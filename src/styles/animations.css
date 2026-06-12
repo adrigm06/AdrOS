@@ -1,0 +1,8 @@
+/* ============================
+   AdrOS Animation Keyframes
+   ============================
+   Animaciones específicas del OS que no están en global.css.
+   Se cargarán cuando los componentes las necesiten.
+   Por ahora, placeholder — las animaciones se definen
+   en los componentes con Framer Motion.
+*/
