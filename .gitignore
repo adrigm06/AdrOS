@@ -27,3 +27,12 @@ pnpm-debug.log*
 .pi-lens/
 .pi/
 .atl/
+
+# environment
+.env.local
+
+# docs (project-specific)
+docs/
+
+# AGENTS.md
+AGENTS.md

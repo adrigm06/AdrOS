@@ -62,9 +62,9 @@ function DownloadIcon() {
 
 const LINKS = [
   { label: "GitHub", href: "https://github.com/adrigm06", icon: GithubIcon },
-  { label: "LinkedIn", href: "#", icon: LinkedinIcon },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/adrigml/", icon: LinkedinIcon },
   { label: "Email", href: "mailto:hello@adrigm.com", icon: EmailIcon },
-  { label: "CV", href: "/cv-adrian-garcia.pdf", icon: DownloadIcon },
+  { label: "CV", href: "/Adrian_Gomez_FullStack_English.pdf", icon: DownloadIcon },
 ];
 
 export default function QuickLinks({ lang, onOpenProfile }: QuickLinksProps) {

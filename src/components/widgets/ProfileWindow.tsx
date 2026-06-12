@@ -16,21 +16,21 @@ interface ProfileData {
 
 const PROFILE: Record<Lang, ProfileData> = {
   es: {
-    name: 'Adrián García M.',
+    name: 'Adrián Gómez',
     role: 'Mobile & Full-Stack Developer',
-    location: '📍 Cártama, Málaga, España',
+    location: '📍 Málaga, España',
     bio: 'Apasionado por Android nativo, Clean Architecture y el detalle en la experiencia de usuario. Construyo herramientas que resuelven problemas reales.',
     github: 'https://github.com/adrigm06',
-    linkedin: '#',
+    linkedin: 'https://www.linkedin.com/in/adrigml/',
     email: 'mailto:hello@adrigm.com',
   },
   en: {
-    name: 'Adrián García M.',
+    name: 'Adrián Gómez',
     role: 'Mobile & Full-Stack Developer',
-    location: '📍 Cártama, Málaga, Spain',
+    location: '📍 Málaga, Spain',
     bio: 'Passionate about native Android, Clean Architecture and the detail in user experience. I build tools that solve real problems.',
     github: 'https://github.com/adrigm06',
-    linkedin: '#',
+    linkedin: 'https://www.linkedin.com/in/adrigml/',
     email: 'mailto:hello@adrigm.com',
   },
 };
@@ -62,7 +62,7 @@ export default function ProfileWindow({ lang }: ProfileWindowProps) {
       >
         <img
           src="/avatar.webp"
-          alt="Foto de perfil de Adrián García"
+          alt="Foto de perfil de Adrián Gómez"
           width={120}
           height={120}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}

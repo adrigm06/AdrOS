@@ -22,9 +22,9 @@ export const translations = {
   list_col_date: 'Fecha',
 
   // Perfil
-  profile_title: 'Adrián García — adrigm',
+  profile_title: 'Adrián Gómez — adrigm',
   profile_role: 'Mobile & Full-Stack Developer',
-  profile_location: '📍 Cártama, Málaga, España',
+  profile_location: '📍 Málaga, España',
   profile_bio: 'Apasionado por Android nativo, Clean Architecture y el detalle en la experiencia de usuario. Construyo herramientas que resuelven problemas reales.',
 
   // QuickLinks

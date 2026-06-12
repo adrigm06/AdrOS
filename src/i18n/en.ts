@@ -22,9 +22,9 @@ export const translations = {
   list_col_date: 'Date',
 
   // Profile
-  profile_title: 'Adrián García — adrigm',
+  profile_title: 'Adrián Gómez — adrigm',
   profile_role: 'Mobile & Full-Stack Developer',
-  profile_location: '📍 Cártama, Málaga, Spain',
+  profile_location: '📍 Málaga, Spain',
   profile_bio: 'Passionate about native Android, Clean Architecture and the detail in user experience. I build tools that solve real problems.',
 
   // QuickLinks
