@@ -221,7 +221,7 @@ export default function Desktop({ projects }: DesktopProps) {
   );
 }
 
-/* ── ListView ── */
+/* ── ListView con buscador ── */
 function ListView({
   projects,
   onOpenProject,
@@ -231,7 +231,24 @@ function ListView({
   onOpenProject: (p: ProjectEntry) => void;
   lang: string;
 }) {
+  const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const sorted = [...projects].sort((a, b) => b.data.date.localeCompare(a.data.date));
+
+  const filtered = query.trim()
+    ? sorted.filter((p) => {
+        const q = query.toLowerCase();
+        const nameMatch = p.data.title.toLowerCase().includes(q);
+        const techMatch = p.data.stack.some((t) => t.toLowerCase().includes(q));
+        return nameMatch || techMatch;
+      })
+    : sorted;
+
+  // Focus input on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   return (
     <motion.div
@@ -244,87 +261,158 @@ function ListView({
         left: 0,
         right: 0,
         bottom: 'var(--taskbar-h)',
-        backgroundColor: 'rgba(13, 15, 20, 0.95)',
-        backdropFilter: 'blur(8px)',
+        backgroundColor: 'rgba(13, 15, 20, 0.96)',
+        backdropFilter: 'blur(12px)',
       }}
     >
       <div className="max-w-4xl mx-auto p-6">
-        <table className="w-full" style={{ fontFamily: 'var(--font-mono)' }}>
-          <thead>
-            <tr className="text-left text-xs" style={{ color: 'var(--os-muted)' }}>
-              <th className="pb-3 font-normal">{lang === 'es' ? 'Proyecto' : 'Project'}</th>
-              <th className="pb-3 font-normal">{lang === 'es' ? 'Categoría' : 'Category'}</th>
-              <th className="pb-3 font-normal hidden sm:table-cell">Stack</th>
-              <th className="pb-3 font-normal">{lang === 'es' ? 'Fecha' : 'Date'}</th>
-              <th className="pb-3 font-normal" />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((project, i) => {
-              const zone = project.data.zone as keyof typeof ZONE_COLORS;
-              return (
-                <motion.tr
-                  key={project.data.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03, duration: 0.1 }}
-                  className="group cursor-pointer transition-colors duration-100"
-                  style={{ borderBottom: '1px solid var(--os-border)' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--os-surface-2)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                  onClick={() => onOpenProject(project)}
-                >
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: ZONE_COLORS[zone] }}
-                      />
-                      <span className="text-sm" style={{ color: 'var(--os-text)' }}>
-                        {project.data.title}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className="text-xs" style={{ color: 'var(--os-muted)' }}>
-                      {project.data.zone}
-                    </span>
-                  </td>
-                  <td className="py-3 pr-4 hidden sm:table-cell">
-                    <div className="flex gap-1 flex-wrap">
-                      {project.data.stack.slice(0, 3).map((tech) => (
+        {/* Search input */}
+        <div className="relative mb-5">
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: 'var(--os-muted)' }}
+          >
+            <circle cx="6" cy="6" r="4.5" />
+            <path d="M9.5 9.5L13 13" />
+          </svg>
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={lang === 'es' ? 'Buscar por nombre o tecnología...' : 'Search by name or technology...'}
+            className="w-full pl-9 pr-8 py-2 font-mono text-sm outline-none transition-colors duration-150"
+            style={{
+              backgroundColor: 'var(--os-surface-2)',
+              border: '1px solid var(--os-border)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--os-text)',
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setQuery('');
+            }}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+              aria-label="Clear search"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: 'var(--os-muted)' }}>
+                <path d="M1 1L9 9M9 1L1 9" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Results count */}
+        <div className="mb-3 font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
+          {filtered.length === 0
+            ? (lang === 'es' ? 'Sin resultados' : 'No results')
+            : `${filtered.length} ${lang === 'es' ? 'proyecto' : 'project'}${filtered.length !== 1 ? 's' : ''}`}
+        </div>
+
+        {/* Table */}
+        {filtered.length > 0 && (
+          <table className="w-full" style={{ fontFamily: 'var(--font-mono)' }}>
+            <thead>
+              <tr className="text-left text-xs" style={{ color: 'var(--os-muted)' }}>
+                <th className="pb-3 font-normal">{lang === 'es' ? 'Proyecto' : 'Project'}</th>
+                <th className="pb-3 font-normal">{lang === 'es' ? 'Categoría' : 'Category'}</th>
+                <th className="pb-3 font-normal hidden sm:table-cell">Stack</th>
+                <th className="pb-3 font-normal">{lang === 'es' ? 'Fecha' : 'Date'}</th>
+                <th className="pb-3 font-normal" />
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((project, i) => {
+                const zone = project.data.zone as keyof typeof ZONE_COLORS;
+                return (
+                  <motion.tr
+                    key={project.data.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.02, duration: 0.1 }}
+                    className="group cursor-pointer transition-colors duration-100"
+                    style={{ borderBottom: '1px solid var(--os-border)' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--os-surface-2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    onClick={() => onOpenProject(project)}
+                  >
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-3">
                         <span
-                          key={tech}
-                          className="text-[10px] px-1.5 py-0.5 rounded-[var(--radius-sm)]"
-                          style={{
-                            backgroundColor: 'var(--os-surface-2)',
-                            border: '1px solid var(--os-border)',
-                            color: 'var(--os-muted)',
-                          }}
-                        >
-                          {tech}
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: ZONE_COLORS[zone] }}
+                        />
+                        <span className="text-sm" style={{ color: 'var(--os-text)' }}>
+                          {project.data.title}
                         </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4">
-                    <span className="text-xs" style={{ color: 'var(--os-muted)' }}>
-                      {project.data.date}
-                    </span>
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className="text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ color: 'var(--os-accent)' }}
-                    >
-                      →
-                    </span>
-                  </td>
-                </motion.tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className="text-xs" style={{ color: 'var(--os-muted)' }}>
+                        {project.data.zone}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 hidden sm:table-cell">
+                      <div className="flex gap-1 flex-wrap">
+                        {project.data.stack.slice(0, 3).map((tech) => (
+                          <span
+                            key={tech}
+                            className="text-[10px] px-1.5 py-0.5 rounded-[var(--radius-sm)]"
+                            style={{
+                              backgroundColor: 'var(--os-surface-2)',
+                              border: '1px solid var(--os-border)',
+                              color: 'var(--os-muted)',
+                            }}
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className="text-xs" style={{ color: 'var(--os-muted)' }}>
+                        {project.data.date}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className="text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: 'var(--os-accent)' }}
+                      >
+                        →
+                      </span>
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {/* Empty state */}
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 gap-2">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--os-muted)', opacity: 0.5 }}>
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21L16.65 16.65" />
+            </svg>
+            <span className="font-mono text-xs" style={{ color: 'var(--os-muted)' }}>
+              {lang === 'es' ? 'Ningún proyecto coincide con tu búsqueda' : 'No projects match your search'}
+            </span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
