@@ -95,15 +95,23 @@ export default function Desktop({ projects }: DesktopProps) {
     .filter((w) => w.type === 'project' && w.isOpen && !w.isMinimized)
     .map((w) => w.projectId || '');
 
-  /* ── macOS-style wallpaper gradients ── */
+  /* ── macOS Sonoma wallpaper — vibrant layered gradients ── */
   const wallpaperStyle: React.CSSProperties = {
     background: `
-      radial-gradient(ellipse at 15% 20%, rgba(0, 212, 170, 0.09) 0%, transparent 55%),
-      radial-gradient(ellipse at 85% 35%, rgba(96, 165, 250, 0.08) 0%, transparent 55%),
-      radial-gradient(ellipse at 50% 85%, rgba(167, 139, 250, 0.07) 0%, transparent 55%),
-      radial-gradient(ellipse at 45% 50%, rgba(255, 255, 255, 0.015) 0%, transparent 60%),
-      #0a0c12
+      /* Deep chromatic base */
+      radial-gradient(ellipse at 20% 15%, rgba(180, 130, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 90%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 10% 60%, rgba(0, 212, 170, 0.07) 0%, transparent 40%),
+      radial-gradient(ellipse at 90% 70%, rgba(167, 139, 250, 0.06) 0%, transparent 40%),
+      /* Subtle center glow */
+      radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
+      /* Ambient edge light */
+      radial-gradient(ellipse at 0% 50%, rgba(96, 165, 250, 0.04) 0%, transparent 30%),
+      radial-gradient(ellipse at 100% 50%, rgba(167, 139, 250, 0.04) 0%, transparent 30%),
+      #080a10
     `,
+    position: 'relative',
   };
 
   /* ── Grid overlay lines ── */
@@ -137,10 +145,10 @@ export default function Desktop({ projects }: DesktopProps) {
         {/* ── Grid overlay (visible solo al arrastrar) ── */}
         <div style={gridStyle} />
 
-        {/* ── Desktop canvas ── */}
+        {/* ── Desktop canvas (full height — dock floats) ── */}
         <motion.div
           className="absolute inset-0"
-          style={{ bottom: 'var(--taskbar-h)' }}
+          style={{ bottom: 0 }}
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}

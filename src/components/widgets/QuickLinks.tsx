@@ -117,6 +117,7 @@ export default function QuickLinks(_props: QuickLinksProps) {
             {/* Label */}
             <span
               className="font-mono text-[10px] transition-colors duration-200 group-hover:text-[var(--os-accent)]"
+              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
             >
               {link.label}
             </span>
