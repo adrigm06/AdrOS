@@ -15,7 +15,7 @@ interface TaskbarProps {
 
 /**
  * macOS Sonoma Dock
- * Glass pill centered at bottom with app icons + system widgets
+ * Glass pill centered at bottom
  */
 export default function Taskbar({
   lang,
@@ -38,7 +38,6 @@ export default function Taskbar({
       const h = String(now.getHours()).padStart(2, '0');
       const m = String(now.getMinutes()).padStart(2, '0');
       setTime(`${h}:${m}`);
-
       const day = String(now.getDate()).padStart(2, '0');
       const month = String(now.getMonth() + 1).padStart(2, '0');
       setDate(`${day}/${month}`);
@@ -48,7 +47,8 @@ export default function Taskbar({
     return () => clearInterval(interval);
   }, []);
 
-  const handleAdrOSClick = () => {
+  // Easter egg: 5 clicks on the clock
+  const handleClockClick = () => {
     const newCount = clickCount + 1;
     setClickCount(newCount);
     if (clickTimer.current) clearTimeout(clickTimer.current);
@@ -60,22 +60,18 @@ export default function Taskbar({
     }
   };
 
-  const openAppCount = minimizedWindows.length;
+  const hasWindows = minimizedWindows.length > 0;
 
   return (
     <>
       {/* ── macOS DOCK ── */}
       <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] flex items-center justify-center">
         <div
-          className="glass-dock flex items-center gap-1 px-2 py-2"
-          style={{ borderRadius: 'var(--radius-xl)', height: 58 }}
+          className="glass-dock flex items-center gap-1.5 px-3 py-2"
+          style={{ borderRadius: 'var(--radius-xl)', height: 60 }}
         >
-          {/* Profile / Finder icon */}
-          <DockItem
-            onClick={onOpenProfile}
-            label="Adrián"
-            isActive={false}
-          >
+          {/* ── LEFT: Fixed apps ── */}
+          <DockItem onClick={onOpenProfile} label="Adrián">
             <div className="w-9 h-9 rounded-[var(--radius-md)] overflow-hidden ring-1 ring-white/10">
               <img
                 src="/avatar.webp"
@@ -86,14 +82,9 @@ export default function Taskbar({
             </div>
           </DockItem>
 
-          {/* View Toggle (Finder-like icon) */}
-          <DockItem
-            onClick={onToggleView}
-            label={viewMode === 'icons' ? 'List' : 'Grid'}
-            isActive={false}
-          >
+          <DockItem onClick={onToggleView} label={viewMode === 'icons' ? 'List view' : 'Grid view'}>
             <div
-              className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center"
+              className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center transition-colors duration-150 hover:bg-white/5"
               style={{ backgroundColor: 'var(--os-surface-2)' }}
             >
               {viewMode === 'icons' ? (
@@ -113,92 +104,91 @@ export default function Taskbar({
             </div>
           </DockItem>
 
-          {/* AdrOS logo in center */}
-          <div className="px-2">
-            <button
-              type="button"
-              onClick={handleAdrOSClick}
-              className="font-mono text-[11px] tracking-[0.12em] transition-all duration-200"
-              style={{ color: 'var(--os-muted)' }}
-            >
-              <div className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-md)] transition-colors duration-150 hover:bg-white/5">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--os-accent)' }}>
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                  <path d="M2 12h20" />
-                </svg>
-              </div>
-            </button>
-          </div>
+          {/* ── Separator (only if there are windows) ── */}
+          {hasWindows && <div className="w-px h-7 mx-0.5" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />}
 
-          {/* Minimized windows (open apps) */}
+          {/* ── CENTER: Minimized windows ── */}
           <AnimatePresence>
             {minimizedWindows.map((w, idx) => (
               <motion.button
                 key={w.id}
                 type="button"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                transition={{ duration: 0.2, delay: idx * 0.03, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ scale: 0, opacity: 0, x: -10 }}
+                animate={{ scale: 1, opacity: 1, x: 0 }}
+                exit={{ scale: 0, opacity: 0, x: 10 }}
+                transition={{ duration: 0.2, delay: idx * 0.04, ease: [0.23, 1, 0.32, 1] }}
                 onClick={() => onRestoreWindow(w.id)}
-                className="dock-icon flex flex-col items-center justify-center gap-0.5 relative"
-                style={{ width: 36, height: 36 }}
+                className="dock-icon flex flex-col items-center justify-center gap-0.5 relative group"
+                style={{ width: 44, height: 44 }}
                 title={w.title}
               >
                 <div
-                  className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[10px] font-mono truncate px-1"
+                  className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden"
                   style={{
                     backgroundColor: 'var(--os-surface-2)',
-                    border: '1px solid var(--os-border-light)',
-                    color: 'var(--os-muted)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    transition: 'border-color 0.15s ease',
                   }}
                 >
-                  {w.title.slice(0, 3)}
+                  <span
+                    className="text-[11px] font-mono font-bold tracking-wider"
+                    style={{ color: 'var(--os-muted)' }}
+                  >
+                    {w.title.slice(0, 2).toUpperCase()}
+                  </span>
                 </div>
-                {/* Active indicator */}
+                {/* Mini dot indicator */}
                 <div
-                  className="absolute -bottom-0.5 w-1 h-1 rounded-full"
-                  style={{ backgroundColor: 'var(--os-accent)' }}
+                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
+                  style={{ backgroundColor: 'var(--os-muted)' }}
                 />
+                {/* Tooltip on hover */}
+                <span
+                  className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 font-mono text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+                  style={{
+                    backgroundColor: 'rgba(22, 24, 34, 0.92)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--os-text)',
+                  }}
+                >
+                  {w.title}
+                </span>
               </motion.button>
             ))}
           </AnimatePresence>
 
-          {/* Separator */}
-          {openAppCount > 0 && (
-            <div className="w-px h-6 mx-1" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
-          )}
+          {/* ── RIGHT: System ── */}
+          {hasWindows && <div className="w-px h-7 mx-0.5" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />}
 
-          {/* Trash / System area — clock + lang */}
-          <DockItem onClick={toggleLang} label={lang.toUpperCase()} isActive={false}>
+          <DockItem onClick={toggleLang} label={lang === 'es' ? 'Español' : 'English'}>
             <div
-              className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center font-mono text-[10px] font-bold tracking-wider"
+              className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center font-mono text-[10px] font-bold tracking-wider transition-colors duration-150 hover:bg-white/5"
               style={{
                 backgroundColor: 'var(--os-surface-2)',
                 color: 'var(--os-muted)',
-                border: '1px solid var(--os-border-light)',
+                border: '1px solid rgba(255,255,255,0.06)',
               }}
             >
               {lang === 'es' ? 'ES' : 'EN'}
             </div>
           </DockItem>
 
-          {/* Clock */}
-          <div className="flex flex-col items-center justify-center px-1">
-            <span
-              className="font-mono text-[10px] leading-tight"
-              style={{ color: 'var(--os-muted)' }}
-            >
+          {/* Clock — click 5x for easter egg */}
+          <button
+            type="button"
+            onClick={handleClockClick}
+            className="flex flex-col items-center justify-center px-1.5 rounded-[var(--radius-md)] transition-colors duration-150 hover:bg-white/5"
+            style={{ height: 36, minWidth: 36 }}
+          >
+            <span className="font-mono text-[10px] leading-tight" style={{ color: 'var(--os-muted)' }}>
               {time}
             </span>
-            <span
-              className="font-mono text-[8px] leading-tight"
-              style={{ color: 'var(--os-muted-light, #8b95a5)' }}
-            >
+            <span className="font-mono text-[8px] leading-tight" style={{ color: 'rgba(107,114,128,0.6)' }}>
               {date}
             </span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -213,7 +203,7 @@ export default function Taskbar({
             className="fixed bottom-[68px] left-1/2 -translate-x-1/2 z-[9999] px-4 py-2 font-mono text-xs glass-strong"
             style={{ borderRadius: 'var(--radius-md)', color: 'var(--os-accent)' }}
           >
-            ✦ Nice try. Nothing here... yet.
+            ✦ Easter egg! Nothing here... yet.
           </motion.div>
         )}
       </AnimatePresence>
@@ -226,12 +216,10 @@ function DockItem({
   children,
   onClick,
   label,
-  isActive,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   label: string;
-  isActive: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -241,30 +229,23 @@ function DockItem({
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="dock-icon flex flex-col items-center justify-center relative"
+      className="dock-icon flex items-center justify-center relative"
       style={{ width: 36, height: 36 }}
       title={label}
     >
       {children}
-      {/* Active indicator */}
-      {isActive && (
-        <div
-          className="absolute -bottom-0.5 w-1 h-1 rounded-full"
-          style={{ backgroundColor: 'var(--os-accent)' }}
-        />
-      )}
-      {/* Dock label tooltip (macOS style) */}
+      {/* macOS-style floating label */}
       <AnimatePresence>
         {hovered && (
           <motion.span
-            initial={{ opacity: 0, y: 4, scale: 0.9 }}
+            initial={{ opacity: 0, y: 6, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.9 }}
+            exit={{ opacity: 0, y: 6, scale: 0.92 }}
             transition={{ duration: 0.12, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 font-mono text-[10px] pointer-events-none"
+            className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 font-mono text-[10px] pointer-events-none z-50"
             style={{
-              backgroundColor: 'rgba(30, 32, 42, 0.95)',
-              backdropFilter: 'blur(8px)',
+              backgroundColor: 'rgba(22, 24, 34, 0.94)',
+              backdropFilter: 'blur(12px)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 'var(--radius-sm)',
               color: 'var(--os-text)',
