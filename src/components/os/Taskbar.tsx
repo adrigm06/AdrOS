@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { WindowState } from '@/hooks/useWindowManager';
 import type { Lang } from '@/hooks/useLanguage';
+import CalendarPopover from './CalendarPopover';
 
 interface TaskbarProps {
   lang: Lang;
@@ -47,16 +48,23 @@ export default function Taskbar({
     return () => clearInterval(interval);
   }, []);
 
-  // Easter egg: 5 clicks on the clock
+  const calendarBtnRef = useRef<HTMLButtonElement>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
   const handleClockClick = () => {
+    // Toggle calendar on single click
+    setCalendarOpen((prev) => !prev);
+    // Easter egg on 5th click (only when closing)
     const newCount = clickCount + 1;
     setClickCount(newCount);
     if (clickTimer.current) clearTimeout(clickTimer.current);
     clickTimer.current = setTimeout(() => setClickCount(0), 3000);
     if (newCount >= 5) {
-      setShowEaster(true);
-      setClickCount(0);
-      setTimeout(() => setShowEaster(false), 4000);
+      if (!calendarOpen) {
+        setShowEaster(true);
+        setClickCount(0);
+        setTimeout(() => setShowEaster(false), 4000);
+      }
     }
   };
 
@@ -175,8 +183,9 @@ export default function Taskbar({
             </div>
           </DockItem>
 
-          {/* Clock — click 5x for easter egg */}
+          {/* Clock — click to toggle calendar */}
           <button
+            ref={calendarBtnRef}
             type="button"
             onClick={handleClockClick}
             className="flex flex-col items-center justify-center px-1.5 rounded-[var(--radius-md)] transition-colors duration-150 hover:bg-white/5"
@@ -191,6 +200,13 @@ export default function Taskbar({
           </button>
         </div>
       </div>
+
+      {/* Calendar popover */}
+      <CalendarPopover
+        isOpen={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        anchorEl={calendarBtnRef.current}
+      />
 
       {/* Easter egg notification */}
       <AnimatePresence>
