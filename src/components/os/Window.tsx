@@ -14,6 +14,15 @@ interface WindowProps {
   children: React.ReactNode;
 }
 
+/**
+ * macOS-style traffic light colors
+ */
+const TRAFFIC = {
+  close: '#ff5f57',
+  minimize: '#febc2e',
+  maximize: '#28c840',
+} as const;
+
 export default function Window({
   window: win,
   onClose,
@@ -90,35 +99,38 @@ export default function Window({
       aria-label={win.title}
       aria-modal="true"
     >
-      {/* Titlebar */}
+      {/* macOS Titlebar */}
       <div
         className="flex items-center gap-2 px-3 flex-shrink-0 select-none"
         style={{
           height: 'var(--titlebar-h)',
           backgroundColor: 'var(--os-surface-2)',
           borderBottom: '1px solid var(--os-border)',
+          borderTopLeftRadius: 'var(--radius-lg)',
+          borderTopRightRadius: 'var(--radius-lg)',
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
       >
-        {/* Traffic lights */}
-        <div className="flex items-center gap-[6px]">
-          <WindowButton color="var(--os-danger)" label="Cerrar" onClick={() => onClose(win.id)} icon="×" />
-          <WindowButton color="var(--os-warn)" label="Minimizar" onClick={() => onMinimize(win.id)} icon="−" />
-          <WindowButton color="var(--os-ok)" label="Maximizar" onClick={() => onMaximize(win.id)} icon="⤢" />
+        {/* Traffic lights — macOS exact */}
+        <div className="flex items-center gap-[8px] flex-shrink-0">
+          <MacOSTrafficLight color={TRAFFIC.close} label="Cerrar" onClick={() => onClose(win.id)} icon="×" />
+          <MacOSTrafficLight color={TRAFFIC.minimize} label="Minimizar" onClick={() => onMinimize(win.id)} icon="−" />
+          <MacOSTrafficLight color={TRAFFIC.maximize} label="Maximizar" onClick={() => onMaximize(win.id)} icon="⤢" />
         </div>
 
-        {/* Title */}
-        <div className="flex items-center gap-1.5 ml-2 flex-1 min-w-0">
-          <div className="w-3 h-3 rounded flex-shrink-0" style={{ backgroundColor: accent }} />
-          <span
-            className="text-xs font-mono truncate"
-            style={{ color: 'var(--os-muted)' }}
-          >
-            {win.title}
-          </span>
+        {/* Title — centrado */}
+        <div className="flex-1 flex items-center justify-center min-w-0 mr-[52px]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded flex-shrink-0" style={{ backgroundColor: accent }} />
+            <span
+              className="text-xs font-mono truncate"
+              style={{ color: 'var(--os-muted)' }}
+            >
+              {win.title}
+            </span>
+          </div>
         </div>
-
       </div>
 
       {/* Content */}
@@ -144,7 +156,7 @@ export default function Window({
   );
 }
 
-function WindowButton({ color, label, onClick, icon }: { color: string; label: string; onClick: () => void; icon: string }) {
+function MacOSTrafficLight({ color, label, onClick, icon }: { color: string; label: string; onClick: () => void; icon: string }) {
   return (
     <button
       type="button"
@@ -158,7 +170,10 @@ function WindowButton({ color, label, onClick, icon }: { color: string; label: s
       }}
       aria-label={label}
     >
-      <span className="text-[8px] opacity-0 group-hover:opacity-100 transition-opacity leading-none" style={{ color: '#000', fontWeight: 700 }}>
+      <span
+        className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity leading-none font-bold"
+        style={{ color: 'rgba(0,0,0,0.5)', fontWeight: 700 }}
+      >
         {icon}
       </span>
     </button>

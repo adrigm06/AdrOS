@@ -16,9 +16,9 @@
   --os-accent-glow: #00d4aa44;
   --os-text:        #e2e8f0;
   --os-muted:       #64748b;
-  --os-danger:      #ff4757;
-  --os-warn:        #ffa502;
-  --os-ok:          #2ed573;
+  --os-danger:      #ff5f57;
+  --os-warn:        #febc2e;
+  --os-ok:          #28c840;
   --font-mono:      'JetBrains Mono', monospace;
   --font-sans:      'Inter', sans-serif;
   --radius-sm:      4px;
@@ -27,7 +27,7 @@
   --shadow-window:  0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
   --shadow-hover:   0 0 0 1px var(--os-accent-dim);
   --taskbar-h:      48px;
-  --titlebar-h:     36px;
+  --titlebar-h:     38px;
 }
 
 /* ============================

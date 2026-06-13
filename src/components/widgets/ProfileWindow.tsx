@@ -19,19 +19,19 @@ const PROFILE: Record<Lang, ProfileData> = {
     name: 'Adrián Gómez',
     role: 'Mobile & Full-Stack Developer',
     location: '📍 Málaga, España',
-    bio: 'Apasionado por Android nativo, Clean Architecture y el detalle en la experiencia de usuario. Construyo herramientas que resuelven problemas reales.',
+    bio: 'Especializado en desarrollo Android nativo con Kotlin y aplicaciones web con Java/Spring Boot. Apasionado por la arquitectura limpia, el código bien estructurado y las herramientas que resuelven problemas reales.',
     github: 'https://github.com/adrigm06',
     linkedin: 'https://www.linkedin.com/in/adrigml/',
-    email: 'mailto:hello@adrigm.com',
+    email: 'mailto:adrigml06@gmail.com',
   },
   en: {
     name: 'Adrián Gómez',
     role: 'Mobile & Full-Stack Developer',
     location: '📍 Málaga, Spain',
-    bio: 'Passionate about native Android, Clean Architecture and the detail in user experience. I build tools that solve real problems.',
+    bio: 'Specialized in native Android development with Kotlin and web applications with Java/Spring Boot. Passionate about clean architecture, well-structured code, and building tools that solve real problems.',
     github: 'https://github.com/adrigm06',
     linkedin: 'https://www.linkedin.com/in/adrigml/',
-    email: 'mailto:hello@adrigm.com',
+    email: 'mailto:adrigml06@gmail.com',
   },
 };
 

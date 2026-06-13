@@ -1,9 +1,8 @@
-import type { Lang } from '@/hooks/useLanguage';
-
 interface QuickLinksProps {
-  lang: Lang;
-  onOpenProfile: () => void;
+  // no props needed currently
 }
+
+/* ── Icon SVGs ── */
 
 function GithubIcon() {
   return (
@@ -60,100 +59,70 @@ function DownloadIcon() {
   );
 }
 
-const LINKS = [
-  { label: "GitHub", href: "https://github.com/adrigm06", icon: GithubIcon },
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/adrigml/", icon: LinkedinIcon },
-  { label: "Email", href: "mailto:hello@adrigm.com", icon: EmailIcon },
-  { label: "CV", href: "/Adrian_Gomez_FullStack_English.pdf", icon: DownloadIcon },
-];
-
-export default function QuickLinks({ lang, onOpenProfile }: QuickLinksProps) {
+/** Shortcut arrow badge (Windows/macOS style) */
+function ShortcutBadge() {
   return (
-    <div
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      className="absolute -bottom-0.5 -left-0.5"
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "16px",
-        height: "100%",
-        width: "100%",
+        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
       }}
     >
-      {/* Icon grid */}
-      <div
-        style={{
-          display: "flex",
-          gap: "20px",
-          flexWrap: "wrap",
-          justifyContent: "center",
-        }}
-      >
-        {LINKS.map((link) => {
-          const Icon = link.icon;
-          return (
-            <a
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "6px",
-                color: "var(--os-muted)",
-                textDecoration: "none",
-                transition: "color 150ms ease, transform 150ms ease",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.color = "var(--os-accent)";
-                el.style.transform = "scale(1.1)";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.color = "var(--os-muted)";
-                el.style.transform = "scale(1)";
-              }}
-            >
-              <Icon />
-              <span
-                style={{ fontFamily: "var(--font-mono)", fontSize: "10px" }}
-              >
-                {link.label}
-              </span>
-            </a>
-          );
-        })}
-      </div>
+      {/* Badge background */}
+      <rect x="0.5" y="0.5" width="13" height="13" rx="2.5" fill="var(--os-surface-2)" stroke="var(--os-border)" strokeWidth="0.5" />
+      {/* Curved arrow */}
+      <path
+        d="M9.5 7.5V4.5H6.5M9.5 4.5L5.5 8.5"
+        stroke="var(--os-muted)"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
 
-      {/* About me button */}
-      <button
-        type="button"
-        onClick={onOpenProfile}
-        style={{
-          padding: "8px 20px",
-          border: "1px solid var(--os-accent)",
-          backgroundColor: "var(--os-accent-dim)",
-          borderRadius: "var(--radius-sm)",
-          fontFamily: "var(--font-mono)",
-          fontSize: "12px",
-          color: "var(--os-accent)",
-          cursor: "pointer",
-          transition: "background-color 150ms ease",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.backgroundColor =
-            "var(--os-accent-glow)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.backgroundColor =
-            "var(--os-accent-dim)";
-        }}
-      >
-        {lang === 'es' ? '👤 Sobre mí' : '👤 About me'}
-      </button>
+/* ── Link definitions ── */
+
+const LINKS: { label: string; href: string; labelKey: string; Icon: React.FC }[] = [
+  { label: "GitHub", href: "https://github.com/adrigm06", labelKey: "GitHub", Icon: GithubIcon },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/adrigml/", labelKey: "LinkedIn", Icon: LinkedinIcon },
+  { label: "Email", href: "mailto:adrigml06@gmail.com", labelKey: "Email", Icon: EmailIcon },
+  { label: "CV", href: "/Adrian_Gomez_FullStack_English.pdf", labelKey: "CV", Icon: DownloadIcon },
+];
+
+export default function QuickLinks(_props: QuickLinksProps) {
+  return (
+    <div className="flex items-center gap-5">
+      {LINKS.map((link) => {
+        const { Icon } = link;
+        return (
+          <a
+            key={link.labelKey}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex flex-col items-center gap-1.5 transition-all duration-200 hover:scale-110 hover:drop-shadow-[0_0_8px_var(--os-accent-glow)]"
+            style={{ color: 'var(--os-muted)' }}
+          >
+            {/* Icon container with shortcut badge */}
+            <div className="relative">
+              <Icon />
+              <ShortcutBadge />
+            </div>
+            {/* Label */}
+            <span
+              className="font-mono text-[10px] transition-colors duration-200 group-hover:text-[var(--os-accent)]"
+            >
+              {link.label}
+            </span>
+          </a>
+        );
+      })}
     </div>
   );
 }

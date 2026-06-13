@@ -2,6 +2,8 @@ import { AnimatePresence } from 'framer-motion';
 import type { WindowState } from '@/hooks/useWindowManager';
 import type { Lang } from '@/hooks/useLanguage';
 import type { ProjectEntry } from './Desktop';
+import { ZONE_COLORS } from '@/data/projects';
+import type { ZoneId } from '@/data/projects';
 import Window from './Window';
 import ProjectWindow from '@/components/project/ProjectWindow';
 import ProfileWindow from '@/components/widgets/ProfileWindow';
@@ -36,7 +38,7 @@ export default function WindowManager({
           ? projects.find(p => p.data.id === win.projectId)
           : undefined;
 
-        const accentColor = project?.data.color;
+        const accentColor = project ? ZONE_COLORS[project.data.zone as ZoneId] : undefined;
 
         return (
           <Window

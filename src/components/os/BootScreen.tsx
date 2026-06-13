@@ -9,7 +9,7 @@ interface BootLine {
 const BOOT_LINES: BootLine[] = [
   { text: '', delay: 0 },
   { text: 'AdrOS v1.0.0', delay: 200 },
-  { text: 'Copyright © 2026 Adrián García M.', delay: 600 },
+  { text: 'Copyright © 2026 Adrián Gómez', delay: 600 },
   { text: '', delay: 1000 },
   { text: 'Initializing file system...', delay: 1100 },
   { text: 'Loading projects... [████████░░] 82%', delay: 1400 },
