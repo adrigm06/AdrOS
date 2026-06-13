@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useDrag } from '@/hooks/useDrag';
 import type { WindowState } from '@/hooks/useWindowManager';
@@ -14,11 +15,10 @@ interface WindowProps {
   children: React.ReactNode;
 }
 
-const TRAFFIC = {
-  close: '#ff5f57',
-  minimize: '#febc2e',
-  maximize: '#28c840',
-} as const;
+const TRAFFIC = { close: '#ff5f57', minimize: '#febc2e', maximize: '#28c840' } as const;
+
+/** Posición del dock (bottom-center) para el genie effect */
+const DOCK_Y_OFFSET = 70;
 
 export default function Window({
   window: win,
@@ -37,10 +37,61 @@ export default function Window({
     disabled: win.isMaximized || isMobile,
   });
 
+  const exitIntentRef = useRef<'minimize' | 'close' | null>(null);
   const isMaximized = win.isMaximized;
   const accent = accentColor || 'var(--os-accent)';
+  const isFullScreen = isMobile || isMaximized;
 
-  const winStyle: React.CSSProperties = isMobile || isMaximized
+  const handleMinimize = () => {
+    exitIntentRef.current = 'minimize';
+    onMinimize(win.id);
+  };
+
+  const handleClose = () => {
+    exitIntentRef.current = 'close';
+    onClose(win.id);
+  };
+
+  const handleMaximize = () => {
+    onMaximize(win.id);
+  };
+
+  // ── Dock center (genie target) ──
+  const dockX = typeof window !== 'undefined' ? window.innerWidth / 2 : 0;
+  const dockY = typeof window !== 'undefined' ? window.innerHeight - DOCK_Y_OFFSET : 0;
+  const winCenterX = position.x + win.size.width / 2;
+  const winCenterY = position.y + win.size.height / 2;
+
+  // ── Genie effect: delta desde centro ventana → centro dock ──
+  const genieDX = dockX - winCenterX;
+  const genieDY = dockY - winCenterY;
+
+  // ── Exit animation ──
+  const getExit = () => {
+    if (exitIntentRef.current === 'minimize') {
+      // Genie effect: shrink toward dock
+      return {
+        opacity: 0,
+        scale: 0.08,
+        x: genieDX,
+        y: genieDY,
+        filter: 'blur(4px)',
+      };
+    }
+    if (exitIntentRef.current === 'close') {
+      // Shrink + fade + tilt
+      return {
+        opacity: 0,
+        scale: 0.6,
+        rotate: -1.5,
+        filter: 'blur(3px)',
+      };
+    }
+    // Default exit
+    return { opacity: 0, scale: 0.88, y: 16 };
+  };
+
+  const winStyle: React.CSSProperties = isFullScreen
     ? {
         position: 'fixed',
         top: 0,
@@ -59,29 +110,30 @@ export default function Window({
         cursor: isDragging ? 'grabbing' : 'default',
       };
 
-  const isFullScreen = isMobile || isMaximized;
-
   return (
     <motion.div
       ref={dragRef}
-      initial={{ opacity: 0, scale: 0.93, y: 12 }}
+      initial={{ opacity: 0, scale: 0.88, y: 20 }}
       animate={{
         opacity: 1,
         scale: 1,
         y: 0,
+        x: 0,
+        rotate: 0,
+        filter: 'blur(0px)',
         width: isFullScreen ? '100vw' : win.size.width,
         height: isFullScreen ? '100dvh' : win.size.height,
         top: isFullScreen ? 0 : position.y,
         left: isFullScreen ? 0 : position.x,
       }}
-      exit={{ opacity: 0, scale: 0.88, y: 16 }}
+      exit={getExit()}
       transition={{
-        duration: 0.22,
+        duration: 0.28,
         ease: [0.16, 1, 0.3, 1],
-        width: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
-        height: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
-        top: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
-        left: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+        width: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+        height: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+        top: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+        left: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
       }}
       style={{
         ...winStyle,
@@ -98,7 +150,7 @@ export default function Window({
       aria-label={win.title}
       aria-modal="true"
     >
-      {/* ── macOS Titlebar with glass ── */}
+      {/* macOS Titlebar */}
       <div
         className="flex items-center gap-2 px-3 flex-shrink-0 select-none"
         style={{
@@ -115,19 +167,16 @@ export default function Window({
       >
         {/* Traffic lights */}
         <div className="flex items-center gap-[8px] flex-shrink-0">
-          <MacOSTrafficLight color={TRAFFIC.close} label="Cerrar" onClick={() => onClose(win.id)} icon="×" />
-          <MacOSTrafficLight color={TRAFFIC.minimize} label="Minimizar" onClick={() => onMinimize(win.id)} icon="−" />
-          <MacOSTrafficLight color={TRAFFIC.maximize} label="Maximizar" onClick={() => onMaximize(win.id)} icon="⤢" />
+          <MacOSTrafficLight color={TRAFFIC.close} label="Cerrar" onClick={handleClose} icon="×" />
+          <MacOSTrafficLight color={TRAFFIC.minimize} label="Minimizar" onClick={handleMinimize} icon="−" />
+          <MacOSTrafficLight color={TRAFFIC.maximize} label="Maximizar" onClick={handleMaximize} icon="⤢" />
         </div>
 
         {/* Title — centered */}
         <div className="flex-1 flex items-center justify-center min-w-0 mr-[52px]">
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded flex-shrink-0" style={{ backgroundColor: accent }} />
-            <span
-              className="text-[11px] font-mono truncate"
-              style={{ color: 'var(--os-muted)' }}
-            >
+            <span className="text-[11px] font-mono truncate" style={{ color: 'var(--os-muted)' }}>
               {win.title}
             </span>
           </div>
@@ -135,10 +184,7 @@ export default function Window({
       </div>
 
       {/* Content */}
-      <div
-        className="flex-1 overflow-y-auto"
-        style={{ backgroundColor: 'var(--os-bg)' }}
-      >
+      <div className="flex-1 overflow-y-auto" style={{ backgroundColor: 'var(--os-bg)' }}>
         {children}
       </div>
 
@@ -173,10 +219,7 @@ function MacOSTrafficLight({ color, label, onClick, icon }: { color: string; lab
       }}
       aria-label={label}
     >
-      <span
-        className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity leading-none font-bold"
-        style={{ color: 'rgba(0,0,0,0.45)' }}
-      >
+      <span className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity leading-none font-bold" style={{ color: 'rgba(0,0,0,0.45)' }}>
         {icon}
       </span>
     </button>
