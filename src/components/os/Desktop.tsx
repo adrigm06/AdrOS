@@ -4,6 +4,7 @@ import { useWindowManager } from '@/hooks/useWindowManager';
 import { LanguageContext, useLanguageState, useTranslation } from '@/hooks/useLanguage';
 import { useReducedMotion } from 'framer-motion';
 import { useKonamiCode, useLsCommand } from '@/hooks/useEasterEggs';
+import type { EasterEgg } from '@/hooks/useEasterEggs';
 import Taskbar from './Taskbar';
 import BootScreen from './BootScreen';
 import WindowManager from './WindowManager';
@@ -129,7 +130,7 @@ export default function Desktop({ projects }: DesktopProps) {
   const { t } = useTranslation(langState.lang);
   const reduce = useReducedMotion();
 
-  useKonamiCode();
+  const { eggs, updateEgg } = useKonamiCode();
   useLsCommand();
 
   useEffect(() => {
@@ -329,6 +330,11 @@ export default function Desktop({ projects }: DesktopProps) {
             );
           })}
 
+          {/* ── Konami eggs ── */}
+          {eggs.map((egg) => (
+            <DraggableEgg key={egg.id} egg={egg} onMove={updateEgg} />
+          ))}
+
           {/* QuickLinks — bottom-right */}
           <div className="absolute" style={{ right: 28, bottom: 24 }}>
             <QuickLinks />
@@ -469,6 +475,81 @@ function SnapCornerMarkers({ cells }: { cells: Array<{ x: number; y: number; isT
         </div>
       ))}
     </motion.div>
+  );
+}
+
+/* ==================================================================
+   DraggableEgg — konami code easter egg (literally a draggable egg)
+   ================================================================== */
+function DraggableEgg({ egg, onMove }: { egg: EasterEgg; onMove: (id: number, x: number, y: number) => void }) {
+  const dragRef = useRef<HTMLDivElement>(null);
+  const startPos = useRef({ x: 0, y: 0, eggX: 0, eggY: 0 });
+  const [dragging, setDragging] = useState(false);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    startPos.current = { x: e.clientX, y: e.clientY, eggX: egg.x, eggY: egg.y };
+    setDragging(true);
+  }, [egg.x, egg.y]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove_ = (e: MouseEvent) => {
+      const dx = e.clientX - startPos.current.x;
+      const dy = e.clientY - startPos.current.y;
+      if (dragRef.current) {
+        dragRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
+      }
+    };
+    const onUp = (e: MouseEvent) => {
+      const dx = e.clientX - startPos.current.x;
+      const dy = e.clientY - startPos.current.y;
+      onMove(egg.id, startPos.current.eggX + dx, startPos.current.eggY + dy);
+      if (dragRef.current) dragRef.current.style.transform = '';
+      setDragging(false);
+    };
+    window.addEventListener('mousemove', onMove_);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove_);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [dragging, egg.id, onMove]);
+
+  return (
+    <div
+      ref={dragRef}
+      onMouseDown={handleMouseDown}
+      className="absolute flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+      style={{
+        left: egg.x - 22,
+        top: egg.y - 22,
+        width: 44,
+        height: 44,
+        zIndex: dragging ? 9998 : 100,
+        transition: dragging ? 'none' : 'left 0.2s ease, top 0.2s ease',
+        filter: `drop-shadow(0 4px 16px rgba(0, 212, 170, 0.35))`,
+      }}
+    >
+      <div
+        className="rounded-full flex items-center justify-center transition-transform"
+        style={{
+          width: 44,
+          height: 44,
+          background: 'radial-gradient(circle at 35% 30%, rgba(0,212,170,0.2), rgba(0,212,170,0.05))',
+          border: '1px solid rgba(0,212,170,0.2)',
+          transform: dragging ? 'scale(1.1)' : 'scale(1)',
+        }}
+      >
+        <img
+          src="/AdrOS.webp"
+          alt="🥚"
+          className="w-[26px] h-[26px] pointer-events-none"
+          style={{ filter: 'drop-shadow(0 0 6px rgba(0,212,170,0.4))' }}
+        />
+      </div>
+    </div>
   );
 }
 
