@@ -13,6 +13,7 @@ import QuickLinks from '@/components/widgets/QuickLinks';
 import { ZONE_COLORS } from '@/data/projects';
 import ContextMenu from './ContextMenu';
 import type { ContextMenuItem } from './ContextMenu';
+import WallpaperPicker, { WALLPAPERS } from './WallpaperPicker';
 import type { CollectionEntry } from 'astro:content';
 
 type ViewMode = 'icons' | 'list';
@@ -56,6 +57,10 @@ export default function Desktop({ projects }: DesktopProps) {
   const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [desktopCtxMenu, setDesktopCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const [wallpaperId, setWallpaperId] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'sonoma';
+    return localStorage.getItem('adros-wallpaper') || 'sonoma';
+  });
   const [wallpaperPickerOpen, setWallpaperPickerOpen] = useState(false);
   const desktopRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +100,12 @@ export default function Desktop({ projects }: DesktopProps) {
     setDesktopCtxMenu({ x: e.clientX, y: e.clientY });
   }, []);
 
+  const handleWallpaperSelect = useCallback((id: string) => {
+    setWallpaperId(id);
+    localStorage.setItem('adros-wallpaper', id);
+    setWallpaperPickerOpen(false);
+  }, []);
+
   const desktopCtxItems: ContextMenuItem[] = [
     {
       label: langState.lang === 'es' ? 'Cambiar fondo de pantalla' : 'Change Wallpaper',
@@ -112,23 +123,12 @@ export default function Desktop({ projects }: DesktopProps) {
     .filter((w) => w.type === 'project' && w.isOpen && !w.isMinimized)
     .map((w) => w.projectId || '');
 
-  /* ── macOS Sonoma wallpaper — vibrant layered gradients ── */
+  /* ── Wallpaper from state ── */
+  const currentWallpaper = WALLPAPERS.find((w) => w.id === wallpaperId) || WALLPAPERS[0];
   const wallpaperStyle: React.CSSProperties = {
-    background: `
-      /* Deep chromatic base */
-      radial-gradient(ellipse at 20% 15%, rgba(180, 130, 255, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 20%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 90%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 10% 60%, rgba(0, 212, 170, 0.07) 0%, transparent 40%),
-      radial-gradient(ellipse at 90% 70%, rgba(167, 139, 250, 0.06) 0%, transparent 40%),
-      /* Subtle center glow */
-      radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
-      /* Ambient edge light */
-      radial-gradient(ellipse at 0% 50%, rgba(96, 165, 250, 0.04) 0%, transparent 30%),
-      radial-gradient(ellipse at 100% 50%, rgba(167, 139, 250, 0.04) 0%, transparent 30%),
-      #080a10
-    `,
+    background: currentWallpaper.css,
     position: 'relative',
+    transition: 'background 0.4s ease',
   };
 
   /* ── Grid overlay lines ── */
@@ -236,6 +236,14 @@ export default function Desktop({ projects }: DesktopProps) {
             onClose={() => setDesktopCtxMenu(null)}
           />
         )}
+
+        {/* ── Wallpaper picker ── */}
+        <WallpaperPicker
+          isOpen={wallpaperPickerOpen}
+          currentId={wallpaperId}
+          onSelect={handleWallpaperSelect}
+          onClose={() => setWallpaperPickerOpen(false)}
+        />
 
         {/* ── List view ── */}
         <AnimatePresence>
