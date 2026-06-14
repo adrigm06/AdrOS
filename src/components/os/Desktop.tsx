@@ -94,8 +94,11 @@ function calcInitialPositions(projects: ProjectEntry[]): Record<string, { x: num
   const positions: Record<string, { x: number; y: number }> = {};
 
   zones.forEach((zone, col) => {
-    const zoneProjects = projects.filter((p) => p.data.zone === zone);
     const baseX = COL_START_X + col * GRID_X;
+    // Sort by date descending (newest first) so that VantageSystems appears at the top
+    const zoneProjects = projects
+      .filter((p) => p.data.zone === zone)
+      .sort((a, b) => b.data.date.localeCompare(a.data.date));
     zoneProjects.forEach((p, row) => {
       const baseY = ROW_START_Y + row * GRID_Y;
       positions[p.data.id] = { x: baseX, y: baseY };
