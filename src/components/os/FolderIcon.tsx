@@ -253,8 +253,8 @@ export default function FolderIcon({
         onBlur={() => setIsHovered(false)}
         className="flex flex-col items-center gap-1 p-2 outline-none rounded-[var(--radius-md)] transition-transform active:scale-[0.94]"
         style={{
-          minWidth: 80,
-          minHeight: 80,
+          width: 96,
+          minHeight: 90,
           cursor: position ? 'grab' : 'pointer',
           transform: `scale(${iconScale})`,
           transition: 'transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out)',
