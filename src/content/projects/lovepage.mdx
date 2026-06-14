@@ -1,14 +1,14 @@
 ---
 id: "lovepage"
 title: "LovePage"
-subtitle: "Romantic Landing Page Builder"
+subtitle: "Full-Stack Romantic Web App"
 zone: "fullstack"
 status: "completed"
-date: "2024-06"
+date: "2025-10"
 color: "#f472b6"
-hasImages: true
+hasImages: false
 githubUrl: "https://github.com/adrigm06/LovePage"
-demoUrl: ""
+demoUrl: "https://adrigm06.github.io/LovePage/"
 linkedinUrl: ""
 stack:
   - "HTML5"
@@ -20,15 +20,91 @@ stack:
   - "REST API"
   - "GitHub Pages"
   - "Render"
+  - "Spotify API"
 description:
-  es: "Constructor de landing pages románticas con backend completo."
-  en: "Romantic landing page builder with full backend."
+  es: "Aplicación web full-stack personalizable con autenticación, galería de fotos, contadores, Spotify y fechas importantes."
+  en: "Customisable full-stack web app with authentication, photo gallery, counters, Spotify integration and important dates."
 ---
 
 <Content lang="es">
-LovePage es un constructor de landing pages románticas que permite a los usuarios crear páginas web personalizadas para declaraciones de amor, aniversarios o propuestas. El frontend estático está construido con HTML5, CSS3 y JavaScript vanilla, desplegado en GitHub Pages. El backend con Node.js, Express.js y PostgreSQL gestiona la autenticación, almacenamiento de configuraciones y entrega de páginas. Incluye animaciones CSS, música de fondo personalizable y un generador de contenido romántico.
+
+LovePage es una aplicación web full-stack diseñada para crear un espacio digital personalizado y afectivo. Frontend dinámico con HTML5, CSS3 y JavaScript modular; backend con Node.js, Express y PostgreSQL. Desplegada en GitHub Pages + Render.
+
+> **Demo en vivo:** [adrigm06.github.io/LovePage](https://adrigm06.github.io/LovePage/)
+
+#### Funcionalidades
+
+| Categoría | Características |
+|---|---|
+| **Tema visual** | Modo día/noche con burbujas animadas (día) y cielo estrellado (noche) |
+| **Animaciones** | Corazones flotantes, máquina de escribir, transiciones suaves |
+| **Cursor** | Personalizado con forma de corazón |
+| **Mensajes** | Sistema con efecto de escritura y latidos, personalizables por usuario |
+| **Galería** | Fotos compartidas con efectos 3D y rotación automática basada en fechas |
+| **Contadores** | Días desde la fecha especial + badges mensuales (🍊 mandarinas) |
+| **Fechas** | Gestión de eventos importantes con iconos personalizables |
+| **Spotify** | Reproductor embebido con playlist personalizable |
+| **Autenticación** | Login/registro con sesiones, perfiles y ajustes por usuario |
+
+#### Tecnologías
+
+**Frontend:**
+- HTML5, CSS3 modular (variables, temas, animaciones, galería, formularios)
+- JavaScript vanilla con arquitectura modular (config, animaciones, temas, contadores, mensajes, galería, Spotify, fotos, login, recordatorios)
+
+**Backend:**
+- Node.js + Express, sesiones con express-session, API RESTful con CORS
+- PostgreSQL en la nube, dotenv para configuración
+
+**Despliegue:**
+- Frontend: GitHub Pages
+- Backend + DB: Render
+
+#### Estructura del Proyecto
+
+```
+LovePage/
+├── index.html / login.html / recordatorios.html
+├── styles/          # CSS modular (8 archivos)
+├── scripts/         # JS modular (11 módulos)
+├── img/             # Imágenes + photos.json
+└── lovepage-backend/  # Servidor Express + SQL schema
+```
+
 </Content>
 
 <Content lang="en">
-LovePage is a romantic landing page builder that lets users create personalized web pages for love confessions, anniversaries, or proposals. The static frontend is built with HTML5, CSS3, and vanilla JavaScript, deployed on GitHub Pages. The backend with Node.js, Express.js, and PostgreSQL handles authentication, configuration storage, and page delivery. Includes CSS animations, customizable background music, and a romantic content generator.
+
+LovePage is a full-stack web app designed to create a personalised, heartfelt digital space. Dynamic frontend with HTML5, CSS3 and modular JavaScript; backend with Node.js, Express and PostgreSQL. Deployed on GitHub Pages + Render.
+
+> **Live demo:** [adrigm06.github.io/LovePage](https://adrigm06.github.io/LovePage/)
+
+#### Features
+
+| Category | Details |
+|---|---|
+| **Visual theme** | Day/night toggle with animated bubbles (day) and starry sky (night) |
+| **Animations** | Floating hearts, typewriter effect, smooth transitions |
+| **Cursor** | Custom heart-shaped cursor |
+| **Messages** | Typewriter system with heartbeat, customisable per user |
+| **Gallery** | Shared photos with 3D effects and date-based rotation |
+| **Counters** | Days since special date + monthly badges (🍊 mandarins) |
+| **Dates** | Important event management with customisable icons |
+| **Spotify** | Embedded player with customisable playlist |
+| **Auth** | Login/register with sessions, profiles and per-user settings |
+
+#### Tech Stack
+
+**Frontend:**
+- HTML5, modular CSS3 (variables, themes, animations, gallery, forms)
+- Vanilla JavaScript with modular architecture (11 modules)
+
+**Backend:**
+- Node.js + Express, express-session, RESTful API with CORS
+- Cloud PostgreSQL, dotenv configuration
+
+**Deployment:**
+- Frontend: GitHub Pages
+- Backend + DB: Render
+
 </Content>
