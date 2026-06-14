@@ -29,14 +29,13 @@ export default function Window({
   onBringToFront,
   onUpdatePosition,
   onUpdateSize,
-  isMobile,
   accentColor,
   children,
 }: WindowProps) {
   const { dragRef, position, isDragging, handleMouseDown, handleTouchStart } = useDrag({
     initialPosition: win.position,
     onDragEnd: (pos) => onUpdatePosition(win.id, pos),
-    disabled: win.isMaximized || (isMobile ?? false),
+    disabled: win.isMaximized,
   });
 
   const [isResizing, setIsResizing] = useState(false);
@@ -44,7 +43,7 @@ export default function Window({
   const exitIntentRef = useRef<'minimize' | 'close' | null>(null);
   const isMaximized = win.isMaximized;
   const accent = accentColor || 'var(--os-accent)';
-  const isFullScreen = isMobile || isMaximized;
+  const isFullScreen = isMaximized;
 
   /* ── Resize ── */
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
