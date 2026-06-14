@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ProjectEntry } from './Desktop';
+import ContextMenu from './ContextMenu';
+import type { ContextMenuItem } from './ContextMenu';
 
 interface FolderIconProps {
   project: ProjectEntry;
@@ -114,6 +116,30 @@ export default function FolderIcon({
     handleDragStart(t.clientX, t.clientY);
   };
 
+  /* ── Context menu ── */
+  const [ctxMenuPos, setCtxMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowInfo(false);
+    setCtxMenuPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const closeContextMenu = () => setCtxMenuPos(null);
+
+  const ctxItems: ContextMenuItem[] = [
+    {
+      label: 'Open',
+      onClick: () => { onOpen(); closeContextMenu(); },
+    },
+    {
+      label: 'Get Info',
+      onClick: () => { setShowInfo(true); closeContextMenu(); },
+    },
+  ];
+
   /* ── Double-click ── */
   const handleClick = () => {
     if (hasMoved.current || !position) return;
@@ -149,6 +175,7 @@ export default function FolderIcon({
       <button
         type="button"
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         onFocus={() => setIsHovered(true)}
@@ -250,6 +277,111 @@ export default function FolderIcon({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Context menu */}
+      {ctxMenuPos && (
+        <ContextMenu
+          items={ctxItems}
+          position={ctxMenuPos}
+          onClose={closeContextMenu}
+        />
+      )}
+
+      {/* Get Info card */}
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+            className="fixed z-[99999]"
+            style={{
+              left: position ? position.x + 20 : 20,
+              top: position ? position.y : 20,
+              width: 220,
+            }}
+          >
+            <div
+              className="rounded-[var(--radius-md)] p-3"
+              style={{
+                backgroundColor: 'rgba(22, 24, 34, 0.94)',
+                backdropFilter: 'blur(20px) saturate(1.3)',
+                WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+              }}
+            >
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => setShowInfo(false)}
+                className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: 'var(--os-muted)' }}>
+                  <path d="M1 1L7 7M7 1L1 7" />
+                </svg>
+              </button>
+
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: zoneColor }} />
+                <span className="font-sans text-sm font-semibold" style={{ color: 'var(--os-text)' }}>
+                  {project.data.title}
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <InfoRow label={langLabel('Status', 'Estado')} value={project.data.status} colorKey="status" />
+                <InfoRow label={langLabel('Date', 'Fecha')} value={project.data.date} />
+                <InfoRow label={langLabel('Category', 'Categoría')} value={project.data.zone} />
+                <div className="pt-1 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <span className="font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
+                    {langLabel('Technologies', 'Tecnologías')}
+                  </span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {project.data.stack.map((tech) => (
+                      <span
+                        key={tech}
+                        className="text-[9px] px-1.5 py-0.5 font-mono rounded-[var(--radius-sm)]"
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          color: 'var(--os-text-dim)',
+                        }}
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+const LANG = typeof navigator !== 'undefined' && navigator.language.startsWith('es') ? 'es' : 'en';
+function langLabel(en: string, es: string) { return LANG === 'es' ? es : en; }
+
+function InfoRow({ label, value, colorKey }: { label: string; value: string; colorKey?: string }) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
+        {label}
+      </span>
+      <span
+        className="font-mono text-[10px]"
+        style={{
+          color: colorKey === 'status'
+            ? value === 'active' ? 'var(--os-ok)' : value === 'completed' ? 'var(--os-warn)' : 'var(--os-muted)'
+            : 'var(--os-text-dim)',
+        }}
+      >
+        {value}
+      </span>
     </div>
   );
 }

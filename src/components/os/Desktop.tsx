@@ -11,6 +11,8 @@ import FolderIcon from './FolderIcon';
 import ZoneLegend from './ZoneLegend';
 import QuickLinks from '@/components/widgets/QuickLinks';
 import { ZONE_COLORS } from '@/data/projects';
+import ContextMenu from './ContextMenu';
+import type { ContextMenuItem } from './ContextMenu';
 import type { CollectionEntry } from 'astro:content';
 
 type ViewMode = 'icons' | 'list';
@@ -53,6 +55,8 @@ export default function Desktop({ projects }: DesktopProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('icons');
   const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [desktopCtxMenu, setDesktopCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const [wallpaperPickerOpen, setWallpaperPickerOpen] = useState(false);
   const desktopRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -84,6 +88,19 @@ export default function Desktop({ projects }: DesktopProps) {
   const handleDragState = useCallback((id: string, dragging: boolean) => {
     setDraggingId(dragging ? id : null);
   }, []);
+
+  /* ── Desktop context menu ── */
+  const handleDesktopContext = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setDesktopCtxMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const desktopCtxItems: ContextMenuItem[] = [
+    {
+      label: langState.lang === 'es' ? 'Cambiar fondo de pantalla' : 'Change Wallpaper',
+      onClick: () => { setWallpaperPickerOpen(true); },
+    },
+  ];
 
   // Orden estable por zona
   const sortedProjects = [...projects].sort((a, b) => {
@@ -141,6 +158,7 @@ export default function Desktop({ projects }: DesktopProps) {
         ref={desktopRef}
         className="relative w-full h-screen overflow-hidden select-none"
         style={wallpaperStyle}
+        onContextMenu={handleDesktopContext}
       >
         {/* ── Grid overlay (visible solo al arrastrar) ── */}
         <div style={gridStyle} />
@@ -209,6 +227,15 @@ export default function Desktop({ projects }: DesktopProps) {
             onOpenProfile={() => openWindow('profile', 'profile', t('profile_title'))}
           />
         </motion.div>
+
+        {/* ── Desktop context menu ── */}
+        {desktopCtxMenu && (
+          <ContextMenu
+            items={desktopCtxItems}
+            position={desktopCtxMenu}
+            onClose={() => setDesktopCtxMenu(null)}
+          />
+        )}
 
         {/* ── List view ── */}
         <AnimatePresence>
