@@ -147,11 +147,8 @@ export default function ProjectReadme({ project, lang }: ProjectReadmeProps) {
         }}
       >
         {/* Terminal header bar */}
-        <div className="flex items-center gap-1.5 mb-3 pb-3" style={{ borderBottom: '1px solid var(--os-border)' }}>
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--os-danger)' }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--os-warn)' }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--os-ok)' }} />
-          <span className="ml-2 font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
+        <div className="mb-3 pb-3" style={{ borderBottom: '1px solid var(--os-border)' }}>
+          <span className="font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
             README.md — {p.title}
           </span>
         </div>
@@ -160,23 +157,6 @@ export default function ProjectReadme({ project, lang }: ProjectReadmeProps) {
         <div className="space-y-0">
           {lines.map((line, i) => renderLine(line, i))}
         </div>
-      </div>
-
-      {/* ── Stack tags footer ── */}
-      <div className="mt-4 flex flex-wrap gap-1.5">
-        {p.stack.map((tech) => (
-          <span
-            key={tech}
-            className="px-2 py-0.5 text-[10px] font-mono rounded-[var(--radius-sm)]"
-            style={{
-              backgroundColor: 'var(--os-surface-2)',
-              border: '1px solid var(--os-border)',
-              color: p.color,
-            }}
-          >
-            {tech}
-          </span>
-        ))}
       </div>
     </div>
   );
