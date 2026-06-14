@@ -262,39 +262,42 @@ export default function Desktop({ projects }: DesktopProps) {
 
   return (
     <LanguageContext.Provider value={langState}>
-      {/* ── macOS-style menubar ── */}
       <div
-        className="fixed top-0 left-0 right-0 z-[9999] flex items-center px-3 select-none"
-        style={{
-          height: 28,
-          backgroundColor: 'rgba(16, 18, 26, 0.82)',
-          backdropFilter: 'blur(20px) saturate(1.3)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        <div className="flex items-center gap-1.5">
-          <img
-            src="/AdrOS.webp"
-            alt="AdrOS"
-            className="w-[16px] h-[16px]"
-            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }}
-          />
-          <span
-            className="font-mono text-[11px] font-semibold tracking-wide"
-            style={{ color: 'var(--os-text)' }}
-          >
-            AdrOS
-          </span>
-        </div>
-      </div>
-
-      <div
-        ref={desktopRef}
-        className="relative w-full h-screen overflow-hidden select-none"
+        className="flex flex-col h-screen"
         style={wallpaperStyle}
-        onContextMenu={handleDesktopContext}
       >
+        {/* ── macOS-style menubar (normal flow, pushes content down) ── */}
+        <div
+          className="flex-shrink-0 flex items-center px-3 select-none"
+          style={{
+            height: 28,
+            backgroundColor: 'rgba(16, 18, 26, 0.82)',
+            backdropFilter: 'blur(20px) saturate(1.3)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <div className="flex items-center gap-1.5">
+            <img
+              src="/AdrOS.webp"
+              alt="AdrOS"
+              className="w-[16px] h-[16px]"
+              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }}
+            />
+            <span
+              className="font-mono text-[11px] font-semibold tracking-wide"
+              style={{ color: 'var(--os-text)' }}
+            >
+              AdrOS
+            </span>
+          </div>
+        </div>
+
+        <div
+          ref={desktopRef}
+          className="flex-1 relative overflow-hidden select-none"
+          onContextMenu={handleDesktopContext}
+        >
         {/* ── Corner markers (visible solo al arrastrar) ── */}
         <AnimatePresence>
           {nearbyCells.length > 0 && draggingId && (
@@ -401,7 +404,8 @@ export default function Desktop({ projects }: DesktopProps) {
             />
           )}
         </AnimatePresence>
-      </div>
+      </div>{/* end desktop */}
+    </div>{/* end flex outer */}
     </LanguageContext.Provider>
   );
 }
@@ -600,7 +604,7 @@ function ListView({
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-40 overflow-auto"
       style={{
-        top: 28,
+        top: 0,
         left: 0,
         right: 0,
         bottom: 0,
@@ -608,7 +612,7 @@ function ListView({
         backdropFilter: 'blur(16px)',
       }}
     >
-      <div className="max-w-4xl mx-auto p-6 pt-8">
+      <div className="max-w-4xl mx-auto p-6">
         {/* Search input */}
         <div className="relative mb-5">
           <svg
