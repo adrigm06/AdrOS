@@ -14,7 +14,7 @@ export default function ZoneLegend({ lang }: ZoneLegendProps) {
 
   return (
     <div
-      className="fixed right-0 z-30 hidden md:flex items-center cursor-pointer select-none"
+      className="fixed right-0 z-30 flex items-center cursor-pointer select-none"
       style={{
         top: '50%',
         transform: 'translateY(-50%)',
@@ -23,6 +23,7 @@ export default function ZoneLegend({ lang }: ZoneLegendProps) {
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => setIsHovered(h => !h)}
     >
       {/* Content panel — slides in from the right on hover */}
       <motion.div

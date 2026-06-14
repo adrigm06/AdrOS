@@ -15,6 +15,7 @@ interface WindowManagerProps {
   onMaximize: (id: string) => void;
   onBringToFront: (id: string) => void;
   onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
+  onUpdateSize: (id: string, size: { width: number; height: number }) => void;
   projects: ProjectEntry[];
   lang: Lang;
 }
@@ -26,6 +27,7 @@ export default function WindowManager({
   onMaximize,
   onBringToFront,
   onUpdatePosition,
+  onUpdateSize,
   projects,
   lang,
 }: WindowManagerProps) {
@@ -49,6 +51,7 @@ export default function WindowManager({
             onMaximize={onMaximize}
             onBringToFront={onBringToFront}
             onUpdatePosition={onUpdatePosition}
+            onUpdateSize={onUpdateSize}
             isMobile={isMobile}
             accentColor={accentColor}
           >

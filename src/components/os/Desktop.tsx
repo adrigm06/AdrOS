@@ -123,7 +123,7 @@ export default function Desktop({ projects }: DesktopProps) {
   const {
     windows, minimizedWindows,
     openWindow, closeWindow, minimizeWindow, maximizeWindow,
-    restoreWindow, bringToFront, updatePosition,
+    restoreWindow, bringToFront, updatePosition, updateSize,
   } = useWindowManager();
 
   const langState = useLanguageState();
@@ -355,6 +355,7 @@ export default function Desktop({ projects }: DesktopProps) {
           onMaximize={maximizeWindow}
           onBringToFront={bringToFront}
           onUpdatePosition={updatePosition}
+          onUpdateSize={updateSize}
           projects={projects}
           lang={langState.lang}
         />

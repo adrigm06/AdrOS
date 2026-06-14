@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDrag } from '@/hooks/useDrag';
 import type { WindowState } from '@/hooks/useWindowManager';
+import { WINDOW_MIN } from '@/hooks/useWindowManager';
 
 interface WindowProps {
   window: WindowState;
@@ -10,6 +11,7 @@ interface WindowProps {
   onMaximize: (id: string) => void;
   onBringToFront: (id: string) => void;
   onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
+  onUpdateSize?: (id: string, size: { width: number; height: number }) => void;
   isMobile?: boolean;
   accentColor?: string;
   children: React.ReactNode;
@@ -17,7 +19,6 @@ interface WindowProps {
 
 const TRAFFIC = { close: '#ff5f57', minimize: '#febc2e', maximize: '#28c840' } as const;
 
-/** Posición del dock (bottom-center) para el genie effect */
 const DOCK_Y_OFFSET = 70;
 
 export default function Window({
@@ -27,6 +28,7 @@ export default function Window({
   onMaximize,
   onBringToFront,
   onUpdatePosition,
+  onUpdateSize,
   isMobile,
   accentColor,
   children,
@@ -34,13 +36,38 @@ export default function Window({
   const { dragRef, position, isDragging, handleMouseDown, handleTouchStart } = useDrag({
     initialPosition: win.position,
     onDragEnd: (pos) => onUpdatePosition(win.id, pos),
-    disabled: win.isMaximized || isMobile,
+    disabled: win.isMaximized || (isMobile ?? false),
   });
 
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const exitIntentRef = useRef<'minimize' | 'close' | null>(null);
   const isMaximized = win.isMaximized;
   const accent = accentColor || 'var(--os-accent)';
   const isFullScreen = isMobile || isMaximized;
+
+  /* ── Resize ── */
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    if (isFullScreen) return;
+    e.stopPropagation();
+    resizeStart.current = { x: e.clientX, y: e.clientY, w: win.size.width, h: win.size.height };
+    setIsResizing(true);
+  }, [isFullScreen, win.size]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+    const onMove = (e: MouseEvent) => {
+      const dw = e.clientX - resizeStart.current.x;
+      const dh = e.clientY - resizeStart.current.y;
+      const newW = Math.max(WINDOW_MIN.width, resizeStart.current.w + dw);
+      const newH = Math.max(WINDOW_MIN.height, resizeStart.current.h + dh);
+      onUpdateSize?.(win.id, { width: newW, height: newH });
+    };
+    const onUp = () => setIsResizing(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [isResizing, win.id, onUpdateSize]);
 
   const handleMinimize = () => {
     exitIntentRef.current = 'minimize';
@@ -61,33 +88,16 @@ export default function Window({
   const dockY = typeof window !== 'undefined' ? window.innerHeight - DOCK_Y_OFFSET : 0;
   const winCenterX = position.x + win.size.width / 2;
   const winCenterY = position.y + win.size.height / 2;
-
-  // ── Genie effect: delta desde centro ventana → centro dock ──
   const genieDX = dockX - winCenterX;
   const genieDY = dockY - winCenterY;
 
-  // ── Exit animation ──
   const getExit = () => {
     if (exitIntentRef.current === 'minimize') {
-      // Genie effect: shrink toward dock
-      return {
-        opacity: 0,
-        scale: 0.08,
-        x: genieDX,
-        y: genieDY,
-        filter: 'blur(4px)',
-      };
+      return { opacity: 0, scale: 0.08, x: genieDX, y: genieDY, filter: 'blur(4px)' };
     }
     if (exitIntentRef.current === 'close') {
-      // Shrink + fade + tilt
-      return {
-        opacity: 0,
-        scale: 0.6,
-        rotate: -1.5,
-        filter: 'blur(3px)',
-      };
+      return { opacity: 0, scale: 0.6, rotate: -1.5, filter: 'blur(3px)' };
     }
-    // Default exit
     return { opacity: 0, scale: 0.88, y: 16 };
   };
 
@@ -107,7 +117,7 @@ export default function Window({
         width: win.size.width,
         height: win.size.height,
         zIndex: win.zIndex,
-        cursor: isDragging ? 'grabbing' : 'default',
+        cursor: isDragging ? 'grabbing' : (isResizing ? 'se-resize' : 'default'),
       };
 
   return (
@@ -188,14 +198,18 @@ export default function Window({
         {children}
       </div>
 
-      {/* Resize handle */}
+      {/* Resize handle (drag to resize) */}
       {!isFullScreen && (
         <div
-          className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize"
+          onMouseDown={handleResizeStart}
+          className="absolute bottom-0 right-0 cursor-se-resize"
           style={{
-            borderRight: '2px solid rgba(255,255,255,0.08)',
-            borderBottom: '2px solid rgba(255,255,255,0.08)',
+            width: 20,
+            height: 20,
+            borderRight: '2px solid rgba(255,255,255,0.1)',
+            borderBottom: '2px solid rgba(255,255,255,0.1)',
             borderBottomRightRadius: 'var(--radius-sm)',
+            zIndex: 10,
           }}
         />
       )}

@@ -13,17 +13,31 @@ export interface WindowState {
   projectId?: string;
 }
 
-export const WINDOW_DEFAULTS = {
-  project: { width: 720, height: 520 },
-  profile: { width: 560, height: 380 },
-};
+/** Default sizes clamped to viewport so windows fit any screen. */
+function defaultSize(type: 'project' | 'profile') {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+  if (type === 'profile') {
+    return {
+      width: Math.min(560, vw * 0.88),
+      height: Math.min(420, vh * 0.72),
+    };
+  }
+  return {
+    width: Math.min(720, vw * 0.92),
+    height: Math.min(560, vh * 0.82),
+  };
+}
+
+export const WINDOW_MIN = { width: 280, height: 240 };
 
 const MAX_WINDOWS = 5;
 
 let _zCounter = 0;
 
 function randomOffset() {
-  return (Math.random() - 0.5) * 40; // -20 to +20
+  return (Math.random() - 0.5) * 40;
 }
 
 export function useWindowManager() {
@@ -33,7 +47,6 @@ export function useWindowManager() {
     setWindows(prev => {
       const existing = prev.find(w => w.id === id);
       if (existing) {
-        // Si está minimizada, restaurar; si está abierta, traer al frente
         if (existing.isMinimized) {
           return prev.map(w =>
             w.id === id ? { ...w, isMinimized: false, zIndex: ++_zCounter } : w
@@ -44,9 +57,9 @@ export function useWindowManager() {
         );
       }
 
-      const size = type === 'profile' ? WINDOW_DEFAULTS.profile : WINDOW_DEFAULTS.project;
+      const size = defaultSize(type);
       const centerX = Math.max(0, (window.innerWidth - size.width) / 2 + randomOffset());
-      const centerY = Math.max(0, (window.innerHeight - size.height) / 2 + randomOffset());
+      const centerY = Math.max(0, (window.innerHeight - size.height) / 2 + randomOffset() - 20);
 
       const newWindow: WindowState = {
         id,
@@ -61,7 +74,6 @@ export function useWindowManager() {
         projectId,
       };
 
-      // Si hay >= MAX_WINDOWS, minimizar la de zIndex más bajo
       let updated = [...prev, newWindow];
       if (updated.filter(w => w.isOpen && !w.isMinimized).length > MAX_WINDOWS) {
         const lowest = [...updated]
@@ -114,6 +126,22 @@ export function useWindowManager() {
     );
   }, []);
 
+  const updateSize = useCallback((id: string, size: { width: number; height: number }) => {
+    setWindows(prev =>
+      prev.map(w =>
+        w.id === id
+          ? {
+              ...w,
+              size: {
+                width: Math.max(WINDOW_MIN.width, Math.min(size.width, window.innerWidth - 20)),
+                height: Math.max(WINDOW_MIN.height, Math.min(size.height, window.innerHeight - 40)),
+              },
+            }
+          : w
+      )
+    );
+  }, []);
+
   const minimizedWindows = windows.filter(w => w.isMinimized);
 
   return {
@@ -126,5 +154,6 @@ export function useWindowManager() {
     restoreWindow,
     bringToFront,
     updatePosition,
+    updateSize,
   };
 }
