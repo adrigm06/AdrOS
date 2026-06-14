@@ -1,13 +1,13 @@
 ---
 id: "android-skill-pkg"
 title: "Android Engineering Skill Pkg"
-subtitle: "AI-Powered Android Skills"
+subtitle: "AI Decision Engine for Android"
 zone: "ai-tools"
 status: "active"
-date: "2026-02"
+date: "2026-03"
 color: "#f59e0b"
-hasImages: true
-githubUrl: ""
+hasImages: false
+githubUrl: "https://github.com/adrigm06/Android-Engineering-Skill"
 demoUrl: ""
 linkedinUrl: ""
 stack:
@@ -17,15 +17,130 @@ stack:
   - "Clean Architecture"
   - "NPM"
   - "Open Source"
+  - "TypeScript"
 description:
-  es: "Paquete de skills de ingeniería Android impulsado por IA."
-  en: "AI-powered Android engineering skill package."
+  es: "Motor de decisiones open source para flujos de trabajo con agentes de IA orientados a la ingeniería Android."
+  en: "Open-source decision engine for AI agent workflows focused on Android engineering."
 ---
 
 <Content lang="es">
-Android Engineering Skill Pkg es un paquete open source que encapsula conocimientos de ingeniería Android en un formato reutilizable para asistentes de IA. Define patrones, mejores prácticas y arquitecturas de referencia que cualquier agente de IA puede consumir para generar código Android de alta calidad. Incluye guías detalladas de Clean Architecture, patrones de diseño específicos de Android, configuración de Gradle optimizada, estrategias de testing y gestión de dependencias. Publicado como paquete NPM para facilitar su integración en cualquier flujo de trabajo.
+
+Paquete modular de código abierto desarrollado como **motor de decisiones** para flujos de trabajo con agentes de IA orientados a la ingeniería Android. La solución estructura y estandariza procesos técnicos complejos, mejorando la calidad y consistencia de los resultados.
+
+Instalación vía NPM:
+
+```
+npx @adrigm06/android-engineering-skill
+```
+
+#### Arquitectura Multicapa
+
+| Capa | Función |
+|---|---|
+| **SKILL.md** | Punto de entrada maestro y enrutamiento |
+| **AGENTS.md** | Restricciones runtime y arbitraje de conflictos |
+| **skills/*/SKILL.md** | Lógica de dominio y ramificación de decisiones |
+| **assets/, references/** | Artefactos reutilizables de soporte |
+
+#### Especialización por Dominios
+
+| Skill | Área |
+|---|---|
+| `android-architecture` | Estructura, boundaries y direcciones de dependencia |
+| `android-compose` | UI state, design systems, estabilidad |
+| `android-kotlin-concurrency` | Corrutinas, Flow, structured concurrency |
+| `android-testing` | Pirámide de testing, estrategia de cobertura |
+| `android-gradle-build` | Build graph, CI, convention plugins |
+| `android-performance` | Startup, jank, memoria, ANR, batería |
+| `android-security` | Datos sensibles, exploitability, override global |
+| `android-code-review` | AI code review con severidad y hallazgos |
+| `android-debugging` | Diagnóstico basado en hipótesis |
+| `android-release-engineering` | Go/no-go, rollout y rollback |
+
+#### Sistema de Autoridad Jerárquica
+
+Los conflictos entre dominios se resuelven con un modelo determinista:
+
+| Dominio | Autoridad | Prioridad |
+|---|---|---|
+| `android-security` | **Global override** | Crítica — vulnerabilidades y datos sensibles |
+| `android-architecture` | Estructural | Boundaries y direcciones de dependencia |
+| `android-release-engineering` | Production gate | Go/no-go y políticas de rollout |
+| `android-performance` | Runtime | Jank, memoria, ANR, batería |
+| `android-gradle-build` | Build/CI | Build graph y restricciones de CI |
+
+#### Estandarización de Resultados
+
+Todo output no trivial sigue este orden de secciones:
+
+1. Contexto y restricciones
+2. Decisión y fundamentos
+3. Alternativas consideradas
+4. Trade-offs
+5. Riesgos y mitigaciones
+6. Confianza e incógnitas
+7. Impactos cross-skill
+8. Próximos pasos
+
 </Content>
 
 <Content lang="en">
-Android Engineering Skill Pkg is an open source package that encapsulates Android engineering knowledge in a reusable format for AI assistants. It defines patterns, best practices, and reference architectures that any AI agent can consume to generate high-quality Android code. Includes detailed guides on Clean Architecture, Android-specific design patterns, optimized Gradle configuration, testing strategies, and dependency management. Published as an NPM package for easy integration into any workflow.
+
+Modular open-source package designed as a **decision engine** for AI agent workflows focused on Android engineering. The solution structures and standardises complex technical processes, improving output quality and consistency.
+
+Install via NPM:
+
+```
+npx @adrigm06/android-engineering-skill
+```
+
+#### Multi-Layer Architecture
+
+| Layer | Purpose |
+|---|---|
+| **SKILL.md** | Master entrypoint and routing |
+| **AGENTS.md** | Runtime constraints and conflict arbitration |
+| **skills/*/SKILL.md** | Domain logic and decision branching |
+| **assets/, references/** | Reusable support artifacts |
+
+#### Domain Specialisation
+
+| Skill | Area |
+|---|---|
+| `android-architecture` | Structure, boundaries, dependency direction |
+| `android-compose` | UI state, design systems, stability |
+| `android-kotlin-concurrency` | Coroutines, Flow, structured concurrency |
+| `android-testing` | Testing pyramid, coverage strategy |
+| `android-gradle-build` | Build graph, CI, convention plugins |
+| `android-performance` | Startup, jank, memory, ANR, battery |
+| `android-security` | Sensitive data, exploitability, global override |
+| `android-code-review` | AI code review with severity findings |
+| `android-debugging` | Hypothesis-driven diagnostics |
+| `android-release-engineering` | Go/no-go, rollout and rollback |
+
+#### Hierarchical Authority System
+
+Domain conflicts are resolved through a deterministic model:
+
+| Domain | Authority | Priority |
+|---|---|---|
+| `android-security` | **Global override** | Critical — vulnerabilities and sensitive data |
+| `android-architecture` | Structural | Boundaries and dependency direction |
+| `android-release-engineering` | Production gate | Go/no-go and rollout policy |
+| `android-performance` | Runtime | Jank, memory, ANR, battery |
+| `android-gradle-build` | Build/CI | Build graph and CI constraints |
+
+#### Output Standardisation
+
+Every non-trivial output follows this section order:
+
+1. Context and constraints
+2. Decision and rationale
+3. Alternatives considered
+4. Trade-offs
+5. Risks and mitigations
+6. Confidence and unknowns
+7. Cross-skill impacts
+8. Next implementation steps
+
 </Content>
