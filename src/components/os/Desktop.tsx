@@ -261,6 +261,33 @@ export default function Desktop({ projects }: DesktopProps) {
 
   return (
     <LanguageContext.Provider value={langState}>
+      {/* ── macOS-style menubar ── */}
+      <div
+        className="fixed top-0 left-0 right-0 z-[9999] flex items-center px-3 select-none"
+        style={{
+          height: 28,
+          backgroundColor: 'rgba(16, 18, 26, 0.82)',
+          backdropFilter: 'blur(20px) saturate(1.3)',
+          WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <div className="flex items-center gap-1.5">
+          <img
+            src="/AdrOS.webp"
+            alt="AdrOS"
+            className="w-[16px] h-[16px]"
+            style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }}
+          />
+          <span
+            className="font-mono text-[11px] font-semibold tracking-wide"
+            style={{ color: 'var(--os-text)' }}
+          >
+            AdrOS
+          </span>
+        </div>
+      </div>
+
       <div
         ref={desktopRef}
         className="relative w-full h-screen overflow-hidden select-none"
