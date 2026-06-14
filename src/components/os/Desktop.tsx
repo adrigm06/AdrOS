@@ -387,7 +387,12 @@ export default function Desktop({ projects }: DesktopProps) {
         {/* ── List view ── */}
         <AnimatePresence>
           {viewMode === 'list' && (
-            <ListView projects={projects} onOpenProject={handleOpenProject} lang={langState.lang} />
+            <ListView
+              projects={projects}
+              onOpenProject={handleOpenProject}
+              lang={langState.lang}
+              onClose={() => setViewMode('icons')}
+            />
           )}
         </AnimatePresence>
       </div>
@@ -472,10 +477,12 @@ function ListView({
   projects,
   onOpenProject,
   lang,
+  onClose,
 }: {
   projects: ProjectEntry[];
   onOpenProject: (p: ProjectEntry) => void;
   lang: string;
+  onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -496,6 +503,15 @@ function ListView({
     inputRef.current?.focus();
   }, []);
 
+  // Escape to close list view
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -503,15 +519,15 @@ function ListView({
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-40 overflow-auto"
       style={{
-        top: 0,
+        top: 28,
         left: 0,
         right: 0,
-        bottom: 'var(--taskbar-h)',
-        backgroundColor: 'rgba(13, 15, 20, 0.96)',
-        backdropFilter: 'blur(12px)',
+        bottom: 0,
+        backgroundColor: 'rgba(13, 15, 20, 0.98)',
+        backdropFilter: 'blur(16px)',
       }}
     >
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6 pt-8">
         {/* Search input */}
         <div className="relative mb-5">
           <svg
