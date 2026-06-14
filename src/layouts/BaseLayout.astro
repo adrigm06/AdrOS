@@ -6,6 +6,7 @@ interface Props {
 }
 
 const { title = 'AdrOS — Adrián Gómez', description = 'Portfolio personal con estética de sistema operativo. Android & Full-Stack Developer.', ogImage = '/avatar.webp' } = Astro.props;
+import '@/styles/global.css';
 ---
 
 <!DOCTYPE html>
@@ -38,8 +39,7 @@ const { title = 'AdrOS — Adrián Gómez', description = 'Portfolio personal co
     <link rel="icon" type="image/webp" href="/AdrOS.webp" />
     <link rel="icon" href="/favicon.ico" />
 
-    <!-- Global styles -->
-    <link rel="stylesheet" href="/src/styles/global.css" />
+    <!-- Global styles (imported in frontmatter) -->
   </head>
   <body>
     <slot />
