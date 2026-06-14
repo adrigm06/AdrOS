@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWindowManager } from '@/hooks/useWindowManager';
 import { LanguageContext, useLanguageState, useTranslation } from '@/hooks/useLanguage';
@@ -30,6 +30,60 @@ const GRID_Y = 118;
 const GRID_OFFSET_X = 36;
 const GRID_OFFSET_Y = 32;
 
+/* ── Pure grid utilities ── */
+function snapToGrid(pos: { x: number; y: number }): { x: number; y: number } {
+  return {
+    x: Math.round((pos.x - GRID_OFFSET_X) / GRID_X) * GRID_X + GRID_OFFSET_X,
+    y: Math.round((pos.y - GRID_OFFSET_Y) / GRID_Y) * GRID_Y + GRID_OFFSET_Y,
+  };
+}
+
+function getOccupiedSetSnapshot(
+  positions: Record<string, { x: number; y: number }>,
+  excludeId?: string,
+): Set<string> {
+  const set = new Set<string>();
+  for (const [id, pos] of Object.entries(positions)) {
+    if (id === excludeId) continue;
+    const s = snapToGrid(pos);
+    set.add(`${s.x},${s.y}`);
+  }
+  return set;
+}
+
+/** BFS outward from target to find the nearest unoccupied grid cell. */
+function findNearestFreeCell(
+  target: { x: number; y: number },
+  occupiedKeys: Set<string>,
+  bounds: { minX: number; minY: number; maxX: number; maxY: number },
+): { x: number; y: number } {
+  const key = `${target.x},${target.y}`;
+  if (!occupiedKeys.has(key)) return { ...target };
+
+  for (let r = 1; r <= 20; r++) {
+    const candidates: Array<{ x: number; y: number }> = [];
+    // Top & bottom rows (full width)
+    for (let dx = -r; dx <= r; dx++) {
+      candidates.push({ x: target.x + dx * GRID_X, y: target.y - r * GRID_Y });
+      candidates.push({ x: target.x + dx * GRID_X, y: target.y + r * GRID_Y });
+    }
+    // Left & right columns (excluding corners)
+    for (let dy = -r + 1; dy <= r - 1; dy++) {
+      candidates.push({ x: target.x - r * GRID_X, y: target.y + dy * GRID_Y });
+      candidates.push({ x: target.x + r * GRID_X, y: target.y + dy * GRID_Y });
+    }
+
+    for (const c of candidates) {
+      if (
+        c.x < bounds.minX || c.x > bounds.maxX ||
+        c.y < bounds.minY || c.y > bounds.maxY
+      ) continue;
+      if (!occupiedKeys.has(`${c.x},${c.y}`)) return c;
+    }
+  }
+  return { ...target };
+}
+
 /* ── Distribución inicial ── */
 const COL_START_X = GRID_OFFSET_X;
 const ROW_START_Y = GRID_OFFSET_Y;
@@ -56,6 +110,7 @@ export default function Desktop({ projects }: DesktopProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('icons');
   const [iconPositions, setIconPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const [desktopCtxMenu, setDesktopCtxMenu] = useState<{ x: number; y: number } | null>(null);
   const [wallpaperId, setWallpaperId] = useState<string>(() => {
     if (typeof window === 'undefined') return 'sonoma';
@@ -85,14 +140,83 @@ export default function Desktop({ projects }: DesktopProps) {
     openWindow(project.data.id, 'project', project.data.title, project.data.id);
   }, [openWindow]);
 
-  const handleIconDrag = useCallback((id: string, pos: { x: number; y: number }) => {
-    setIconPositions((prev) => ({ ...prev, [id]: pos }));
-  }, []);
-
-  /* ── Drag state para mostrar grid y leyenda ── */
+  /* ── Drag state ── */
   const handleDragState = useCallback((id: string, dragging: boolean) => {
     setDraggingId(dragging ? id : null);
+    if (!dragging) setDragPos(null);
   }, []);
+
+  /* ── Drag move: raw position for snap markers ── */
+  const handleIconDragMove = useCallback((_id: string, pos: { x: number; y: number }) => {
+    setDragPos(pos);
+  }, []);
+
+  /* ── Drag end: snap → collide → clamp ── */
+  const handleIconDragEnd = useCallback((id: string, rawPos: { x: number; y: number }) => {
+    setIconPositions((prev) => {
+      const snapped = snapToGrid(rawPos);
+      const occupied = getOccupiedSetSnapshot(prev, id);
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // Compute the last valid grid point within the viewport
+      const bounds = {
+        minX: GRID_OFFSET_X,
+        minY: GRID_OFFSET_Y,
+        maxX: Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X,
+        maxY: Math.floor((vh - 160 - GRID_OFFSET_Y) / GRID_Y) * GRID_Y + GRID_OFFSET_Y,
+      };
+
+      const resolved = occupied.has(`${snapped.x},${snapped.y}`)
+        ? findNearestFreeCell(snapped, occupied, bounds)
+        : { ...snapped };
+
+      // Final clamp
+      resolved.x = Math.max(bounds.minX, Math.min(bounds.maxX, resolved.x));
+      resolved.y = Math.max(bounds.minY, Math.min(bounds.maxY, resolved.y));
+
+      return { ...prev, [id]: resolved };
+    });
+  }, []);
+
+  /* ── snap-target & nearby cells (for corner markers) ── */
+  const occupiedKeys = useMemo(
+    () => getOccupiedSetSnapshot(iconPositions, draggingId ?? undefined),
+    [iconPositions, draggingId],
+  );
+
+  const snapTarget = useMemo(() => {
+    if (!dragPos) return null;
+    const snapped = snapToGrid(dragPos);
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const bounds = {
+      minX: GRID_OFFSET_X,
+      minY: GRID_OFFSET_Y,
+      maxX: Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X,
+      maxY: Math.floor((vh - 160 - GRID_OFFSET_Y) / GRID_Y) * GRID_Y + GRID_OFFSET_Y,
+    };
+    if (occupiedKeys.has(`${snapped.x},${snapped.y}`)) {
+      return findNearestFreeCell(snapped, occupiedKeys, bounds);
+    }
+    return snapped;
+  }, [dragPos, occupiedKeys]);
+
+  const nearbyCells = useMemo(() => {
+    if (!snapTarget) return [];
+    const cells: Array<{ x: number; y: number; isTarget: boolean }> = [];
+    const range = 2;
+    for (let dx = -range; dx <= range; dx++) {
+      for (let dy = -range; dy <= range; dy++) {
+        cells.push({
+          x: snapTarget.x + dx * GRID_X,
+          y: snapTarget.y + dy * GRID_Y,
+          isTarget: dx >= 0 && dx <= 1 && dy >= 0 && dy <= 1,
+        });
+      }
+    }
+    return cells;
+  }, [snapTarget]);
 
   /* ── Desktop context menu ── */
   const handleDesktopContext = useCallback((e: React.MouseEvent) => {
@@ -131,23 +255,6 @@ export default function Desktop({ projects }: DesktopProps) {
     transition: 'background 0.4s ease',
   };
 
-  /* ── Grid overlay lines ── */
-  const gridStyle: React.CSSProperties = {
-    position: 'absolute',
-    inset: 0,
-    bottom: 'var(--taskbar-h)',
-    backgroundImage: `
-      linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)
-    `,
-    backgroundSize: `${GRID_X}px ${GRID_Y}px`,
-    backgroundPosition: `${GRID_OFFSET_X}px ${GRID_OFFSET_Y}px`,
-    pointerEvents: 'none',
-    zIndex: 50,
-    opacity: draggingId ? 1 : 0,
-    transition: 'opacity 0.15s ease',
-  };
-
   if (!booted) {
     return <BootScreen onComplete={() => setBooted(true)} />;
   }
@@ -160,10 +267,14 @@ export default function Desktop({ projects }: DesktopProps) {
         style={wallpaperStyle}
         onContextMenu={handleDesktopContext}
       >
-        {/* ── Grid overlay (visible solo al arrastrar) ── */}
-        <div style={gridStyle} />
+        {/* ── Corner markers (visible solo al arrastrar) ── */}
+        <AnimatePresence>
+          {nearbyCells.length > 0 && draggingId && (
+            <SnapCornerMarkers cells={nearbyCells} />
+          )}
+        </AnimatePresence>
 
-        {/* ── Desktop canvas (full height — dock floats) ── */}
+        {/* ── Desktop canvas ── */}
         <motion.div
           className="absolute inset-0"
           style={{ bottom: 0 }}
@@ -184,8 +295,9 @@ export default function Desktop({ projects }: DesktopProps) {
                 isOpen={openProjectIds.includes(project.data.id)}
                 onOpen={() => handleOpenProject(project)}
                 position={pos}
-                onDragEnd={(p) => handleIconDrag(project.data.id, p)}
                 onDragStateChange={(d) => handleDragState(project.data.id, d)}
+                onDragMove={(p) => handleIconDragMove(project.data.id, p)}
+                onDragEnd={(p) => handleIconDragEnd(project.data.id, p)}
               />
             );
           })}
@@ -197,7 +309,7 @@ export default function Desktop({ projects }: DesktopProps) {
         </motion.div>
 
         {/* ── Zone Legend (visible solo al arrastrar) ── */}
-        <ZoneLegend isVisible={draggingId !== null} lang={langState.lang} />
+        <ZoneLegend lang={langState.lang} />
 
         {/* ── Windows layer ── */}
         <WindowManager
@@ -253,6 +365,78 @@ export default function Desktop({ projects }: DesktopProps) {
         </AnimatePresence>
       </div>
     </LanguageContext.Provider>
+  );
+}
+
+/* ==================================================================
+   SnapCornerMarkers — stylised + at grid intersections during drag
+   ================================================================== */
+function SnapCornerMarkers({ cells }: { cells: Array<{ x: number; y: number; isTarget: boolean }> }) {
+  const targetCells = cells.filter((c) => c.isTarget);
+  const hasTarget = targetCells.length === 4;
+  const rectX = hasTarget ? Math.min(...targetCells.map((c) => c.x)) : 0;
+  const rectY = hasTarget ? Math.min(...targetCells.map((c) => c.y)) : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.12 }}
+      className="absolute inset-0 pointer-events-none"
+      style={{ zIndex: 51 }}
+    >
+      {/* Rectangle outline of the target grid cell */}
+      {hasTarget && (
+        <div
+          className="absolute pointer-events-none rounded-[4px]"
+          style={{
+            left: rectX,
+            top: rectY,
+            width: GRID_X,
+            height: GRID_Y,
+            border: '1.5px solid var(--os-accent)',
+            backgroundColor: 'rgba(0, 212, 170, 0.04)',
+            opacity: 0.35,
+          }}
+        />
+      )}
+
+      {/* Individual + markers */}
+      {cells.map((cell) => (
+        <div
+          key={`${cell.x}-${cell.y}`}
+          className="absolute"
+          style={{
+            left: cell.x - 7,
+            top: cell.y - 7,
+            width: 14,
+            height: 14,
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            style={{ opacity: cell.isTarget ? 1 : 0.3 }}
+          >
+            <line
+              x1="7" y1="2" x2="7" y2="12"
+              stroke={cell.isTarget ? 'var(--os-accent)' : 'rgba(255,255,255,0.35)'}
+              strokeWidth={cell.isTarget ? 1.5 : 0.75}
+              strokeLinecap="round"
+            />
+            <line
+              x1="2" y1="7" x2="12" y2="7"
+              stroke={cell.isTarget ? 'var(--os-accent)' : 'rgba(255,255,255,0.35)'}
+              strokeWidth={cell.isTarget ? 1.5 : 0.75}
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      ))}
+    </motion.div>
   );
 }
 

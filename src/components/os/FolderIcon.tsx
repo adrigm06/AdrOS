@@ -10,13 +10,14 @@ interface FolderIconProps {
   isOpen: boolean;
   onOpen: () => void;
   position?: { x: number; y: number };
+  onDragMove?: (pos: { x: number; y: number }) => void;
   onDragEnd?: (pos: { x: number; y: number }) => void;
   onDragStateChange?: (dragging: boolean) => void;
 }
 
 export default function FolderIcon({
   project, zoneColor, isOpen, onOpen,
-  position, onDragEnd, onDragStateChange,
+  position, onDragMove, onDragEnd, onDragStateChange,
 }: FolderIconProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -65,7 +66,11 @@ export default function FolderIcon({
     if (dragRef.current) {
       dragRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
     }
-  }, [isDragging, onDragStateChange]);
+    // Report absolute raw position for snap markers (only after movement)
+    if (hasMoved.current && position) {
+      onDragMove?.({ x: position.x + dx, y: position.y + dy });
+    }
+  }, [isDragging, onDragStateChange, position, onDragMove]);
 
   const handleDragEnd = useCallback(() => {
     if (!isDragging || !position || !onDragEnd) return;
@@ -80,13 +85,8 @@ export default function FolderIcon({
       if (match && hasMoved.current) {
         const deltaX = parseFloat(match[1]);
         const deltaY = parseFloat(match[2]);
-        let newX = position.x + deltaX;
-        let newY = position.y + deltaY;
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        newX = Math.max(0, Math.min(vw - 100, newX));
-        newY = Math.max(0, Math.min(vh - 130, newY));
-        onDragEnd({ x: newX, y: newY });
+        // Send raw absolute position — Desktop handles snap + clamp + collision
+        onDragEnd({ x: position.x + deltaX, y: position.y + deltaY });
       }
       el.style.transform = '';
     }
@@ -218,7 +218,16 @@ export default function FolderIcon({
   };
 
   const containerStyle: React.CSSProperties = position
-    ? { position: 'absolute', left: position.x, top: position.y, zIndex: isDragging ? 100 : 1 }
+    ? {
+        position: 'absolute',
+        left: position.x,
+        top: position.y,
+        zIndex: isDragging ? 100 : 1,
+        // Smooth snap animation when not dragging (transform handles drag movement)
+        transition: isDragging
+          ? 'none'
+          : 'left 0.25s cubic-bezier(0.23, 1, 0.32, 1), top 0.25s cubic-bezier(0.23, 1, 0.32, 1)',
+      }
     : {};
 
   const iconScale = isDragging ? 0.95 : isHovered ? 1.05 : 1;
