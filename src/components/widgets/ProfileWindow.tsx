@@ -22,7 +22,7 @@ const PROFILE: Record<Lang, ProfileData> = {
     bio: 'Especializado en desarrollo Android nativo con Kotlin y aplicaciones web con Java/Spring Boot. Apasionado por la arquitectura limpia, el código bien estructurado y las herramientas que resuelven problemas reales.',
     github: 'https://github.com/adrigm06',
     linkedin: 'https://www.linkedin.com/in/adrigml/',
-    email: 'mailto:adrigml06@gmail.com',
+    email: 'mailto:adriglc6@gmail.com',
   },
   en: {
     name: 'Adrián Gómez',
@@ -31,7 +31,7 @@ const PROFILE: Record<Lang, ProfileData> = {
     bio: 'Specialized in native Android development with Kotlin and web applications with Java/Spring Boot. Passionate about clean architecture, well-structured code, and building tools that solve real problems.',
     github: 'https://github.com/adrigm06',
     linkedin: 'https://www.linkedin.com/in/adrigml/',
-    email: 'mailto:adrigml06@gmail.com',
+    email: 'mailto:adriglc6@gmail.com',
   },
 };
 

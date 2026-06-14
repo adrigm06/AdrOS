@@ -36,3 +36,20 @@ docs/
 
 # AGENTS.md
 AGENTS.md
+
+# local agent configs
+.agents/
+
+# opencode workspace
+opencode/
+
+# TypeScript
+*.tsbuildinfo
+
+# local env overrides
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/

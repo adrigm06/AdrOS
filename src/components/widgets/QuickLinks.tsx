@@ -91,7 +91,7 @@ function ShortcutBadge() {
 const LINKS: { label: string; href: string; labelKey: string; Icon: React.FC }[] = [
   { label: "GitHub", href: "https://github.com/adrigm06", labelKey: "GitHub", Icon: GithubIcon },
   { label: "LinkedIn", href: "https://www.linkedin.com/in/adrigml/", labelKey: "LinkedIn", Icon: LinkedinIcon },
-  { label: "Email", href: "mailto:adrigml06@gmail.com", labelKey: "Email", Icon: EmailIcon },
+  { label: "Email", href: "mailto:adriglc6@gmail.com", labelKey: "Email", Icon: EmailIcon },
   { label: "CV", href: "/Adrian_Gomez_FullStack_English.pdf", labelKey: "CV", Icon: DownloadIcon },
 ];
 
