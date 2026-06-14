@@ -29,8 +29,6 @@ export default function CalendarPopover({ isOpen, onClose, anchorEl }: CalendarP
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  const isCurrentYear = viewYear === today.getFullYear();
-
   const goPrevMonth = useCallback(() => {
     setViewMonth((prev) => {
       if (prev === 0) {
