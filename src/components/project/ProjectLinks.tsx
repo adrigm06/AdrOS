@@ -7,9 +7,11 @@ interface ProjectLinksProps {
 export default function ProjectLinks({ project }: ProjectLinksProps) {
   const p = project.data;
 
+  const demoLabel = p.id === 'petconnect' ? 'Video Demo' : 'Demo en vivo';
+
   const links = [
     { label: 'GitHub', url: p.githubUrl },
-    { label: 'Demo en vivo', url: p.demoUrl },
+    { label: demoLabel, url: p.demoUrl },
     { label: 'LinkedIn', url: p.linkedinUrl },
   ].filter((l) => l.url !== '');
 
