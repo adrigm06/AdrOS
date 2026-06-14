@@ -62,18 +62,48 @@ export default function ZoneLegend({ lang }: ZoneLegendProps) {
         </div>
       </motion.div>
 
-      {/* Tab handle — thin vertical bar always visible on the right edge */}
+      {/* Tab handle — vertical bar always visible on the right edge */}
       <div
-        className="flex-shrink-0 transition-all duration-200 ease-out"
+        className="flex-shrink-0 flex flex-col items-center justify-center gap-[3px] transition-all duration-200 ease-out"
         style={{
-          width: 3,
-          height: isHovered ? 64 : 32,
+          width: 6,
+          height: isHovered ? 80 : 52,
           backgroundColor: isHovered ? 'var(--os-accent)' : 'var(--os-border)',
-          borderRadius: '2px',
-          opacity: isHovered ? 0.7 : 0.4,
-          marginLeft: 2,
+          borderRadius: '3px',
+          opacity: isHovered ? 0.85 : 0.55,
+          marginLeft: 4,
+          cursor: 'pointer',
         }}
-      />
+      >
+        {/* Grip dots — subtle indicator that this is interactive */}
+        <div
+          className="rounded-full"
+          style={{
+            width: 2,
+            height: 2,
+            backgroundColor: isHovered ? 'rgba(0,0,0,0.5)' : 'var(--os-text-dim)',
+            opacity: 0.6,
+          }}
+        />
+        <div
+          className="rounded-full"
+          style={{
+            width: 2,
+            height: 2,
+            backgroundColor: isHovered ? 'rgba(0,0,0,0.5)' : 'var(--os-text-dim)',
+            opacity: 0.6,
+          }}
+        />
+        <div
+          className="rounded-full"
+          style={{
+            width: 2,
+            height: 2,
+            backgroundColor: isHovered ? 'rgba(0,0,0,0.5)' : 'var(--os-text-dim)',
+            opacity: 0.6,
+          }}
+        />
+      </div>
     </div>
   );
 }
