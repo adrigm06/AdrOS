@@ -1,14 +1,14 @@
 ---
 id: "petconnect"
 title: "PetConnect"
-subtitle: "Pet Adoption Platform"
+subtitle: "Full-Stack Veterinary Platform"
 zone: "fullstack"
 status: "active"
 date: "2025-08"
 color: "#60a5fa"
-hasImages: true
+hasImages: false
 githubUrl: ""
-demoUrl: ""
+demoUrl: "https://drive.google.com/file/d/1lCevO6pznM9CCR1t0QNOTVbPZSD5GbM6/view"
 linkedinUrl: ""
 stack:
   - "Java 21"
@@ -17,19 +17,107 @@ stack:
   - "JWT"
   - "PostgreSQL"
   - "Supabase"
-  - "React.js"
+  - "React 19"
   - "TypeScript"
   - "Leaflet"
-  - "JPA"
+  - "Capacitor"
+  - "Zustand"
+  - "JPA / Hibernate"
 description:
-  es: "Plataforma full-stack para adopción de mascotas con mapas interactivos."
-  en: "Full-stack pet adoption platform with interactive maps."
+  es: "Plataforma full-stack para la digitalización del sector veterinario con mapas interactivos, red social y gestión de perfiles médicos."
+  en: "Full-stack platform for veterinary sector digitalization with interactive maps, social network and medical profile management."
 ---
 
 <Content lang="es">
-PetConnect es una plataforma full-stack que conecta refugios de animales con adoptantes potenciales. Desarrollada con Java 21 y Spring Boot 3.4 en el backend, y React con TypeScript en el frontend. Utiliza Spring Security con JWT para autenticación, PostgreSQL con Supabase para almacenamiento, y Leaflet para mapas interactivos que muestran mascotas cercanas. Los refugios pueden gestionar perfiles de animales, y los adoptantes pueden filtrar por especie, edad, ubicación y compatibilidad. Incluye un sistema de mensajería integrado y seguimiento post-adopción.
+
+PetConnect es una plataforma integral para la digitalización del sector veterinario, desarrollada como monorepo con backend Spring Boot, frontend React + TypeScript y versión móvil con Capacitor/Android.
+
+#### Stack Tecnológico
+
+| Capa | Tecnologías |
+|---|---|
+| **Backend** | Java 21, Spring Boot 3.4.1, Spring Security (JWT) |
+| **Base de datos** | PostgreSQL vía Supabase, JPA / Hibernate |
+| **Frontend** | React 19, TypeScript, Vite 8, TailwindCSS 3 |
+| **Estado** | Zustand |
+| **Mapas** | Leaflet + React Leaflet + Overpass API |
+| **Móvil** | Capacitor (Android) |
+| **Auth** | Supabase Auth + JWT Resource Server |
+
+#### Mapa Interactivo
+
+El mapa está centrado en España con las siguientes categorías de centros veterinarios:
+
+| Categoría | Descripción |
+|---|---|
+| 🏥 Clínicas veterinarias | Centros de atención primaria |
+| 🚑 Urgencias 24h | Veterinarios de emergencia |
+| 🏨 Hospitales 24h | Hospitales veterinarios con internamiento |
+| 🏠 Refugios y protectoras | Centros de adopción y acogida |
+| 🔍 Centros de acogida | Animales perdidos temporalmente |
+| 🛒 Tiendas de animales | Categoría secundaria |
+
+**Estrategia de carga del mapa:**
+- Caché en memoria + persistente en localStorage
+- Reintentos con backoff ante errores 429/504 de Overpass API
+- Reducción de concurrencia para evitar rate limiting
+- Fallback automático a datos demo sin conexión
+
+#### Red Social para Propietarios
+
+- Publicaciones con imágenes y vídeo (multipart/form-data)
+- Sistema de likes y comentarios por post
+- Seguimiento entre usuarios (follow / unfollow)
+- Búsqueda y paginación en backend para escalar
+- Perfiles médicos de mascotas compartibles
+
+>>>> **Vídeo demo:** [Ver en Google Drive](https://drive.google.com/file/d/1lCevO6pznM9CCR1t0QNOTVbPZSD5GbM6/view)
+
 </Content>
 
 <Content lang="en">
-PetConnect is a full-stack platform connecting animal shelters with potential adopters. Built with Java 21 and Spring Boot 3.4 on the backend, and React with TypeScript on the frontend. Uses Spring Security with JWT for authentication, PostgreSQL with Supabase for storage, and Leaflet for interactive maps showing nearby pets. Shelters can manage animal profiles, and adopters can filter by species, age, location, and compatibility. Includes an integrated messaging system and post-adoption tracking.
+
+PetConnect is a comprehensive platform for veterinary sector digitalization, built as a monorepo with a Spring Boot backend, React + TypeScript frontend, and Capacitor/Android mobile support.
+
+#### Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Backend** | Java 21, Spring Boot 3.4.1, Spring Security (JWT) |
+| **Database** | PostgreSQL via Supabase, JPA / Hibernate |
+| **Frontend** | React 19, TypeScript, Vite 8, TailwindCSS 3 |
+| **State** | Zustand |
+| **Maps** | Leaflet + React Leaflet + Overpass API |
+| **Mobile** | Capacitor (Android) |
+| **Auth** | Supabase Auth + JWT Resource Server |
+
+#### Interactive Map
+
+The map is centered on Spain with the following veterinary center categories:
+
+| Category | Description |
+|---|---|
+| 🏥 Veterinary clinics | Primary care centers |
+| 🚑 24h Emergencies | Emergency veterinary services |
+| 🏨 24h Hospitals | Veterinary hospitals with inpatient care |
+| 🏠 Shelters | Adoption and foster centers |
+| 🔍 Lost animal centers | Temporary lost pet holding |
+| 🛒 Pet stores | Secondary category |
+
+**Map loading strategy:**
+- In-memory cache + persistent localStorage cache
+- Backoff retries on Overpass API 429/504 errors
+- Concurrency reduction to prevent rate limiting
+- Automatic fallback to demo data offline
+
+#### Social Network for Pet Owners
+
+- Posts with image and video support (multipart/form-data)
+- Like and comment system per post
+- User follow / unfollow
+- Search and pagination on the backend
+- Shareable pet medical profiles
+
+>>>> **Demo video:** [View on Google Drive](https://drive.google.com/file/d/1lCevO6pznM9CCR1t0QNOTVbPZSD5GbM6/view)
+
 </Content>
