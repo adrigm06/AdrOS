@@ -1,10 +1,10 @@
 ---
 id: "betterprompt"
 title: "BetterPrompt"
-subtitle: "AI Prompt Engineering Tool"
+subtitle: "AI Prompt Engineering Extension"
 zone: "ai-tools"
 status: "active"
-date: "2025-12"
+date: "2026-05"
 color: "#a78bfa"
 hasImages: false
 githubUrl: "https://github.com/adrigm06/BetterPrompt"
@@ -13,18 +13,91 @@ linkedinUrl: ""
 stack:
   - "TypeScript"
   - "Node.js"
+  - "Pi Agent SDK"
   - "LLM Integration"
   - "TUI"
   - "Heuristic Analysis"
 description:
-  es: "Herramienta TUI para ingeniería de prompts con análisis heurístico."
-  en: "TUI tool for prompt engineering with heuristic analysis."
+  es: "Extensión open source para Pi Agent que enriquece automáticamente el contexto de los prompts antes de enviarlos al LLM."
+  en: "Open-source Pi Agent extension that automatically enriches prompt context before sending to the LLM."
 ---
 
 <Content lang="es">
-BetterPrompt es una herramienta de terminal (TUI) diseñada para optimizar la creación y refinamiento de prompts para modelos de lenguaje. Utiliza análisis heurístico para evaluar la calidad de los prompts, sugiriendo mejoras estructurales y semánticas. Construida con TypeScript y Node.js, ofrece una interfaz limpia y eficiente para ingenieros de prompts que prefieren trabajar desde la terminal. Entre sus características destacan: análisis de claridad y especificidad del prompt, detección de ambigüedades, sugerencias de contexto adicional, y exportación a múltiples formatos.
+
+BetterPrompt es una extensión open source para **Pi Agent** — actúa como un proxy inteligente entre el usuario y el LLM. Cada mensaje pasa por un pipeline de análisis que lo enriquece con el contexto técnico del proyecto, conocimiento arquitectónico y guías específicas del stack, y presenta la versión optimizada para revisión antes de enviarla.
+
+#### El Problema
+
+Los prompts genéricos pierden contexto crucial. Pides *"añadir OTP al login"* y el LLM desconoce tu arquitectura de autenticación, middleware existente o estilo de código. Pides *"refactorizar el módulo auth"* y el LLM no ha visto tus boundaries, grafo de dependencias o convenciones de nombrado. Terminas repitiendo los mismos detalles del proyecto en cada mensaje.
+
+#### Cómo lo Soluciona
+
+BetterPrompt intercepta el mensaje antes de que llegue al LLM, lee las partes relevantes del proyecto (árbol de directorios, archivos clave, patrones de arquitectura), construye un prompt de análisis oculto y pide al LLM que genere una versión enriquecida con contexto — todo en segundo plano. Tú revisas el resultado y lo envías cuando esté listo.
+
+#### Clasificación Heurística
+
+Analiza cada mensaje localmente (sin llamada al LLM) para decidir la profundidad del escaneo:
+
+| Nivel | Detección | Escaneo | Ejemplo |
+|---|---|---|---|
+| **SIMPLE** | Palabras clave o < 8 palabras | Solo archivos directamente afectados | *"Añadir Adri al README"* |
+| **MEDIUM** | Fallback por defecto | Archivos clave: .md, package.json, AGENTS.md | *"Añadir OTP al login"* |
+| **COMPLEX** | Palabras clave o > 30 palabras | Árbol completo + archivos clave | *"Refactorizar módulo auth"* |
+| **UNKNOWN** | LLM auto-clasifica | Árbol completo + archivos clave | *"Crear un dashboard"* |
+
+#### Comandos
+
+| Comando | Descripción |
+|---|---|
+| `/better` | Optimiza el siguiente mensaje (modo completo) |
+| `/better-lite` | Optimiza sin contexto local (ahorro de tokens) |
+| `/better-auto` | Activa modo automático — todo se optimiza |
+| `/better-bypass` | Define un prefijo para excluir mensajes |
+| `/better-model` | Selecciona modelo para la fase de mejora |
+| `/pe` | Muestra configuración actual |
+
+#### Lite Mode
+
+`/better-lite` omite el clasificador local, el árbol de proyecto y los archivos clave. El LLM explora por su cuenta lo que necesita. Ideal para tareas auto-descriptivas o proyectos grandes donde construir el árbol es costoso.
+
 </Content>
 
 <Content lang="en">
-BetterPrompt is a terminal (TUI) tool designed to optimize the creation and refinement of prompts for language models. It uses heuristic analysis to evaluate prompt quality, suggesting structural and semantic improvements. Built with TypeScript and Node.js, it offers a clean and efficient interface for prompt engineers who prefer working from the terminal. Features include: clarity and specificity analysis, ambiguity detection, additional context suggestions, and multi-format export.
+
+BetterPrompt is an open-source extension for **Pi Agent** — it acts as an intelligent proxy between you and the LLM. Every message passes through an analysis pipeline that enriches it with technical project context, architectural awareness, and stack-specific guidance, then presents the optimised version for review before sending.
+
+#### The Problem
+
+Generic prompts miss crucial context. You ask *"add OTP to login"* and the LLM doesn't know your auth architecture, existing middleware, or code style. You ask *"refactor the auth module"* and the LLM hasn't read your module boundaries, dependency graph, or naming conventions. You keep repeating project details in every message.
+
+#### How It Fixes It
+
+BetterPrompt intercepts your message before it reaches the LLM, reads the relevant parts of your project (directory tree, key files, architecture patterns), builds a hidden analysis prompt, and asks the LLM to produce a context-enriched version — all in the background. You review the result and send it when ready.
+
+#### Heuristic Classification
+
+Analyses every message locally (no LLM call) to decide scan depth:
+
+| Level | Detection | Scan | Example |
+|---|---|---|---|
+| **SIMPLE** | Keyword match or < 8 words | Only directly affected files | *"Add Adri to README"* |
+| **MEDIUM** | Default fallback | Key files: .md, package.json, AGENTS.md | *"Add OTP to login"* |
+| **COMPLEX** | Keyword match or > 30 words | Full tree + key files | *"Refactor auth module"* |
+| **UNKNOWN** | LLM self-classifies | Full tree + key files | *"Create a dashboard"* |
+
+#### Commands
+
+| Command | Description |
+|---|---|
+| `/better` | Optimise next message (full mode) |
+| `/better-lite` | Optimise without local context (token saving) |
+| `/better-auto` | Toggle auto-mode — everything gets optimised |
+| `/better-bypass` | Set a prefix to exclude messages |
+| `/better-model` | Select model for the enhancement phase |
+| `/pe` | Show current configuration |
+
+#### Lite Mode
+
+`/better-lite` skips the local classifier, project tree and key files. The LLM explores what it needs on its own. Ideal for self-describing tasks or large projects where building the tree is expensive.
+
 </Content>
