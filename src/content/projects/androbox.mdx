@@ -1,31 +1,107 @@
 ---
 id: "androbox"
-title: "AndroBox — Developer Workbench"
-subtitle: "Android Development Toolkit"
+title: "AndroBox"
+subtitle: "Neo-Brutalist Developer Toolkit"
 zone: "android"
 status: "active"
 date: "2026-05"
 color: "#00d4aa"
 hasImages: true
-githubUrl: ""
+githubUrl: "https://github.com/adrigm06/AndroBox"
 demoUrl: ""
 linkedinUrl: ""
 stack:
   - "Kotlin"
-  - "Android SDK"
-  - "Android Jetpack"
   - "Jetpack Compose"
+  - "Material Design 3"
+  - "Android Glance"
+  - "WindowManager"
+  - "ML Kit OCR"
   - "Clean Architecture"
-  - "Mobile Development"
+  - "ADB / Wireless Debug"
 description:
-  es: "Workbench de desarrollo Android con herramientas integradas para productividad."
-  en: "Android development workbench with integrated productivity tools."
+  es: "Herramienta avanzada de diagnóstico, telemetría y diseño en pantalla para Android. Análisis visual directo con rendimiento en hardware en tiempo real."
+  en: "Advanced on-device diagnostics, telemetry and design toolkit for Android. Visual analysis with real-time hardware performance."
 ---
 
 <Content lang="es">
-AndroBox es un entorno de trabajo todo-en-uno para desarrolladores Android. Combina un editor de código ligero, gestor de proyectos, integración con ADB y herramientas de profiling en una sola interfaz. Diseñado para agilizar el día a día del desarrollador Android, AndroBox integra snippets inteligentes, gestión de dependencias y previsualización en tiempo real de layouts Compose. El proyecto está construido con Kotlin y Jetpack Compose, siguiendo principios de Clean Architecture para garantizar mantenibilidad y testabilidad.
+
+AndroBox es una herramienta avanzada de diagnóstico, telemetría y diseño en pantalla desarrollada exclusivamente para Android. Combina utilidades de análisis visual directo (reglas de pantalla, lectores de contraste WCAG) con indicadores de rendimiento del hardware en tiempo real (FPS, CPU, RAM) y accesos directos del sistema como Wireless Debug, todo en un único entorno con estilo Neo-Brutalista.
+
+#### Stack Tecnológico
+
+| Capa | Tecnologías |
+|---|---|
+| **Lenguaje** | Kotlin 2.0+ |
+| **UI** | Jetpack Compose, Material Design 3 |
+| **Widgets** | Android Glance AppWidget |
+| **Superposiciones** | WindowManager API (SYSTEM_ALERT_WINDOW) |
+| **ML** | Google ML Kit Text Recognition |
+| **Arquitectura** | Clean Architecture, MVVM |
+| **Target** | minSdk 31 — targetSdk 36 |
+
+#### Funcionalidades Principales
+
+| # | Herramienta | Descripción |
+|---|---|---|
+| 1 | **Wireless ADB Debugger** | Widget y overlay para togglear ADB inalámbrico al instante |
+| 2 | **APK Extractor** | Explorador de paquetes instalados con extracción one-click |
+| 3 | **Overlay Ruler** | Regla flotante para medir píxeles sobre cualquier app |
+| 4 | **Color Contrast Eyedropper** | Pipeta de color con verificador WCAG AA/AAA |
+| 5 | **Typography Sandbox** | Vista previa en vivo de escalas Material Design |
+| 6 | **Layout Grid Inspector** | Guías configurables de rejilla sobre toda la pantalla |
+| 7 | **Performance Monitor HUD** | Telemetría FPS, RAM, CPU y batería en tiempo real |
+| 8 | **Touch Target Visualizer** | Overlay de zonas táctiles mínimas (48×48dp) |
+| 9 | **Hardware Bezel Simulator** | Simulador de notches, punch-holes y curvaturas |
+| 10 | **Screen Magnifier & ML OCR** | Lupa con OCR integrado para extraer texto al portapapeles |
+
+#### Diseño Neo-Brutalista
+
+- **Tipografía:** JetBrains Mono exclusiva — alineación monospaciada absoluta
+- **Sombras:** Hard Shadows (offset sin blur) para profundidad mecánica
+- **Geometría:** Soft-Sharp en modo claro (4px radius + 2px outline) / Terminal Sharp en oscuro (0px radius)
+- **Paleta:** Blancos rotos y negros profundos con acentos Electric Indigo (claro) y Neon Green (oscuro)
+- **Fondo:** Cuadrícula sutíl de 24px imitando un tablero de diseño técnico
+
 </Content>
 
 <Content lang="en">
-AndroBox is an all-in-one workbench for Android developers. It combines a lightweight code editor, project manager, ADB integration, and profiling tools in a single interface. Designed to streamline the Android developer's daily workflow, AndroBox integrates smart snippets, dependency management, and real-time Compose layout preview. The project is built with Kotlin and Jetpack Compose, following Clean Architecture principles to ensure maintainability and testability.
+
+AndroBox is an advanced on-device diagnostics, telemetry and design toolkit built exclusively for Android. It combines direct visual analysis utilities (screen rulers, WCAG contrast checkers) with real-time hardware performance indicators (FPS, CPU, RAM) and system shortcuts like Wireless Debug — all in a single unified Neo-Brutalist interface.
+
+#### Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Language** | Kotlin 2.0+ |
+| **UI** | Jetpack Compose, Material Design 3 |
+| **Widgets** | Android Glance AppWidget |
+| **Overlays** | WindowManager API (SYSTEM_ALERT_WINDOW) |
+| **ML** | Google ML Kit Text Recognition |
+| **Architecture** | Clean Architecture, MVVM |
+| **Target** | minSdk 31 — targetSdk 36 |
+
+#### Key Features
+
+| # | Tool | Description |
+|---|---|---|
+| 1 | **Wireless ADB Debugger** | Widget & overlay to toggle wireless ADB instantly |
+| 2 | **APK Extractor** | Installed package browser with one-click extraction |
+| 3 | **Overlay Ruler** | Floating ruler to measure pixels across any app |
+| 4 | **Color Contrast Eyedropper** | Color picker with WCAG AA/AAA compliance checker |
+| 5 | **Typography Sandbox** | Live preview of Material Design type scales |
+| 6 | **Layout Grid Inspector** | Configurable grid guides over the full screen |
+| 7 | **Performance Monitor HUD** | Real-time FPS, RAM, CPU and battery telemetry |
+| 8 | **Touch Target Visualizer** | Minimum touch target overlay (48×48dp) |
+| 9 | **Hardware Bezel Simulator** | Notch, punch-hole and corner radius simulation |
+| 10 | **Screen Magnifier & ML OCR** | Magnifier with OCR to extract text to clipboard |
+
+#### Neo-Brutalist Design
+
+- **Typography:** Exclusive JetBrains Mono — absolute monospaced alignment
+- **Shadows:** Hard Shadows (zero blur offset) for mechanical depth
+- **Geometry:** Soft-Sharp light mode (4px radius + 2px outline) / Terminal Sharp dark mode (0px radius)
+- **Palette:** Stark off-whites and deep blacks with Electric Indigo (light) and Neon Green (dark) accents
+- **Background:** Subtle 24px grid pattern mimicking a technical drafting table
+
 </Content>
