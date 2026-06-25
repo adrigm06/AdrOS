@@ -1,0 +1,80 @@
+---
+id: "smart-lead-qualification"
+title: "Smart Lead Qualification System"
+subtitle: "Workflow de Cualificación de Leads"
+zone: "ai-tools"
+status: "completed"
+date: "2026-06"
+color: "#2dd4bf"
+hasImages: false
+githubUrl: ""
+demoUrl: ""
+linkedinUrl: ""
+stack:
+  - "n8n"
+  - "OpenAI"
+  - "Jira Cloud API"
+  - "Telegram Bot API"
+  - "SMTP / IMAP"
+  - "JavaScript"
+description:
+  es: "Workflow inteligente de automatización de ventas que conecta email, Telegram y Jira con OpenAI para cualificar y hacer seguimiento automático de leads."
+  en: "Intelligent sales automation workflow that integrates email, Telegram, and Jira using OpenAI to qualify and follow up on leads."
+videos:
+  - title: "Hablar con Devs (Inglés)"
+    url: "https://drive.google.com/file/d/19dDeg75mih8wjmvu4FhvFWcr87pXRqEX/view?usp=drive_link"
+  - title: "Fuera de Horario"
+    url: "https://drive.google.com/file/d/1OolDprRnS75WS6KuVt2bXbwBAoudSbpN/view?usp=drive_link"
+  - title: "Error de IA"
+    url: "https://drive.google.com/file/d/1y58xD0V34F2CPk5mLoBrIA_s9cDpMHL4/view?usp=drive_link"
+---
+
+<Content lang="es">
+
+**Smart Lead Qualification System** es un sistema inteligente de automatización extremo a extremo diseñado para optimizar el embudo de ventas comercial. Elimina por completo las tareas administrativas repetitivas mediante la recepción, clasificación, registro y seguimiento automático de clientes potenciales (leads) sin intervención humana directa.
+
+#### Características Clave
+
+| Característica | Descripción |
+|---|---|
+| 🧠 **Cualificación con IA** | Análisis automático de correos utilizando OpenAI (GPT-4o-mini) para clasificar intención de compra (aceptación, duda, objeción de precio, spam), sentimiento, idioma y extraer información clave. |
+| ✉️ **Seguimiento Automatizado** | Motor programado ("toques") que monitoriza leads inactivos en el CRM y envía recordatorios personalizados a los 3, 5 y 10 días, descartándolos tras 13 días de inactividad. |
+| 📅 **Gestión del Tiempo** | Filtro dinámico mediante API que detecta fines de semana y festivos nacionales para enrutar correos y responder temporalmente de forma automática fuera del horario laboral. |
+| 🔄 **Prevención de Bucles** | Filtro inteligente anti auto-respuestas para evitar bucles de correos infinitos del tipo *"Fuera de la oficina"*. |
+| 🛡️ **Resiliencia & Errores** | Políticas de reintento exponencial con Jira Cloud, fallbacks ante caídas de la API de OpenAI y alertas en tiempo real al administrador por Telegram ante incidencias críticas. |
+
+#### Detalles Técnicos e Integración
+
+El sistema se diseñó usando una arquitectura modular basada en eventos en **n8n**, integrando APIs y flujos lógicos con alto nivel de tolerancia a fallos:
+
+- **Integración de APIs y Servicios:** Consumo de REST APIs (Jira Cloud para gestión de tickets, Nager.Date API para cálculo de festivos), protocolos de red (SMTP/IMAP para control de buzones de email) y Webhooks reactivos.
+- **NLP Avanzado:** System Prompts estructurados en OpenAI para forzar salidas tipo JSON formateadas que extraen con precisión las variables del lead.
+- **Desarrollo en JS / Node.js:** Escritura de scripts personalizados en nodos de código de n8n para mapeos de prioridades, estados y formateo del historial de notas (logs con marcas de tiempo).
+- **Control Horario Avanzado:** Lógica horaria y cálculo dinámico de husos horarios locales para garantizar el enrutamiento correcto de notificaciones.
+
+</Content>
+
+<Content lang="en">
+
+**Smart Lead Qualification System** is an intelligent, end-to-end sales automation funnel system. It completely eliminates repetitive administrative tasks by automatically receiving, classifying, registering, and following up on sales leads without direct human intervention.
+
+#### Key Features
+
+| Feature | Description |
+|---|---|
+| 🧠 **AI Qualification** | Automatic analysis of incoming emails using OpenAI (GPT-4o-mini) to classify intent (acceptance, doubt, price objection, spam), sentiment, language, and extract key info. |
+| ✉️ **Automated Follow-up** | Scheduled workflow engine ("touches") that monitors inactive leads in the CRM and sends personalized reminders at 3, 5, and 10 days, discarding them after 13 days of inactivity. |
+| 📅 **Time Management** | Dynamic filter via API that detects weekends and national holidays to route emails and automatically send temporary courtesy replies outside business hours. |
+| 🔄 **Loop Prevention** | Intelligent anti-autoresponder filter to prevent infinite email loops (e.g., *"Out of Office"* auto-replies). |
+| 🛡️ **Resilience & Faults** | Exponential retry policies with Jira Cloud, fallback handling for OpenAI API downtime, and real-time administrator alerts via Telegram for critical failures. |
+
+#### Technical Details & Integration
+
+The system is designed using a modular, event-driven architecture built in **n8n**, integrating APIs and workflows with strict error handling:
+
+- **API & Service Integration:** Full consumption of REST APIs (Jira Cloud for ticket management, Nager.Date API for national holiday calculations), network protocols (SMTP/IMAP for mailbox handling), and reactive Webhooks.
+- **Advanced NLP:** Structured System Prompts in OpenAI to enforce structured JSON outputs that extract key lead variables with high precision.
+- **JavaScript / Node.js Development:** Custom scripts within n8n code nodes to perform structured priority/status mappings and format cumulative logs with timestamps.
+- **Advanced Time Control:** Dynamic holiday lookup and timezone math to guarantee correct notification routing.
+
+</Content>

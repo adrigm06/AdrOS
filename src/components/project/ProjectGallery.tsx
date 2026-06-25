@@ -7,19 +7,46 @@ interface ProjectGalleryProps {
 
 const TOTAL_SCREENSHOTS = 5;
 
+type GalleryItem =
+  | { type: 'image'; src: string; alt: string }
+  | { type: 'video'; url: string; title: string; previewUrl: string };
+
 export default function ProjectGallery({ project }: ProjectGalleryProps) {
   const p = project.data;
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const screenshots = Array.from({ length: TOTAL_SCREENSHOTS }, (_, i) => ({
-    src: `/projects/${p.id}/screenshots/${String(i + 1).padStart(2, '0')}.webp`,
-    alt: `Screenshot ${i + 1} del proyecto ${p.title}`,
-  }));
+  const items: GalleryItem[] = [];
 
-  const items = [
-    { src: `/projects/${p.id}/screenshots/cover.webp`, alt: `Cover del proyecto ${p.title}` },
-    ...screenshots,
-  ];
+  if (p.hasImages) {
+    items.push({
+      type: 'image',
+      src: `/projects/${p.id}/screenshots/cover.webp`,
+      alt: `Cover del proyecto ${p.title}`,
+    });
+    for (let i = 0; i < TOTAL_SCREENSHOTS; i++) {
+      items.push({
+        type: 'image',
+        src: `/projects/${p.id}/screenshots/${String(i + 1).padStart(2, '0')}.webp`,
+        alt: `Screenshot ${i + 1} del proyecto ${p.title}`,
+      });
+    }
+  }
+
+  const projectVideos = (p as any).videos;
+  if (projectVideos && projectVideos.length > 0) {
+    projectVideos.forEach((vid: { title: string; url: string }) => {
+      let previewUrl = vid.url;
+      if (previewUrl.includes('/view')) {
+        previewUrl = previewUrl.replace('/view', '/preview');
+      }
+      items.push({
+        type: 'video',
+        url: vid.url,
+        title: vid.title,
+        previewUrl: previewUrl,
+      });
+    });
+  }
 
   const goTo = useCallback(
     (index: number) => setActiveIndex(Math.max(0, Math.min(index, items.length - 1))),
@@ -29,14 +56,14 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
   const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
   const goNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
 
-  if (!p.hasImages) {
+  if (items.length === 0) {
     return (
       <div
         className="p-4 rounded-[var(--radius-md)] font-mono text-xs"
         style={{ backgroundColor: 'var(--os-bg)', color: 'var(--os-accent)' }}
       >
         <p className="mb-2">$ ls screenshots/</p>
-        <p style={{ color: 'var(--os-muted)' }}>No screenshots available for this project.</p>
+        <p style={{ color: 'var(--os-muted)' }}>No screenshots or videos available for this project.</p>
       </div>
     );
   }
@@ -45,7 +72,7 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* ── Main image with arrows ── */}
+      {/* ── Main image/video with arrows ── */}
       <div className="relative w-full flex items-center justify-center" style={{ minHeight: 200 }}>
         {/* Previous arrow */}
         {activeIndex > 0 && (
@@ -66,23 +93,34 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
           </button>
         )}
 
-        {/* Image */}
+        {/* Media Container */}
         <div
           className="overflow-hidden rounded-[var(--radius-md)] w-full flex items-center justify-center"
           style={{ backgroundColor: 'var(--os-bg)', height: 320 }}
         >
-          <img
-            src={current.src}
-            alt={current.alt}
-            className="object-contain w-full h-full"
-            style={{ maxHeight: 320 }}
-            width={720}
-            height={320}
-            loading="eager"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+          {current.type === 'video' ? (
+            <iframe
+              src={current.previewUrl}
+              title={current.title}
+              className="w-full h-full border-0 rounded-[var(--radius-md)]"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              loading="eager"
+            />
+          ) : (
+            <img
+              src={current.src}
+              alt={current.alt}
+              className="object-contain w-full h-full"
+              style={{ maxHeight: 320 }}
+              width={720}
+              height={320}
+              loading="eager"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          )}
         </div>
 
         {/* Next arrow */}
@@ -136,15 +174,26 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
                 transform: isActive ? 'scale(1)' : 'scale(0.92)',
               }}
             >
-              <img
-                src={item.src}
-                alt={item.alt}
-                className="w-full h-full object-cover"
-                width={88}
-                height={64}
-                loading="lazy"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              {item.type === 'video' ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--os-surface-2, #1e2433)] text-[var(--os-accent)] p-1 text-center font-sans text-[8px] leading-tight gap-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  <span className="truncate max-w-[60px] block" title={item.title}>
+                    {item.title}
+                  </span>
+                </div>
+              ) : (
+                <img
+                  src={item.src}
+                  alt={item.alt}
+                  className="w-full h-full object-cover"
+                  width={88}
+                  height={64}
+                  loading="lazy"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
             </button>
           );
         })}

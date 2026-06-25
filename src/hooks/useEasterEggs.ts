@@ -54,7 +54,7 @@ export function useLsCommand() {
       bufferRef.current = bufferRef.current.slice(-2);
 
       if (bufferRef.current.join('') === 'ls') {
-        showNotification('$ ls projects/\nandrobox  betterprompt  android-skill-pkg  komea  petconnect  lovepage  vantagesystems');
+        showNotification('$ ls projects/\nandrobox  betterprompt  android-skill-pkg  komea  petconnect  lovepage  vantagesystems  smart-lead-qualification');
         bufferRef.current = [];
       }
     };

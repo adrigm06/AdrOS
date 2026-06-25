@@ -19,6 +19,10 @@ const projectSchema = z.object({
     es: z.string(),
     en: z.string(),
   }),
+  videos: z.array(z.object({
+    title: z.string(),
+    url: z.string(),
+  })).optional(),
 });
 
 export const collections = {

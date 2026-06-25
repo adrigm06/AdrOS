@@ -20,9 +20,17 @@ export default function ProjectWindow({ project, lang }: ProjectWindowProps) {
   const p = project.data;
   const color = p.color;
 
+  const hasVideos = !!(p.videos && p.videos.length > 0);
   const visibleTabs: { id: Tab; label: string }[] = [
     { id: 'readme', label: 'README' },
-    ...(p.hasImages ? [{ id: 'screenshots' as Tab, label: 'Screenshots' }] : []),
+    ...(p.hasImages || hasVideos
+      ? [
+          {
+            id: 'screenshots' as Tab,
+            label: hasVideos && !p.hasImages ? 'Demos' : 'Screenshots',
+          },
+        ]
+      : []),
     { id: 'stack', label: 'Stack' },
     { id: 'links', label: 'Links' },
   ];
