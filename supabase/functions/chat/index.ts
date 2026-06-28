@@ -115,11 +115,18 @@ Deno.serve(async (req: Request) => {
     // 2. Semantic search in pgvector
     const { data: docs, error: matchError } = await supabase.rpc('match_documents', {
       query_embedding:  embedding,
-      match_threshold:  0.45,
+      match_threshold:  0.15, // Lowered threshold since gemini-embedding-2 has a different cosine range
       match_count:      5,
     });
 
-    if (matchError) console.error('pgvector error:', matchError.message);
+    if (matchError) {
+      console.error('pgvector error:', matchError.message);
+    } else {
+      console.log(`[RAG] Semantic search found ${docs?.length ?? 0} documents.`);
+      docs?.forEach((d: { similarity: number; metadata: { source_id: string } }) => {
+        console.log(` - Chunk: ${d.metadata?.source_id} (Similarity: ${d.similarity})`);
+      });
+    }
 
     const context = (docs ?? [])
       .map((d: { content: string }) => d.content)
