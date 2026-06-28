@@ -58,6 +58,7 @@ async function embedText(text: string, geminiKey: string): Promise<number[]> {
       content: {
         parts: [{ text }],
       },
+      outputDimensionality: 768,
     }),
   });
 

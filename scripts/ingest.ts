@@ -60,6 +60,7 @@ async function embed(texts: string[]): Promise<number[][]> {
     content: {
       parts: [{ text }],
     },
+    outputDimensionality: 768,
   }));
 
   const res = await fetch(url, {
