@@ -340,7 +340,10 @@ export default function Desktop({ projects }: DesktopProps) {
 
           {/* QuickLinks — bottom-right */}
           <div className="absolute" style={{ right: 28, bottom: 24 }}>
-            <QuickLinks />
+            <QuickLinks
+              lang={langState.lang}
+              onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
+            />
           </div>
         </motion.div>
 
@@ -358,6 +361,7 @@ export default function Desktop({ projects }: DesktopProps) {
           onUpdateSize={updateSize}
           projects={projects}
           lang={langState.lang}
+          onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
         />
 
         {/* ── Taskbar ── */}

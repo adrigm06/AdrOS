@@ -9,12 +9,12 @@ export interface WindowState {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
-  type: 'project' | 'profile';
+  type: 'project' | 'profile' | 'contact';
   projectId?: string;
 }
 
 /** Default sizes clamped to viewport so windows fit any screen. */
-function defaultSize(type: 'project' | 'profile') {
+function defaultSize(type: 'project' | 'profile' | 'contact') {
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
 
@@ -22,6 +22,12 @@ function defaultSize(type: 'project' | 'profile') {
     return {
       width: Math.min(560, vw * 0.88),
       height: Math.min(420, vh * 0.72),
+    };
+  }
+  if (type === 'contact') {
+    return {
+      width: Math.min(480, vw * 0.88),
+      height: Math.min(460, vh * 0.82),
     };
   }
   return {
@@ -43,7 +49,7 @@ function randomOffset() {
 export function useWindowManager() {
   const [windows, setWindows] = useState<WindowState[]>([]);
 
-  const openWindow = useCallback((id: string, type: 'project' | 'profile', title: string, projectId?: string) => {
+  const openWindow = useCallback((id: string, type: 'project' | 'profile' | 'contact', title: string, projectId?: string) => {
     setWindows(prev => {
       const existing = prev.find(w => w.id === id);
       if (existing) {

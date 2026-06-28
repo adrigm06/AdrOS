@@ -1,5 +1,8 @@
+import type { Lang } from '@/hooks/useLanguage';
+
 interface QuickLinksProps {
-  // no props needed currently
+  lang: Lang;
+  onOpenContact: () => void;
 }
 
 /* ── Icon SVGs ── */
@@ -88,18 +91,52 @@ function ShortcutBadge() {
 
 /* ── Link definitions ── */
 
-const LINKS: { label: string; href: string; labelKey: string; Icon: React.FC }[] = [
+interface LinkItem {
+  label: string;
+  href: string;
+  labelKey: string;
+  Icon: React.FC;
+  isContact?: boolean;
+}
+
+const LINKS: LinkItem[] = [
   { label: "GitHub", href: "https://github.com/adrigm06", labelKey: "GitHub", Icon: GithubIcon },
   { label: "LinkedIn", href: "https://www.linkedin.com/in/adrigml/", labelKey: "LinkedIn", Icon: LinkedinIcon },
-  { label: "Email", href: "mailto:adriglc6@gmail.com", labelKey: "Email", Icon: EmailIcon },
+  { label: "Email", href: "#contact", labelKey: "Email", Icon: EmailIcon, isContact: true },
   { label: "CV", href: "/Adrian_Gomez_FullStack_English.pdf", labelKey: "CV", Icon: DownloadIcon },
 ];
 
-export default function QuickLinks(_props: QuickLinksProps) {
+export default function QuickLinks({ lang, onOpenContact }: QuickLinksProps) {
   return (
     <div className="flex items-center gap-5">
       {LINKS.map((link) => {
         const { Icon } = link;
+
+        if (link.isContact) {
+          return (
+            <button
+              key={link.labelKey}
+              type="button"
+              onClick={onOpenContact}
+              className="group flex flex-col items-center gap-1.5 transition-all duration-200 hover:scale-110 hover:drop-shadow-[0_0_8px_var(--os-accent-glow)] bg-transparent border-none p-0 cursor-pointer text-left"
+              style={{ color: 'var(--os-muted)' }}
+            >
+              {/* Icon container with shortcut badge */}
+              <div className="relative">
+                <Icon />
+                <ShortcutBadge />
+              </div>
+              {/* Label */}
+              <span
+                className="font-mono text-[10px] transition-colors duration-200 group-hover:text-[var(--os-accent)]"
+                style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
+              >
+                {lang === 'es' ? 'Contacto' : 'Contact'}
+              </span>
+            </button>
+          );
+        }
+
         return (
           <a
             key={link.labelKey}

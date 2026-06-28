@@ -53,3 +53,6 @@ opencode/
 
 # IDE
 .vscode/
+
+# Vercel output
+.vercel/

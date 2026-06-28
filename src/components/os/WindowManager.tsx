@@ -7,6 +7,7 @@ import type { ZoneId } from '@/data/projects';
 import Window from './Window';
 import ProjectWindow from '@/components/project/ProjectWindow';
 import ProfileWindow from '@/components/widgets/ProfileWindow';
+import ContactForm from '@/components/widgets/ContactForm';
 
 interface WindowManagerProps {
   windows: WindowState[];
@@ -18,6 +19,7 @@ interface WindowManagerProps {
   onUpdateSize: (id: string, size: { width: number; height: number }) => void;
   projects: ProjectEntry[];
   lang: Lang;
+  onOpenContact: () => void;
 }
 
 export default function WindowManager({
@@ -30,6 +32,7 @@ export default function WindowManager({
   onUpdateSize,
   projects,
   lang,
+  onOpenContact,
 }: WindowManagerProps) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -40,7 +43,9 @@ export default function WindowManager({
           ? projects.find(p => p.data.id === win.projectId)
           : undefined;
 
-        const accentColor = project ? ZONE_COLORS[project.data.zone as ZoneId] : undefined;
+        const accentColor = win.type === 'contact'
+          ? 'var(--os-accent)'
+          : (project ? ZONE_COLORS[project.data.zone as ZoneId] : undefined);
 
         return (
           <Window
@@ -56,7 +61,9 @@ export default function WindowManager({
             accentColor={accentColor}
           >
             {win.type === 'profile' ? (
-              <ProfileWindow lang={lang} />
+              <ProfileWindow lang={lang} onOpenContact={onOpenContact} />
+            ) : win.type === 'contact' ? (
+              <ContactForm lang={lang} onClose={() => onClose(win.id)} />
             ) : project ? (
               <ProjectWindow project={project} lang={lang} />
             ) : null}

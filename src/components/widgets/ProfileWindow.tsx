@@ -2,6 +2,7 @@ import type { Lang } from '@/hooks/useLanguage';
 
 interface ProfileWindowProps {
   lang: Lang;
+  onOpenContact?: () => void;
 }
 
 interface ProfileData {
@@ -35,7 +36,7 @@ const PROFILE: Record<Lang, ProfileData> = {
   },
 };
 
-export default function ProfileWindow({ lang }: ProfileWindowProps) {
+export default function ProfileWindow({ lang, onOpenContact }: ProfileWindowProps) {
   const p = PROFILE[lang];
 
   return (
@@ -148,7 +149,40 @@ export default function ProfileWindow({ lang }: ProfileWindowProps) {
         >
           <ProfileLink href={p.github} label="GitHub" />
           <ProfileLink href={p.linkedin} label="LinkedIn" />
-          <ProfileLink href={p.email} label="Email" />
+          {onOpenContact ? (
+            <button
+              type="button"
+              onClick={onOpenContact}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 16px",
+                backgroundColor: "var(--os-surface-2)",
+                border: "1px solid var(--os-border)",
+                borderRadius: "var(--radius-sm)",
+                fontFamily: "var(--font-sans)",
+                fontSize: "13px",
+                color: "var(--os-text)",
+                transition: "background-color 150ms ease, border-color 150ms ease",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.backgroundColor = "var(--os-accent-dim)";
+                el.style.borderColor = "var(--os-accent)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.backgroundColor = "var(--os-surface-2)";
+                el.style.borderColor = "var(--os-border)";
+              }}
+            >
+              {lang === 'es' ? 'Contáctame' : 'Contact me'}
+            </button>
+          ) : (
+            <ProfileLink href={p.email} label="Email" />
+          )}
         </div>
       </div>
     </div>
