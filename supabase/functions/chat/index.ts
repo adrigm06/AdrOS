@@ -39,27 +39,44 @@ function detectLang(text: string): 'es' | 'en' {
 }
 
 // ── Embed via HuggingFace ─────────────────────────────────────
-async function embedText(text: string, hfKey: string): Promise<number[]> {
-  const res = await fetch(
-    'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2',
-    {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${hfKey}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        inputs:  text,
-        options: { wait_for_model: true },
-      }),
+async function embedText(text: string, hfKey: string, retries = 3, delay = 300): Promise<number[]> {
+  const url = 'https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2';
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, {
+        method:  'POST',
+        headers: {
+          'Authorization': `Bearer ${hfKey}`,
+          'Content-Type':  'application/json',
+        },
+        body: JSON.stringify({
+          inputs:  text,
+          options: { wait_for_model: true },
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`HF embed failed: ${res.status} ${errText}`);
+      }
+
+      const data = await res.json();
+      // Normalise response format: [1][384] or [384]
+      return Array.isArray(data[0]) ? data[0] : data;
+
+    } catch (err) {
+      const isDnsError = err instanceof TypeError && err.message.includes('dns error');
+      if (isDnsError && i < retries - 1) {
+        console.warn(`DNS resolution failed on attempt ${i + 1}. Retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+        delay *= 2; // exponential backoff
+        continue;
+      }
+      throw err;
     }
-  );
-
-  if (!res.ok) throw new Error(`HF embed failed: ${res.status} ${await res.text()}`);
-
-  const data = await res.json();
-  // HF returns shape [1][384] for single input — flatten
-  return Array.isArray(data[0]) ? data[0] : data;
+  }
+  throw new Error('HF embed failed after all retry attempts');
 }
 
 // ── Main handler ──────────────────────────────────────────────
