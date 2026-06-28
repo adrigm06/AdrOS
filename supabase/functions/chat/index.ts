@@ -45,8 +45,8 @@ async function embedText(text: string, geminiKey: string): Promise<number[]> {
   // Diagnostic: log first 5 chars to confirm key is loaded
   console.log(`[embedText] Using Gemini key prefix: ${geminiKey.substring(0, 8)}...`);
   
-  // AQ. keys require x-goog-api-key header (not ?key= query param)
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent';
+  // Use gemini-embedding-2 (768 dimensions), which is active on the user's account
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent';
   
   const res = await fetch(url, {
     method:  'POST',
