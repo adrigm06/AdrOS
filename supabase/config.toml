@@ -1,0 +1,4 @@
+# ── Supabase Project Configuration ──
+
+[functions.chat]
+verify_jwt = false # Permite que visitantes del portfolio consulten a AdrBOT sin login
