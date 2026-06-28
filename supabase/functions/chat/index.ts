@@ -41,12 +41,18 @@ function detectLang(text: string): 'es' | 'en' {
 // ── Embed via Google Gemini (text-embedding-004) ─────────────
 async function embedText(text: string, geminiKey: string): Promise<number[]> {
   if (!geminiKey) throw new Error('GEMINI_API_KEY is not set in Supabase secrets');
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${geminiKey}`;
+  
+  // Diagnostic: log first 5 chars to confirm key is loaded
+  console.log(`[embedText] Using Gemini key prefix: ${geminiKey.substring(0, 8)}...`);
+  
+  // AQ. keys require x-goog-api-key header (not ?key= query param)
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent';
   
   const res = await fetch(url, {
     method:  'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type':    'application/json',
+      'x-goog-api-key':  geminiKey,
     },
     body: JSON.stringify({
       content: {

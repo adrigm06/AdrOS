@@ -52,7 +52,8 @@ interface Chunk {
 
 // ── Gemini batch embedding ────────────────────────────────────
 async function embed(texts: string[]): Promise<number[][]> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${GEMINI_API_KEY}`;
+  // AQ. keys require x-goog-api-key header (not ?key= query param)
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents';
   
   const requests = texts.map(text => ({
     model: 'models/text-embedding-004',
@@ -64,7 +65,8 @@ async function embed(texts: string[]): Promise<number[][]> {
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type':   'application/json',
+      'x-goog-api-key': GEMINI_API_KEY!,
     },
     body: JSON.stringify({ requests }),
   });
