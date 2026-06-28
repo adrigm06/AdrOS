@@ -10,7 +10,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "type-check": "astro check"
+    "type-check": "astro check",
+    "ingest": "tsx scripts/ingest.ts",
+    "ingest:mdx": "tsx scripts/ingest.ts --source mdx",
+    "ingest:profile": "tsx scripts/ingest.ts --source profile",
+    "ingest:pdf": "tsx scripts/ingest.ts --source pdf"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
@@ -31,7 +35,11 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^16.4.5",
+    "gray-matter": "^4.0.3",
+    "pdf-parse": "^1.1.1",
     "postcss": "^8.5.5",
+    "tsx": "^4.19.2",
     "typescript": "^6.0.3"
   }
 }

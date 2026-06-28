@@ -23,9 +23,9 @@ export const translations = {
 
   // Perfil
   profile_title: 'Adrián Gómez — adrigm',
-  profile_role: 'Mobile & Full-Stack Developer',
+  profile_role: 'Full-Stack & AI Developer',
   profile_location: '📍 Málaga, España',
-  profile_bio: 'Apasionado por Android nativo, Clean Architecture y el detalle en la experiencia de usuario. Construyo herramientas que resuelven problemas reales.',
+  profile_bio: 'Construyo productos digitales completos — apps Android, plataformas web y sistemas de IA. Me obsesiona el código limpio, las arquitecturas escalables y la experiencia de usuario.',
 
   // QuickLinks
   quicklinks_github: 'GitHub',
@@ -39,4 +39,12 @@ export const translations = {
   tooltip_minimize: 'Minimizar',
   tooltip_maximize: 'Maximizar',
   tooltip_close: 'Cerrar',
+
+  // Chat (RAG Chatbot)
+  chat_label:       'Pregúntame',
+  chat_placeholder: 'Escribe algo...',
+  chat_thinking:    'Pensando...',
+  chat_error:       'Algo salió mal. Inténtalo de nuevo.',
+  chat_title:       'AdrBOT',
+  chat_send:        'Enviar',
 };

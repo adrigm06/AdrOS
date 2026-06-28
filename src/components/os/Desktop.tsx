@@ -10,6 +10,7 @@ import BootScreen from './BootScreen';
 import WindowManager from './WindowManager';
 import FolderIcon from './FolderIcon';
 import ZoneLegend from './ZoneLegend';
+import BotIcon from './BotIcon';
 import QuickLinks from '@/components/widgets/QuickLinks';
 import { ZONE_COLORS } from '@/data/projects';
 import ContextMenu from './ContextMenu';
@@ -47,7 +48,15 @@ function getOccupiedSetSnapshot(
   for (const [id, pos] of Object.entries(positions)) {
     if (id === excludeId) continue;
     const s = snapToGrid(pos);
-    set.add(`${s.x},${s.y}`);
+    if (id === 'adrbot') {
+      // AdrBOT occupies a 2x2 block in the grid to prevent project folders overlapping
+      set.add(`${s.x},${s.y}`);
+      set.add(`${s.x + GRID_X},${s.y}`);
+      set.add(`${s.x},${s.y + GRID_Y}`);
+      set.add(`${s.x + GRID_X},${s.y + GRID_Y}`);
+    } else {
+      set.add(`${s.x},${s.y}`);
+    }
   }
   return set;
 }
@@ -134,7 +143,14 @@ export default function Desktop({ projects }: DesktopProps) {
   useLsCommand();
 
   useEffect(() => {
-    setIconPositions(calcInitialPositions(projects));
+    const initial = calcInitialPositions(projects);
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    // Calculate the absolute rightmost column of the grid (normal icons)
+    const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
+    // AdrBOT takes 2 columns, so its left edge starts 1 column to the left of the rightmost column
+    const botX = maxColX - GRID_X;
+    initial['adrbot'] = { x: Math.max(GRID_OFFSET_X, botX), y: GRID_OFFSET_Y };
+    setIconPositions(initial);
   }, [projects]);
 
   const handleOpenProject = useCallback((project: ProjectEntry) => {
@@ -156,11 +172,24 @@ export default function Desktop({ projects }: DesktopProps) {
   const handleIconDragEnd = useCallback((id: string, rawPos: { x: number; y: number }) => {
     setIconPositions((prev) => {
       const snapped = snapToGrid(rawPos);
-      const occupied = getOccupiedSetSnapshot(prev, id);
-
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      // Compute the last valid grid point within the viewport
+
+      if (id === 'adrbot') {
+        const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
+        const bounds = {
+          minX: GRID_OFFSET_X,
+          minY: GRID_OFFSET_Y,
+          maxX: maxColX - GRID_X,
+          maxY: Math.floor((vh - 160 - GRID_OFFSET_Y) / GRID_Y) * GRID_Y + GRID_OFFSET_Y,
+        };
+        const resolved = { ...snapped };
+        resolved.x = Math.max(bounds.minX, Math.min(bounds.maxX, resolved.x));
+        resolved.y = Math.max(bounds.minY, Math.min(bounds.maxY, resolved.y));
+        return { ...prev, [id]: resolved };
+      }
+
+      const occupied = getOccupiedSetSnapshot(prev, id);
       const bounds = {
         minX: GRID_OFFSET_X,
         minY: GRID_OFFSET_Y,
@@ -172,7 +201,6 @@ export default function Desktop({ projects }: DesktopProps) {
         ? findNearestFreeCell(snapped, occupied, bounds)
         : { ...snapped };
 
-      // Final clamp
       resolved.x = Math.max(bounds.minX, Math.min(bounds.maxX, resolved.x));
       resolved.y = Math.max(bounds.minY, Math.min(bounds.maxY, resolved.y));
 
@@ -191,33 +219,38 @@ export default function Desktop({ projects }: DesktopProps) {
     const snapped = snapToGrid(dragPos);
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const isBot = draggingId === 'adrbot';
+    const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
     const bounds = {
       minX: GRID_OFFSET_X,
       minY: GRID_OFFSET_Y,
-      maxX: Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X,
+      maxX: isBot ? (maxColX - GRID_X) : maxColX,
       maxY: Math.floor((vh - 160 - GRID_OFFSET_Y) / GRID_Y) * GRID_Y + GRID_OFFSET_Y,
     };
-    if (occupiedKeys.has(`${snapped.x},${snapped.y}`)) {
+    if (!isBot && occupiedKeys.has(`${snapped.x},${snapped.y}`)) {
       return findNearestFreeCell(snapped, occupiedKeys, bounds);
     }
     return snapped;
-  }, [dragPos, occupiedKeys]);
+  }, [dragPos, occupiedKeys, draggingId]);
 
   const nearbyCells = useMemo(() => {
     if (!snapTarget) return [];
     const cells: Array<{ x: number; y: number; isTarget: boolean }> = [];
     const range = 2;
+    const isBot = draggingId === 'adrbot';
     for (let dx = -range; dx <= range; dx++) {
       for (let dy = -range; dy <= range; dy++) {
         cells.push({
           x: snapTarget.x + dx * GRID_X,
           y: snapTarget.y + dy * GRID_Y,
-          isTarget: dx >= 0 && dx <= 1 && dy >= 0 && dy <= 1,
+          isTarget: isBot
+            ? (dx >= 0 && dx <= 2 && dy >= 0 && dy <= 2)
+            : (dx >= 0 && dx <= 1 && dy >= 0 && dy <= 1),
         });
       }
     }
     return cells;
-  }, [snapTarget]);
+  }, [snapTarget, draggingId]);
 
   /* ── Desktop context menu ── */
   const handleDesktopContext = useCallback((e: React.MouseEvent) => {
@@ -332,6 +365,19 @@ export default function Desktop({ projects }: DesktopProps) {
               />
             );
           })}
+
+          {/* ── AdrBOT desktop icon (2x2) ── */}
+          {iconPositions['adrbot'] && (
+            <BotIcon
+              lang={langState.lang}
+              isOpen={windows.some((w) => w.type === 'chat' && w.isOpen && !w.isMinimized)}
+              onOpen={() => openWindow('chat', 'chat', 'AdrBOT')}
+              position={iconPositions['adrbot']}
+              onDragStateChange={(d) => handleDragState('adrbot', d)}
+              onDragMove={(p) => handleIconDragMove('adrbot', p)}
+              onDragEnd={(p) => handleIconDragEnd('adrbot', p)}
+            />
+          )}
 
           {/* ── Konami eggs ── */}
           {eggs.map((egg) => (

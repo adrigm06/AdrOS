@@ -9,6 +9,8 @@ import ProjectWindow from '@/components/project/ProjectWindow';
 import ProfileWindow from '@/components/widgets/ProfileWindow';
 import ContactForm from '@/components/widgets/ContactForm';
 
+import ChatWindow from '@/components/widgets/ChatWindow';
+
 interface WindowManagerProps {
   windows: WindowState[];
   onClose: (id: string) => void;
@@ -43,7 +45,7 @@ export default function WindowManager({
           ? projects.find(p => p.data.id === win.projectId)
           : undefined;
 
-        const accentColor = win.type === 'contact'
+        const accentColor = win.type === 'contact' || win.type === 'chat'
           ? 'var(--os-accent)'
           : (project ? ZONE_COLORS[project.data.zone as ZoneId] : undefined);
 
@@ -64,6 +66,8 @@ export default function WindowManager({
               <ProfileWindow lang={lang} onOpenContact={onOpenContact} />
             ) : win.type === 'contact' ? (
               <ContactForm lang={lang} onClose={() => onClose(win.id)} />
+            ) : win.type === 'chat' ? (
+              <ChatWindow lang={lang} />
             ) : project ? (
               <ProjectWindow project={project} lang={lang} />
             ) : null}
