@@ -28,11 +28,10 @@ import 'dotenv/config';
 
 const SUPABASE_URL = process.env.PUBLIC_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const HF_API_KEY   = process.env.HF_API_KEY;
-const HF_MODEL     = 'sentence-transformers/all-MiniLM-L6-v2';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY || !HF_API_KEY) {
-  console.error('❌ Missing env vars: PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, HF_API_KEY');
+if (!SUPABASE_URL || !SUPABASE_KEY || !GEMINI_API_KEY) {
+  console.error('❌ Missing env vars: PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY');
   process.exit(1);
 }
 
@@ -51,29 +50,37 @@ interface Chunk {
   source:    'mdx' | 'pdf' | 'profile';
 }
 
-// ── HuggingFace embedding ─────────────────────────────────────
+// ── Gemini batch embedding ────────────────────────────────────
 async function embed(texts: string[]): Promise<number[][]> {
-  // HF feature-extraction returns shape [N, 384]
-  const res = await fetch(
-    `https://api-inference.huggingface.co/pipeline/feature-extraction/${HF_MODEL}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HF_API_KEY}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({ inputs: texts, options: { wait_for_model: true } }),
-    }
-  );
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${GEMINI_API_KEY}`;
+  
+  const requests = texts.map(text => ({
+    model: 'models/text-embedding-004',
+    content: {
+      parts: [{ text }],
+    },
+  }));
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ requests }),
+  });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`HF API error ${res.status}: ${err}`);
+    throw new Error(`Gemini API error ${res.status}: ${err}`);
   }
 
   const data = await res.json();
-  // data shape can be [N][384] or [[N][384]] — normalise
-  return Array.isArray(data[0][0]) ? data[0] : data;
+  const embeddings = data.embeddings;
+  if (!Array.isArray(embeddings)) {
+    throw new Error('Invalid response format from Gemini Batch API');
+  }
+
+  return embeddings.map((e: any) => e.values);
 }
 
 // ── Upsert chunks into Supabase ───────────────────────────────

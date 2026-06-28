@@ -38,45 +38,33 @@ function detectLang(text: string): 'es' | 'en' {
   return esWords.test(text) ? 'es' : 'en';
 }
 
-// ── Embed via HuggingFace ─────────────────────────────────────
-async function embedText(text: string, hfKey: string, retries = 3, delay = 300): Promise<number[]> {
-  const url = 'https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2';
+// ── Embed via Google Gemini (text-embedding-004) ─────────────
+async function embedText(text: string, geminiKey: string): Promise<number[]> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${geminiKey}`;
   
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url, {
-        method:  'POST',
-        headers: {
-          'Authorization': `Bearer ${hfKey}`,
-          'Content-Type':  'application/json',
-        },
-        body: JSON.stringify({
-          inputs:  text,
-          options: { wait_for_model: true },
-        }),
-      });
+  const res = await fetch(url, {
+    method:  'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      content: {
+        parts: [{ text }],
+      },
+    }),
+  });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`HF embed failed: ${res.status} ${errText}`);
-      }
-
-      const data = await res.json();
-      // Normalise response format: [1][384] or [384]
-      return Array.isArray(data[0]) ? data[0] : data;
-
-    } catch (err) {
-      const isDnsError = err instanceof TypeError && err.message.includes('dns error');
-      if (isDnsError && i < retries - 1) {
-        console.warn(`DNS resolution failed on attempt ${i + 1}. Retrying in ${delay}ms...`);
-        await new Promise(r => setTimeout(r, delay));
-        delay *= 2; // exponential backoff
-        continue;
-      }
-      throw err;
-    }
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Gemini embed failed: ${res.status} ${errText}`);
   }
-  throw new Error('HF embed failed after all retry attempts');
+
+  const data = await res.json();
+  const values = data.embedding?.values;
+  if (!Array.isArray(values)) {
+    throw new Error('Invalid embedding response format from Gemini');
+  }
+  return values;
 }
 
 // ── Main handler ──────────────────────────────────────────────
@@ -105,16 +93,16 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const GROQ_KEY = Deno.env.get('GROQ_API_KEY')!;
-    const HF_KEY   = Deno.env.get('HF_API_KEY')!;
-    const SB_URL   = Deno.env.get('SUPABASE_URL')!;
-    const SB_KEY   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const GROQ_KEY   = Deno.env.get('GROQ_API_KEY')!;
+    const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY')!;
+    const SB_URL     = Deno.env.get('SUPABASE_URL')!;
+    const SB_KEY     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
     const supabase = createClient(SB_URL, SB_KEY);
     const lang     = detectLang(message);
 
     // 1. Embed the user's question
-    const embedding = await embedText(message, HF_KEY);
+    const embedding = await embedText(message, GEMINI_KEY);
 
     // 2. Semantic search in pgvector
     const { data: docs, error: matchError } = await supabase.rpc('match_documents', {
