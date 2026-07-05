@@ -1,0 +1,75 @@
+---
+id: "keyout"
+title: "Keyout"
+subtitle: "Chroma Key & Background Remover"
+zone: "fullstack"
+status: "completed"
+date: "2026-06"
+color: "#00d4aa"
+hasImages: true
+githubUrl: "https://github.com/adrigm06/Keyout"
+demoUrl: "https://adrigm06.github.io/Keyout/"
+linkedinUrl: ""
+stack:
+  - "HTML5"
+  - "CSS3"
+  - "JavaScript"
+  - "Canvas API"
+  - "Chroma Key"
+  - "Web Workers"
+description:
+  es: "Herramienta web ligera para eliminar fondos y convertir formatos de imágenes de manera local, offline y sin servidor."
+  en: "Lightweight web tool to remove backgrounds and convert image formats locally, offline and completely serverless."
+---
+
+<Content lang="es">
+
+Keyout es un eliminador de fondos de imágenes y convertidor de formatos multi-imagen que se ejecuta **100% en el navegador de manera local y offline**. Diseñado como una herramienta ligera en un único archivo `index.html` (sin frameworks ni pasos de compilación), proporciona procesamiento de alto rendimiento directamente en el lado del cliente utilizando la **Canvas API** y algoritmos de procesamiento de imágenes a nivel de píxel.
+
+#### Características Destacadas
+
+- **Eliminación de Fondos Dual:**
+  - **Chroma Key Avanzado:** Distancia de color en espacio YCbCr para ignorar variaciones de iluminación y sombras, con tolerancia, suavizado y selección de múltiples colores clave simultáneos.
+  - **Modo Inteligente:** Integración de un modelo de eliminación de fondo local cargado en diferido (lazy-loaded) en el navegador.
+- **Refinamiento de Bordes:**
+  - Difuminado selectivo (feathering) mediante desenfoque de caja delimitable y técnica de *despill* para eliminar halos o reflejos de color en los contornos.
+- **Pincel de Corrección Manual:**
+  - Capa de corrección no destructiva que permite restaurar o borrar áreas a mano alzada. Las correcciones se preservan de forma inteligente incluso al ajustar los sliders de tolerancia.
+- **Convertidor por Lotes:**
+  - Pestaña independiente para importar múltiples imágenes simultáneamente y realizar conversiones masivas a PNG, JPG o WEBP con descarga secuencial en un solo clic.
+
+#### Flujo de Procesamiento
+
+El pipeline calcula una máscara alfa de manera no destructiva a través de varias etapas independientes:
+
+```
+Imagen original ─► Máscara base ─► Refinamiento de bordes ─► Correcciones de pincel ─► Composición final
+```
+
+</Content>
+
+<Content lang="en">
+
+Keyout is a lightweight image background remover and batch format converter that runs **100% locally and offline in the browser**. Built as a single-file application (`index.html`) with no build steps or servers, it delivers high-performance image processing directly on the client side using the **Canvas API** and pixel-level manipulation.
+
+#### Key Features
+
+- **Dual Background Removal:**
+  - **Advanced Chroma Key:** Color distance evaluated in YCbCr space to ignore shadow and lighting variations, featuring tolerance, softness, and multi-color key selection.
+  - **Intelligent Mode:** Lazy-loaded local background removal model running directly inside the browser.
+- **Edge Refinement:**
+  - Selective feathering using a fast box blur and *color despill* options to clean up tinted fringes on edges.
+- **Manual Correction Brush:**
+  - Non-destructive correction layer to manually restore or erase parts of the image, keeping custom edits intact even if sliders are adjusted.
+- **Batch Converter:**
+  - Dedicated tab to drop multiple images at once for rapid conversion to PNG, JPG, or WEBP with sequential downloads.
+
+#### Processing Pipeline
+
+The pipeline computes a separate alpha mask non-destructively through independent stages:
+
+```
+Original image ─► Base mask ─► Edge refinement ─► Brush corrections ─► Final composite
+```
+
+</Content>

@@ -14,6 +14,7 @@ type GalleryItem =
 export default function ProjectGallery({ project }: ProjectGalleryProps) {
   const p = project.data;
   const [activeIndex, setActiveIndex] = useState(0);
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   const items: GalleryItem[] = [];
 
@@ -48,15 +49,19 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
     });
   }
 
+  const validItems = items.filter(
+    (item) => item.type === 'video' || !brokenImages[item.src]
+  );
+
   const goTo = useCallback(
-    (index: number) => setActiveIndex(Math.max(0, Math.min(index, items.length - 1))),
-    [items.length],
+    (index: number) => setActiveIndex(Math.max(0, Math.min(index, validItems.length - 1))),
+    [validItems.length],
   );
 
   const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
   const goNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
 
-  if (items.length === 0) {
+  if (validItems.length === 0) {
     return (
       <div
         className="p-4 rounded-[var(--radius-md)] font-mono text-xs"
@@ -68,7 +73,7 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
     );
   }
 
-  const current = items[activeIndex];
+  const current = validItems[activeIndex] || validItems[0];
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -117,14 +122,16 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
               height={320}
               loading="eager"
               onError={(e) => {
+                const src = current.src;
                 (e.target as HTMLImageElement).style.display = 'none';
+                setBrokenImages((prev) => ({ ...prev, [src]: true }));
               }}
             />
           )}
         </div>
 
         {/* Next arrow */}
-        {activeIndex < items.length - 1 && (
+        {activeIndex < validItems.length - 1 && (
           <button
             type="button"
             onClick={goNext}
@@ -151,13 +158,13 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
             backdropFilter: 'blur(4px)',
           }}
         >
-          {activeIndex + 1} / {items.length}
+          {activeIndex + 1} / {validItems.length}
         </div>
       </div>
 
       {/* ── Thumbnails ── */}
       <div className="flex gap-2 flex-wrap justify-center">
-        {items.map((item, i) => {
+        {validItems.map((item, i) => {
           const isActive = i === activeIndex;
           return (
             <button
@@ -191,7 +198,11 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
                   width={88}
                   height={64}
                   loading="lazy"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  onError={(e) => {
+                    const src = item.src;
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    setBrokenImages((prev) => ({ ...prev, [src]: true }));
+                  }}
                 />
               )}
             </button>

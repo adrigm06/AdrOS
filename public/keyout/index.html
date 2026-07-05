@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keyout — Background Remover</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --border:#e2e4e9; --text:#1a1d24; --muted:#6b7280;
+    --accent:#6366f1; --accent-h:#4f52e0; --danger:#ef4444; --ok:#10b981;
+    --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+    --check-a:#d9dbe1; --check-b:#f2f3f6; --radius:12px;
+  }
+  [data-theme="dark"]{
+    --bg:#111318; --panel:#1a1d24; --border:#2a2e38; --text:#e8eaf0; --muted:#8b91a0;
+    --accent:#818cf8; --accent-h:#9aa3ff; --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3);
+    --check-a:#2a2e38; --check-b:#1f232b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+    background:var(--bg); color:var(--text); overflow:hidden;
+  }
+  button{font:inherit; color:inherit; cursor:pointer; border:none; background:none}
+  /* ---------- Header ---------- */
+  header{
+    height:52px; display:flex; align-items:center; gap:10px; padding:0 16px;
+    background:var(--panel); border-bottom:1px solid var(--border);
+  }
+  .logo{font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px}
+  .logo .dot{width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block}
+  #imgInfo{color:var(--muted); font-size:12px; margin-left:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  header .spacer{flex:1}
+  .icon-btn{
+    width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--border); background:var(--panel); font-size:15px;
+  }
+  .icon-btn:hover{border-color:var(--accent)}
+  /* ---------- Layout ---------- */
+  #app{display:flex; height:calc(100% - 52px)}
+  aside{
+    width:290px; min-width:290px; overflow-y:auto; padding:14px;
+    background:var(--panel); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .group{border:1px solid var(--border); border-radius:var(--radius); padding:12px}
+  .group h3{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:10px}
+  .row{display:flex; align-items:center; gap:8px; margin-bottom:8px}
+  .row:last-child{margin-bottom:0}
+  .row label{flex:1; color:var(--text); font-size:13px}
+  .row .val{color:var(--muted); font-size:12px; min-width:30px; text-align:right; font-variant-numeric:tabular-nums}
+  input[type=range]{flex:1.4; accent-color:var(--accent); height:22px}
+  input[type=color]{
+    width:34px; height:28px; border:1px solid var(--border); border-radius:8px; padding:2px;
+    background:var(--panel); cursor:pointer;
+  }
+  .slider-row{display:grid; grid-template-columns:1fr; gap:2px; margin-bottom:10px}
+  .slider-row .top{display:flex; justify-content:space-between; font-size:12.5px}
+  .slider-row .top .val{color:var(--muted); font-variant-numeric:tabular-nums}
+  /* segmented control */
+  .seg{display:flex; background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:3px; gap:3px}
+  .seg button{
+    flex:1; padding:6px 4px; border-radius:7px; font-size:12.5px; color:var(--muted); text-align:center;
+  }
+  .seg button.active{background:var(--panel); color:var(--text); box-shadow:var(--shadow); font-weight:600}
+  .seg button:disabled{opacity:.4; cursor:not-allowed}
+  .btn{
+    display:flex; align-items:center; justify-content:center; gap:7px; width:100%;
+    padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--panel);
+    font-weight:600; font-size:13px;
+  }
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+  .btn.primary:hover{background:var(--accent-h)}
+  .btn.small{padding:6px 8px; font-size:12px; font-weight:500}
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .btn-pair{display:flex; gap:8px}
+  .hint{font-size:11.5px; color:var(--muted); margin-top:6px}
+  select{
+    flex:1; padding:7px 8px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel); color:var(--text); font:inherit;
+  }
+  .eyedrop.active{background:var(--accent); color:#fff; border-color:var(--accent)}
+  #aiStatus{font-size:12px; color:var(--muted); margin-top:6px; display:none}
+  progress{width:100%; height:6px; accent-color:var(--accent); margin-top:6px; display:none}
+  /* ---------- Preview ---------- */
+  #stage{flex:1; display:flex; flex-direction:column; padding:14px; gap:10px; min-width:0}
+  #panels{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:12px; min-height:0}
+  .panel{display:flex; flex-direction:column; min-height:0; min-width:0}
+  .panel .title{font-size:12px; color:var(--muted); font-weight:600; margin-bottom:6px; display:flex; gap:8px; align-items:center}
+  .viewport{
+    flex:1; position:relative; overflow:hidden; border-radius:var(--radius);
+    border:1px solid var(--border); background:var(--bg); min-height:0;
+    touch-action:none;
+  }
+  .viewport.checker{
+    /* always light so transparency is obvious in dark mode too */
+    background-image:
+      linear-gradient(45deg,#d2d5db 25%,transparent 25%,transparent 75%,#d2d5db 75%),
+      linear-gradient(45deg,#d2d5db 25%,#f0f1f5 25%,#f0f1f5 75%,#d2d5db 75%);
+    background-size:20px 20px; background-position:0 0,10px 10px;
+  }
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .chip{
+    width:28px; height:28px; border-radius:8px; border:1px solid var(--border);
+    cursor:pointer; position:relative;
+  }
+  .chip:hover::after{
+    content:'×'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; text-shadow:0 0 3px #000; background:rgba(0,0,0,.25); border-radius:7px;
+  }
+  .pan{position:absolute; top:0; left:0; transform-origin:0 0; will-change:transform}
+  .pan canvas{display:block}
+  #origVp{cursor:grab} #origVp.picking{cursor:crosshair}
+  #resVp{cursor:grab}
+  #resVp.brushing{cursor:none}
+  #brushCursor{
+    position:absolute; border:1.5px solid #fff; outline:1.5px solid rgba(0,0,0,.65);
+    border-radius:50%; pointer-events:none; display:none; transform:translate(-50%,-50%); z-index:5;
+  }
+  /* ---------- Empty / drop state ---------- */
+  #empty{
+    flex:1; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  #dropBox{
+    width:min(560px,100%); border:2px dashed var(--border); border-radius:18px; padding:60px 30px;
+    text-align:center; cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  #dropBox:hover, #dropBox.over{border-color:var(--accent); background:color-mix(in srgb,var(--accent) 6%, transparent)}
+  #dropBox .big{font-size:38px; margin-bottom:12px}
+  #dropBox h2{font-size:17px; margin-bottom:6px}
+  #dropBox p{color:var(--muted); font-size:13px}
+  #dropOverlay{
+    position:fixed; inset:0; background:color-mix(in srgb,var(--accent) 14%, transparent);
+    border:3px dashed var(--accent); z-index:50; display:none; align-items:center; justify-content:center;
+    font-size:20px; font-weight:700; color:var(--accent); pointer-events:none;
+  }
+  /* ---------- Header convert button ---------- */
+  .hdr-btn{
+    height:34px; padding:0 12px; border-radius:9px; display:flex; align-items:center; gap:6px;
+    border:1px solid var(--border); background:var(--panel); font-size:12.5px; font-weight:600; white-space:nowrap;
+  }
+  .hdr-btn:hover{border-color:var(--accent)}
+  /* ---------- Batch convert modal ---------- */
+  #convOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #convModal{
+    width:min(640px,100%); max-height:85vh; background:var(--panel); border-radius:16px;
+    border:1px solid var(--border); box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden;
+  }
+  .convHead{display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border)}
+  .convHead h2{font-size:15px}
+  .convBody{padding:16px 18px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:12px}
+  #convDrop{
+    border:2px dashed var(--border); border-radius:12px; padding:22px; text-align:center; cursor:pointer;
+    color:var(--muted); transition:border-color .15s, background .15s;
+  }
+  #convDrop:hover, #convDrop.over{border-color:var(--accent); background:color-mix(in srgb,var(--accent) 6%, transparent)}
+  #convDrop .big{font-size:26px; margin-bottom:6px}
+  #convList{display:flex; flex-direction:column; gap:8px}
+  .convItem{
+    display:flex; align-items:center; gap:10px; padding:8px; border:1px solid var(--border); border-radius:10px;
+  }
+  .convItem img{width:40px; height:40px; object-fit:cover; border-radius:6px; background:var(--bg)}
+  .convItem .name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.5px}
+  .convItem select{flex:none; width:auto; padding:5px 6px; font-size:12px}
+  .convItem .rm{width:26px; height:26px; border-radius:7px; color:var(--muted); font-size:14px}
+  .convItem .rm:hover{color:var(--danger)}
+  .convItem .status{font-size:11px; color:var(--muted); min-width:60px; text-align:right}
+  #convBulkRow{border-top:1px solid var(--border); padding-top:12px; display:flex; flex-direction:column; gap:8px}
+  #convBulkRow .row{display:flex; align-items:center; gap:8px}
+  #convBulkRow label{font-size:12.5px; color:var(--muted)}
+  .convFoot{padding:14px 18px; border-top:1px solid var(--border); display:flex; align-items:center; gap:12px; justify-content:space-between}
+  .convFoot .btn{width:auto; padding:9px 16px}
+  .hidden{display:none !important}
+  body:not(.adv-on) .adv{display:none !important}
+  #advRow{
+    display:flex; align-items:center; gap:8px; padding:2px 4px;
+  }
+  #advRow label{flex:1; font-weight:600; font-size:13px}
+  /* ---------- Responsive ---------- */
+  @media (max-width:900px){
+    body{overflow:auto}
+    #app{flex-direction:column; height:auto}
+    aside{width:100%; min-width:0; border-right:none; border-bottom:1px solid var(--border)}
+    #panels{grid-template-columns:1fr; }
+    .viewport{min-height:300px}
+    #stage{min-height:720px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo"><span class="dot"></span>Keyout</span>
+  <button class="hdr-btn" id="btnBatchConvert" title="Convert multiple images to another format">🔁 Convert Format</button>
+  <span id="imgInfo"></span>
+  <span class="spacer"></span>
+  <button class="icon-btn" id="btnNew" title="Open another image">📂</button>
+  <button class="icon-btn" id="btnTheme" title="Toggle dark mode">🌙</button>
+</header>
+
+<div id="app">
+  <aside id="sidebar" class="hidden">
+    <!-- Advanced toggle -->
+    <div id="advRow">
+      <label for="chkAdv">⚙ Advanced mode</label>
+      <input type="checkbox" id="chkAdv">
+    </div>
+
+    <!-- Mode -->
+    <div class="group">
+      <h3>Removal Mode</h3>
+      <div class="seg" id="modeSeg">
+        <button data-mode="chroma" class="active">Chroma Key</button>
+        <button data-mode="ai" id="modeAiBtn">Auto (AI)</button>
+      </div>
+      <div id="aiStatus"></div>
+      <progress id="aiProg" max="100" value="0"></progress>
+    </div>
+
+    <!-- Key color -->
+    <div class="group" id="chromaGroup">
+      <h3>Key Colors</h3>
+      <div class="row">
+        <button class="btn small eyedrop" id="btnEyedrop" style="flex:1">💧 Add key from image</button>
+        <input type="color" id="keyColor" value="#00ff00" title="Add key from palette">
+      </div>
+      <div class="chips" id="keyChips"></div>
+      <div class="hint">Every key color gets removed — add the background AND things like glows or shadows. Click a chip to delete it. Eyedropper stays on for multiple picks (Esc to stop).</div>
+      <div class="slider-row">
+        <div class="top"><span>Tolerance</span><span class="val" id="vTol">30</span></div>
+        <input type="range" id="sTol" min="0" max="100" value="30">
+      </div>
+      <div class="slider-row">
+        <div class="top"><span>Softness</span><span class="val" id="vSoft">12</span></div>
+        <input type="range" id="sSoft" min="0" max="60" value="12">
+      </div>
+      <div class="row adv">
+        <label for="chkDespill">Remove color spill (despill)</label>
+        <input type="checkbox" id="chkDespill" checked>
+      </div>
+    </div>
+
+    <!-- Edges -->
+    <div class="group adv">
+      <h3>Edge Refinement</h3>
+      <div class="slider-row">
+        <div class="top"><span>Shrink edge</span><span class="val" id="vShrink">0</span></div>
+        <input type="range" id="sShrink" min="-20" max="20" value="0">
+      </div>
+      <div class="slider-row">
+        <div class="top"><span>Feathering</span><span class="val" id="vFeather">3</span></div>
+        <input type="range" id="sFeather" min="0" max="20" value="3">
+      </div>
+      <div class="slider-row">
+        <div class="top"><span>Edge threshold</span><span class="val" id="vEdge">25</span></div>
+        <input type="range" id="sEdge" min="1" max="100" value="25">
+      </div>
+      <div class="hint">Shrink edge cuts N pixels off the whole outline — removes glow/halo fringes of any color without touching the interior. Negative values grow the edge instead.</div>
+    </div>
+
+    <!-- Matte cleanup -->
+    <div class="group adv">
+      <h3>Matte Cleanup</h3>
+      <div class="row">
+        <label for="chkProtect">Protect interior (erase from edges only)</label>
+        <input type="checkbox" id="chkProtect" checked>
+      </div>
+      <div class="row">
+        <label for="chkIsolate">Keep main subjects only</label>
+        <input type="checkbox" id="chkIsolate">
+      </div>
+      <div class="slider-row">
+        <div class="top"><span>Solidify</span><span class="val" id="vSolid">0</span></div>
+        <input type="range" id="sSolid" min="0" max="100" value="0">
+      </div>
+      <div class="slider-row">
+        <div class="top"><span>Clean specks</span><span class="val" id="vSpeck">15</span></div>
+        <input type="range" id="sSpeck" min="0" max="100" value="15">
+      </div>
+      <div class="slider-row">
+        <div class="top"><span>Fill holes</span><span class="val" id="vHoles">15</span></div>
+        <input type="range" id="sHoles" min="0" max="100" value="15">
+      </div>
+      <div class="hint">Protect interior: only erases areas reachable from the image border — key colors can no longer punch holes inside the subject (disable it if your subject has real see-through gaps). Keep main subjects: drops everything much smaller than the biggest kept piece(s). Solidify: pushes semi-transparent areas to fully opaque/transparent (fixes AI gray blotches). Specks/Holes: remove leftover islands / fill wrongly-erased gaps. 0 = off.</div>
+    </div>
+
+    <!-- Background -->
+    <div class="group">
+      <h3>Background</h3>
+      <div class="row">
+        <div class="seg" style="flex:1" id="bgSeg">
+          <button data-bg="transparent" class="active">Transparent</button>
+          <button data-bg="solid">Solid color</button>
+        </div>
+        <input type="color" id="bgColor" value="#ffffff" title="Background color" disabled>
+      </div>
+    </div>
+
+    <!-- Brush -->
+    <div class="group">
+      <h3>Correction Brush</h3>
+      <div class="seg" id="brushSeg">
+        <button data-brush="off" class="active">Off</button>
+        <button data-brush="restore">＋ Restore</button>
+        <button data-brush="erase">－ Erase</button>
+      </div>
+      <div class="slider-row" style="margin-top:10px">
+        <div class="top"><span>Size</span><span class="val" id="vBSize">40</span></div>
+        <input type="range" id="sBSize" min="4" max="300" value="40">
+      </div>
+      <div class="slider-row">
+        <div class="top"><span>Hardness</span><span class="val" id="vBHard">50</span></div>
+        <input type="range" id="sBHard" min="0" max="100" value="50">
+      </div>
+      <div class="btn-pair">
+        <button class="btn small" id="btnUndo" title="Ctrl+Z">↩ Undo</button>
+        <button class="btn small" id="btnClearBrush">✕ Clear</button>
+      </div>
+      <div class="hint">Paint on the Result panel. Space+drag to pan while brushing.</div>
+    </div>
+
+    <!-- Export -->
+    <div class="group">
+      <h3>Export</h3>
+      <div class="row">
+        <label for="fileNameInput">File name</label>
+      </div>
+      <div class="row">
+        <input type="text" id="fileNameInput" placeholder="image" style="flex:1; padding:7px 8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font:inherit;">
+      </div>
+      <div class="row">
+        <input type="checkbox" id="chkSuffix" checked style="width:auto; flex:none;">
+        <label for="chkSuffix" style="flex:1">Add "-keyout" suffix</label>
+      </div>
+      <div class="hint" id="suffixHint" style="margin-bottom:8px">Saved as “<span id="suffixPreview">image-keyout</span>.png”</div>
+      <div class="row">
+        <label>Format</label>
+        <select id="fmtSel">
+          <option value="image/png" selected>PNG</option>
+          <option value="image/jpeg">JPG</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+      </div>
+      <div class="slider-row hidden" id="qualityRow">
+        <div class="top"><span>Quality</span><span class="val" id="vQual">92</span></div>
+        <input type="range" id="sQual" min="10" max="100" value="92">
+      </div>
+      <button class="btn primary" id="btnDownload">⬇ Download</button>
+      <div class="hint" id="fmtHint">PNG keeps transparency and full quality.</div>
+    </div>
+  </aside>
+
+  <div id="stage">
+    <div id="empty">
+      <div id="dropBox">
+        <div class="big">🖼️</div>
+        <h2>Drop an image here</h2>
+        <p>or click to browse · paste with Ctrl+V<br>PNG · JPG · WEBP</p>
+      </div>
+    </div>
+    <div id="panels" class="hidden">
+      <div class="panel">
+        <div class="title">ORIGINAL <span style="font-weight:400">· click to pick key color when eyedropper is on</span></div>
+        <div class="viewport" id="origVp">
+          <div class="pan" id="origPan"><canvas id="origCanvas"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="title">RESULT <span id="zoomLabel" style="font-weight:400"></span></div>
+        <div class="viewport checker" id="resVp">
+          <div class="pan" id="resPan"><canvas id="resCanvas"></canvas></div>
+          <div id="brushCursor"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="dropOverlay">Drop to load image</div>
+<input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden>
+
+<div id="convOverlay" class="hidden">
+  <div id="convModal">
+    <div class="convHead">
+      <h2>Convert image format</h2>
+      <button class="icon-btn" id="convClose">✕</button>
+    </div>
+    <div class="convBody">
+      <div id="convDrop">
+        <div class="big">📁</div>
+        <p>Click or drop images here to add them to the batch</p>
+      </div>
+      <div id="convList"></div>
+      <div id="convBulkRow" class="hidden">
+        <div class="row">
+          <label>Convert all to</label>
+          <select id="convBulkFmt">
+            <option value="image/png">PNG</option>
+            <option value="image/jpeg">JPG</option>
+            <option value="image/webp">WEBP</option>
+          </select>
+          <button class="btn small" id="convApplyAll" style="width:auto; padding:6px 10px">Apply to all</button>
+        </div>
+        <div class="row">
+          <label for="convQuality" style="flex:1">Quality (JPG/WEBP)</label>
+          <span class="val" id="convQualVal">92</span>
+        </div>
+        <input type="range" id="convQuality" min="10" max="100" value="92">
+      </div>
+    </div>
+    <div class="convFoot">
+      <span id="convStatus" class="hint"></span>
+      <button class="btn primary" id="convGo" disabled>⬇ Convert &amp; Download All</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="convFileInput" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" multiple hidden>
+
+<script>
+'use strict';
+/* =====================================================================
+   Keyout — client-side background remover
+   Pipeline: image -> base mask (chroma | AI) -> edge refine (Sobel +
+   feather) -> brush correction layer -> composite (transparent | solid)
+   Preview runs on a downscaled copy; export re-runs at full resolution.
+   ===================================================================== */
+
+const $ = id => document.getElementById(id);
+const PREVIEW_MAX = 1400;
+
+const state = {
+  file: null, fileName: 'image',
+  fullW: 0, fullH: 0, fullData: null,      // ImageData at original resolution
+  prevW: 0, prevH: 0, prevData: null,      // ImageData at preview resolution
+  mode: 'chroma',                          // 'chroma' | 'ai'
+  aiMaskFull: null, aiMaskPrev: null,      // Float32Array alpha mattes from AI
+  key: {r:0, g:255, b:0},                  // primary key (despill) = keys[0]
+  keys: [{r:0, g:255, b:0}],               // all removed colors
+  tol: 30, soft: 12, despill: true,
+  feather: 3, edgeThr: 25, shrink: 0,
+  cleanSpecks: 15, fillHoles: 15, solidify: 0, isolate: false, protect: true,
+  bgMode: 'transparent', bgColor: {r:255,g:255,b:255},
+  brush: 'off', brushSize: 40, brushHard: 50,
+  strokes: [],                             // {mode,size,hard,pts:[{x,y}]} in preview px
+  zoom: 1, panX: 0, panY: 0,
+  picking: false, spaceDown: false,
+  dirty: {mask:true, clean:true, refine:true, comp:true},
+};
+
+// cached pipeline buffers (preview resolution)
+const cache = { baseMask:null, cleaned:null, refined:null, brushPix:null, brushDirty:true };
+
+/* ---------- small utils ---------- */
+const clamp = (v,a,b)=> v<a?a : v>b?b : v;
+const hex2rgb = h => ({r:parseInt(h.slice(1,3),16), g:parseInt(h.slice(3,5),16), b:parseInt(h.slice(5,7),16)});
+const rgb2hex = c => '#'+[c.r,c.g,c.b].map(v=>v.toString(16).padStart(2,'0')).join('');
+const cbOf = (r,g,b)=> 128 - 0.168736*r - 0.331264*g + 0.5*b;
+const crOf = (r,g,b)=> 128 + 0.5*r - 0.418688*g - 0.081312*b;
+
+function markDirty(stage){
+  if(stage==='mask'){ state.dirty.mask = state.dirty.clean = state.dirty.refine = state.dirty.comp = true; }
+  else if(stage==='clean'){ state.dirty.clean = state.dirty.refine = state.dirty.comp = true; }
+  else if(stage==='refine'){ state.dirty.refine = state.dirty.comp = true; }
+  else state.dirty.comp = true;
+  scheduleRender();
+}
+
+let rafPending = false;
+function scheduleRender(){
+  if(rafPending || !state.prevData) return;
+  rafPending = true;
+  requestAnimationFrame(()=>{ rafPending = false; renderPreview(); });
+}
+
+/* =====================================================================
+   PIPELINE (pure functions over pixel buffers — reused for preview & export)
+   ===================================================================== */
+
+// 1) Chroma key: distance in the CbCr plane (luminance-independent).
+//    Supports MULTIPLE key colors — a pixel is removed if it matches ANY key
+//    (min alpha wins), so background + glow/shadow tints can all be keyed out.
+function chromaMask(imgData, keys, tol, soft){
+  const d = imgData.data, n = imgData.width*imgData.height;
+  const mask = new Float32Array(n);
+  if(!keys.length){ mask.fill(1); return mask; }
+  const kcb = keys.map(k=>cbOf(k.r,k.g,k.b)), kcr = keys.map(k=>crOf(k.r,k.g,k.b));
+  const t0 = tol*0.9, t1 = t0 + Math.max(soft,1)*0.9, span = t1-t0;
+  const m = keys.length;
+  for(let i=0,p=0;i<n;i++,p+=4){
+    const r=d[p],g=d[p+1],b=d[p+2];
+    const cb = cbOf(r,g,b), cr = crOf(r,g,b);
+    let dist = Infinity;
+    for(let k=0;k<m;k++){
+      const dcb=cb-kcb[k], dcr=cr-kcr[k];
+      const dd = Math.sqrt(dcb*dcb+dcr*dcr);
+      if(dd<dist) dist=dd;
+    }
+    mask[i] = dist<=t0 ? 0 : dist>=t1 ? 1 : (dist-t0)/span;
+  }
+  return mask;
+}
+
+// 1a) Protect interior: the real background is always connected to the image
+//     border. Flood-fill from the border over removed pixels; any removed
+//     region NOT reachable from the border is inside the subject -> restore it.
+//     This lets key colors match interior details without punching holes.
+function protectInterior(mask, w, h){
+  const n = w*h;
+  const bg = new Uint8Array(n);
+  const stack = new Int32Array(n);
+  let top = 0;
+  const push = i=>{ if(!bg[i] && mask[i]<0.5){ bg[i]=1; stack[top++]=i; } };
+  for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); }
+  for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
+  while(top){
+    const i=stack[--top], x=i%w, y=(i/w)|0;
+    if(x>0)   push(i-1);
+    if(x<w-1) push(i+1);
+    if(y>0)   push(i-w);
+    if(y<h-1) push(i+w);
+  }
+  const out = mask.slice();
+  for(let i=0;i<n;i++) if(mask[i]<0.5 && !bg[i]) out[i]=1;
+  return out;
+}
+
+// 1b) Solidify: contrast curve on the matte — pushes semi-transparent pixels
+//     to fully opaque or fully transparent (fixes AI gray blotches / faint glow).
+function solidify(mask, v){
+  if(v<1) return mask;
+  const lo = 0.5*(v/100), hi = 1 - 0.49*(v/100), span = hi-lo;
+  const out = new Float32Array(mask.length);
+  for(let i=0;i<mask.length;i++) out[i] = clamp((mask[i]-lo)/span, 0, 1);
+  return out;
+}
+
+// separable box blur on a Float32 field
+function boxBlur(src, w, h, r){
+  if(r<1) return src.slice();
+  const tmp = new Float32Array(src.length), out = new Float32Array(src.length);
+  for(let y=0;y<h;y++){                       // horizontal
+    const row=y*w; let sum=0;
+    for(let x=-r;x<=r;x++) sum += src[row+clamp(x,0,w-1)];
+    for(let x=0;x<w;x++){
+      tmp[row+x]=sum/(2*r+1);
+      sum += src[row+clamp(x+r+1,0,w-1)] - src[row+clamp(x-r,0,w-1)];
+    }
+  }
+  for(let x=0;x<w;x++){                       // vertical
+    let sum=0;
+    for(let y=-r;y<=r;y++) sum += tmp[clamp(y,0,h-1)*w+x];
+    for(let y=0;y<h;y++){
+      out[y*w+x]=sum/(2*r+1);
+      sum += tmp[clamp(y+r+1,0,h-1)*w+x] - tmp[clamp(y-r,0,h-1)*w+x];
+    }
+  }
+  return out;
+}
+
+// 1b) Matte cleanup via connected components (flood fill, 4-neighborhood).
+//     - specks: kept islands smaller than speckPx are erased (glare, reflections)
+//     - holes:  erased regions smaller than holePx that do NOT touch the image
+//       border are restored (gaps wrongly cut inside the subject)
+function matteCleanup(mask, w, h, speckPx, holePx, isolate){
+  if(speckPx<1 && holePx<1 && !isolate) return mask;
+  const n = w*h, out = mask.slice();
+  const stack = new Int32Array(n);
+  function components(test){
+    const seen = new Uint8Array(n), comps = [];
+    for(let s=0;s<n;s++){
+      if(seen[s] || !test(s)) continue;
+      let top=0; stack[top++]=s; seen[s]=1;
+      const px=[]; let touches=false;
+      while(top){
+        const i=stack[--top]; px.push(i);
+        const x=i%w, y=(i/w)|0;
+        if(x===0||y===0||x===w-1||y===h-1) touches=true;
+        let j;
+        if(x>0   && !seen[j=i-1] && test(j)){ seen[j]=1; stack[top++]=j; }
+        if(x<w-1 && !seen[j=i+1] && test(j)){ seen[j]=1; stack[top++]=j; }
+        if(y>0   && !seen[j=i-w] && test(j)){ seen[j]=1; stack[top++]=j; }
+        if(y<h-1 && !seen[j=i+w] && test(j)){ seen[j]=1; stack[top++]=j; }
+      }
+      comps.push({px, touches});
+    }
+    return comps;
+  }
+  // >0.2 / <0.8 so the soft ramp around a region is cleaned with it (no ghost ring)
+  if(speckPx>=1 || isolate){
+    const comps = components(i=>mask[i]>0.2);
+    let maxA=0; for(const c of comps) if(c.px.length>maxA) maxA=c.px.length;
+    for(const c of comps){
+      const small = c.px.length < speckPx;
+      const notMain = isolate && c.px.length < maxA*0.15;   // keep pieces ≥15% of biggest
+      if(small || notMain) for(const i of c.px) out[i]=0;
+    }
+  }
+  if(holePx>=1){
+    const comps = components(i=>mask[i]<0.8);
+    for(const c of comps)
+      if(!c.touches && c.px.length<holePx) for(const i of c.px) out[i]=1;
+  }
+  return out;
+}
+// slider (0-100) -> area threshold in px, proportional to image size
+const cleanArea = (v,w,h)=> v<1 ? 0 : Math.round((v/100)**2 * w*h * 0.05);
+
+// 2a) Shrink / grow the matte edge (morphological erosion / dilation).
+//     Positive r chokes the outline inward — eats glow/halo fringes of ANY
+//     color without touching the interior. Negative r expands it.
+function morphShift(mask, w, h, r){
+  const rad = Math.abs(Math.round(r));
+  if(!rad) return mask;
+  const erode = r>0;
+  const tmp = new Float32Array(mask.length), out = new Float32Array(mask.length);
+  for(let y=0;y<h;y++){                       // horizontal min/max
+    const row=y*w;
+    for(let x=0;x<w;x++){
+      let v = erode?1:0;
+      const x0=Math.max(0,x-rad), x1=Math.min(w-1,x+rad);
+      if(erode){ for(let k=x0;k<=x1;k++){ const m=mask[row+k]; if(m<v)v=m; } }
+      else     { for(let k=x0;k<=x1;k++){ const m=mask[row+k]; if(m>v)v=m; } }
+      tmp[row+x]=v;
+    }
+  }
+  for(let x=0;x<w;x++){                       // vertical min/max
+    for(let y=0;y<h;y++){
+      let v = erode?1:0;
+      const y0=Math.max(0,y-rad), y1=Math.min(h-1,y+rad);
+      if(erode){ for(let k=y0;k<=y1;k++){ const m=tmp[k*w+x]; if(m<v)v=m; } }
+      else     { for(let k=y0;k<=y1;k++){ const m=tmp[k*w+x]; if(m>v)v=m; } }
+      out[y*w+x]=v;
+    }
+  }
+  return out;
+}
+
+// 2) Sobel on the mask -> edge map; feather (blur) applied only at edges.
+function refineMask(mask, w, h, feather, edgeThr){
+  if(feather<1) return mask.slice();
+  const edge = new Float32Array(mask.length);
+  const thr = edgeThr/100;
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const i=y*w+x;
+      const gx = -mask[i-w-1]-2*mask[i-1]-mask[i+w-1] + mask[i-w+1]+2*mask[i+1]+mask[i+w+1];
+      const gy = -mask[i-w-1]-2*mask[i-w]-mask[i-w+1] + mask[i+w-1]+2*mask[i+w]+mask[i+w+1];
+      edge[i] = Math.sqrt(gx*gx+gy*gy)/5.66 > thr ? 1 : 0;   // normalized magnitude
+    }
+  }
+  const edgeSoft = boxBlur(edge, w, h, Math.max(1,feather));  // soften the seam
+  const blurred  = boxBlur(mask, w, h, feather);
+  const out = new Float32Array(mask.length);
+  for(let i=0;i<mask.length;i++){
+    const e = edgeSoft[i];
+    out[i] = mask[i]*(1-e) + blurred[i]*e;
+  }
+  return out;
+}
+
+// 3) Brush correction layer: strokes rendered to an offscreen canvas.
+//    green channel = restore, red channel = erase; alpha = strength.
+function renderStrokes(strokes, w, h, scale){
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx = c.getContext('2d');
+  for(const s of strokes){
+    const rad = Math.max(1, s.size*scale/2);
+    const col = s.mode==='restore' ? '0,255,0' : '255,0,0';
+    const hard = s.hard/100;
+    for(let k=0;k<s.pts.length;k++){
+      const p0 = s.pts[Math.max(0,k-1)], p1 = s.pts[k];
+      const dx=(p1.x-p0.x)*scale, dy=(p1.y-p0.y)*scale;
+      const dist=Math.hypot(dx,dy), steps=Math.max(1,Math.ceil(dist/(rad*0.35)));
+      for(let t=0;t<=steps;t++){
+        const x=p0.x*scale+dx*t/steps, y=p0.y*scale+dy*t/steps;
+        const grad = ctx.createRadialGradient(x,y,rad*hard,x,y,rad);
+        grad.addColorStop(0,`rgba(${col},1)`); grad.addColorStop(1,`rgba(${col},0)`);
+        ctx.fillStyle=grad;
+        ctx.beginPath(); ctx.arc(x,y,rad,0,Math.PI*2); ctx.fill();
+      }
+    }
+  }
+  return ctx.getImageData(0,0,w,h).data;
+}
+
+function applyBrush(mask, brushPix){
+  if(!brushPix) return mask;
+  const out = mask.slice();
+  for(let i=0,p=0;i<mask.length;i++,p+=4){
+    const a = brushPix[p+3];
+    if(!a) continue;
+    const target = brushPix[p+1] >= brushPix[p] ? 1 : 0;     // g>=r -> restore
+    const s = a/255;
+    out[i] = out[i]*(1-s) + target*s;
+  }
+  return out;
+}
+
+// 4) Despill + composite into an RGBA buffer.
+function composite(imgData, mask, opts){
+  const src = imgData.data, w = imgData.width, h = imgData.height;
+  const out = new ImageData(w,h), o = out.data;
+  const {despill, key, bgMode, bgColor} = opts;
+  let ux=0, uy=0, doSpill=false;
+  if(despill){
+    ux = cbOf(key.r,key.g,key.b)-128; uy = crOf(key.r,key.g,key.b)-128;
+    const len = Math.hypot(ux,uy);
+    if(len>8){ ux/=len; uy/=len; doSpill=true; }
+  }
+  const solid = bgMode==='solid';
+  for(let i=0,p=0;i<w*h;i++,p+=4){
+    let r=src[p], g=src[p+1], b=src[p+2];
+    const a = mask[i];
+    if(doSpill && a>0.003 && a<0.997){
+      const y = 0.299*r+0.587*g+0.114*b;
+      let cb = cbOf(r,g,b)-128, cr = crOf(r,g,b)-128;
+      const dot = cb*ux+cr*uy;
+      if(dot>0){ cb -= ux*dot*0.9; cr -= uy*dot*0.9;
+        r = clamp(y + 1.402*cr, 0,255);
+        g = clamp(y - 0.344136*cb - 0.714136*cr, 0,255);
+        b = clamp(y + 1.772*cb, 0,255);
+      }
+    }
+    if(solid){
+      o[p]   = bgColor.r + (r-bgColor.r)*a;
+      o[p+1] = bgColor.g + (g-bgColor.g)*a;
+      o[p+2] = bgColor.b + (b-bgColor.b)*a;
+      o[p+3] = 255;
+    }else{
+      o[p]=r; o[p+1]=g; o[p+2]=b; o[p+3]=Math.round(a*255*(src[p+3]/255));
+    }
+  }
+  return out;
+}
+
+// Full pipeline for arbitrary resolution (used by export; preview uses caches).
+function runPipeline(imgData, featherScale, strokeScale){
+  const w=imgData.width, h=imgData.height;
+  let mask;
+  if(state.mode==='ai' && state.aiMaskFull && w===state.fullW){
+    mask = state.aiMaskFull;
+  }else if(state.mode==='ai' && state.aiMaskPrev && w===state.prevW){
+    mask = state.aiMaskPrev;
+  }else{
+    mask = chromaMask(imgData, state.keys, state.tol, state.soft);
+  }
+  if(state.protect) mask = protectInterior(mask, w, h);
+  mask = solidify(mask, state.solidify);
+  mask = matteCleanup(mask, w, h, cleanArea(state.cleanSpecks,w,h), cleanArea(state.fillHoles,w,h), state.isolate);
+  mask = morphShift(mask, w, h, Math.round(state.shrink*featherScale));
+  mask = refineMask(mask, w, h, Math.round(state.feather*featherScale), state.edgeThr);
+  if(state.strokes.length){
+    mask = applyBrush(mask, renderStrokes(state.strokes, w, h, strokeScale));
+  }
+  return composite(imgData, mask, state);
+}
+
+/* =====================================================================
+   PREVIEW RENDER (incremental via dirty flags)
+   ===================================================================== */
+function renderPreview(){
+  if(!state.prevData) return;
+  const w=state.prevW, h=state.prevH;
+  if(state.dirty.mask || !cache.baseMask){
+    cache.baseMask = (state.mode==='ai' && state.aiMaskPrev)
+      ? state.aiMaskPrev
+      : chromaMask(state.prevData, state.keys, state.tol, state.soft);
+    state.dirty.mask=false;
+  }
+  if(state.dirty.clean || !cache.cleaned){
+    let m = state.protect ? protectInterior(cache.baseMask, w, h) : cache.baseMask;
+    cache.cleaned = matteCleanup(solidify(m, state.solidify), w, h,
+      cleanArea(state.cleanSpecks,w,h), cleanArea(state.fillHoles,w,h), state.isolate);
+    state.dirty.clean=false;
+  }
+  if(state.dirty.refine || !cache.refined){
+    cache.refined = refineMask(morphShift(cache.cleaned, w, h, state.shrink), w, h, state.feather, state.edgeThr);
+    state.dirty.refine=false;
+  }
+  if(cache.brushDirty){
+    cache.brushPix = state.strokes.length ? renderStrokes(state.strokes, w, h, 1) : null;
+    cache.brushDirty=false;
+  }
+  const final = applyBrush(cache.refined, cache.brushPix);
+  const out = composite(state.prevData, final, state);
+  resCanvas.getContext('2d').putImageData(out,0,0);
+  state.dirty.comp=false;
+}
+
+/* =====================================================================
+   IMAGE LOADING
+   ===================================================================== */
+async function loadFile(file){
+  if(!file || !/^image\/(png|jpeg|webp)/.test(file.type)){ return; }
+  state.file = file;
+  state.fileName = (file.name||'image').replace(/\.[^.]+$/,'') || 'image';
+  $('fileNameInput').value = state.fileName;
+  updateSuffixPreview();
+  let bmp;
+  try{ bmp = await createImageBitmap(file, {imageOrientation:'from-image'}); }
+  catch{ bmp = await createImageBitmap(file); }
+  state.fullW = bmp.width; state.fullH = bmp.height;
+
+  // full-res buffer
+  const fc = document.createElement('canvas'); fc.width=bmp.width; fc.height=bmp.height;
+  const fctx = fc.getContext('2d',{willReadFrequently:true});
+  fctx.drawImage(bmp,0,0);
+  state.fullData = fctx.getImageData(0,0,bmp.width,bmp.height);
+
+  // preview buffer
+  const scale = Math.min(1, PREVIEW_MAX/Math.max(bmp.width,bmp.height));
+  state.prevW = Math.max(1,Math.round(bmp.width*scale));
+  state.prevH = Math.max(1,Math.round(bmp.height*scale));
+  const pc = document.createElement('canvas'); pc.width=state.prevW; pc.height=state.prevH;
+  const pctx = pc.getContext('2d',{willReadFrequently:true});
+  pctx.imageSmoothingQuality='high';
+  pctx.drawImage(bmp,0,0,state.prevW,state.prevH);
+  state.prevData = pctx.getImageData(0,0,state.prevW,state.prevH);
+  bmp.close?.();
+
+  // reset per-image state
+  state.strokes=[]; cache.brushDirty=true; cache.baseMask=cache.cleaned=cache.refined=null;
+  state.aiMaskFull=state.aiMaskPrev=null;
+  if(state.mode==='ai') setMode('chroma', true);
+  autoKeyFromBorder();
+
+  origCanvas.width=resCanvas.width=state.prevW;
+  origCanvas.height=resCanvas.height=state.prevH;
+  origCanvas.getContext('2d').putImageData(state.prevData,0,0);
+
+  $('imgInfo').textContent = `${file.name||'pasted image'} · ${state.fullW}×${state.fullH}px`;
+  $('empty').classList.add('hidden');
+  $('panels').classList.remove('hidden');
+  $('sidebar').classList.remove('hidden');
+  fitView();
+  markDirty('mask');
+}
+
+// initial key color = most frequent (quantized) border color
+function autoKeyFromBorder(){
+  const {data,width:w,height:h} = state.prevData;
+  const bins = new Map();
+  const visit = (x,y)=>{
+    const p=(y*w+x)*4, q=32;
+    const key=`${Math.round(data[p]/q)},${Math.round(data[p+1]/q)},${Math.round(data[p+2]/q)}`;
+    const e=bins.get(key)||{n:0,r:0,g:0,b:0};
+    e.n++; e.r+=data[p]; e.g+=data[p+1]; e.b+=data[p+2];
+    bins.set(key,e);
+  };
+  const step = Math.max(1,Math.floor(w/200));
+  for(let x=0;x<w;x+=step){ visit(x,0); visit(x,h-1); }
+  for(let y=0;y<h;y+=step){ visit(0,y); visit(w-1,y); }
+  let best=null;
+  for(const e of bins.values()) if(!best||e.n>best.n) best=e;
+  if(best){
+    const c={r:Math.round(best.r/best.n), g:Math.round(best.g/best.n), b:Math.round(best.b/best.n)};
+    state.keys=[c]; state.key=c;
+    $('keyColor').value = rgb2hex(c);
+    renderKeyChips();
+  }
+}
+
+/* =====================================================================
+   EXPORT
+   ===================================================================== */
+function outputBaseName(){
+  const typed = $('fileNameInput').value.trim();
+  const base = typed || state.fileName || 'image';
+  return $('chkSuffix').checked ? `${base}-keyout` : base;
+}
+function updateSuffixPreview(){
+  const fmt = $('fmtSel')?.value || 'image/png';
+  const ext = fmt==='image/png'?'png':fmt==='image/jpeg'?'jpg':'webp';
+  $('suffixPreview').textContent = `${outputBaseName()}.${ext}`;
+}
+$('fileNameInput').addEventListener('input', updateSuffixPreview);
+$('chkSuffix').addEventListener('change', updateSuffixPreview);
+$('fmtSel').addEventListener('change', updateSuffixPreview);
+
+async function download(){
+  if(!state.fullData) return;
+  const btn=$('btnDownload'); btn.disabled=true; btn.textContent='Processing…';
+  await new Promise(r=>setTimeout(r,30));                    // let UI paint
+  try{
+    const fmt = $('fmtSel').value;
+    const scale = state.fullW/state.prevW;
+    // JPG has no alpha: flatten onto bg color (white if transparent mode)
+    const saved = state.bgMode;
+    if(fmt==='image/jpeg' && state.bgMode==='transparent') state.bgMode='solid';
+    const out = runPipeline(state.fullData, scale, scale);
+    state.bgMode = saved;
+    const c=document.createElement('canvas'); c.width=state.fullW; c.height=state.fullH;
+    c.getContext('2d').putImageData(out,0,0);
+    const q = +$('sQual').value/100;
+    const blob = await new Promise(res=>c.toBlob(res,fmt,fmt==='image/png'?undefined:q));
+    const ext = fmt==='image/png'?'png':fmt==='image/jpeg'?'jpg':'webp';
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=`${outputBaseName()}.${ext}`;
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }finally{
+    btn.disabled=false; btn.textContent='⬇ Download';
+  }
+}
+
+/* =====================================================================
+   VIEW: shared zoom & pan for both panels
+   ===================================================================== */
+const origCanvas=$('origCanvas'), resCanvas=$('resCanvas');
+const origVp=$('origVp'), resVp=$('resVp');
+const pans=[$('origPan'),$('resPan')];
+
+function applyView(){
+  const t=`translate(${state.panX}px,${state.panY}px) scale(${state.zoom})`;
+  pans.forEach(p=>p.style.transform=t);
+  $('zoomLabel').textContent=`· ${Math.round(state.zoom*100)}%`;
+}
+function fitView(){
+  const r=resVp.getBoundingClientRect();
+  if(!r.width||!state.prevW) return;
+  state.zoom=Math.min(r.width/state.prevW, r.height/state.prevH)*0.97;
+  state.panX=(r.width-state.prevW*state.zoom)/2;
+  state.panY=(r.height-state.prevH*state.zoom)/2;
+  applyView();
+}
+window.addEventListener('resize', ()=>{ if(state.prevData) fitView(); });
+
+function wheelZoom(e){
+  e.preventDefault();
+  const r=e.currentTarget.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  const f=e.deltaY<0?1.15:1/1.15;
+  const z=clamp(state.zoom*f,0.03,20);
+  state.panX=mx-(mx-state.panX)*(z/state.zoom);
+  state.panY=my-(my-state.panY)*(z/state.zoom);
+  state.zoom=z; applyView(); updateBrushCursor();
+}
+[origVp,resVp].forEach(vp=>vp.addEventListener('wheel',wheelZoom,{passive:false}));
+
+// image-space coords from a pointer event on a viewport
+function imgCoords(e,vp){
+  const r=vp.getBoundingClientRect();
+  return { x:(e.clientX-r.left-state.panX)/state.zoom,
+           y:(e.clientY-r.top -state.panY)/state.zoom };
+}
+
+/* ---------- pointer handling: pan / brush / eyedropper ---------- */
+let drag=null;  // {type:'pan'|'brush', lastX,lastY}
+
+function pointerDown(e, vp){
+  vp.setPointerCapture(e.pointerId);
+  const brushing = vp===resVp && state.brush!=='off' && !state.spaceDown && e.button===0;
+  if(vp===origVp && state.picking && e.button===0){ pickColor(e); return; }
+  if(brushing){
+    const st={mode:state.brush, size:state.brushSize, hard:state.brushHard, pts:[imgCoords(e,vp)]};
+    state.strokes.push(st);
+    drag={type:'brush', stroke:st};
+    cache.brushDirty=true; markDirty('comp');
+  }else{
+    drag={type:'pan', lastX:e.clientX, lastY:e.clientY};
+    vp.style.cursor='grabbing';
+  }
+}
+function pointerMove(e, vp){
+  if(vp===resVp) updateBrushCursor(e);
+  if(!drag) return;
+  if(drag.type==='pan'){
+    state.panX+=e.clientX-drag.lastX; state.panY+=e.clientY-drag.lastY;
+    drag.lastX=e.clientX; drag.lastY=e.clientY;
+    applyView();
+  }else{
+    drag.stroke.pts.push(imgCoords(e,vp));
+    cache.brushDirty=true; markDirty('comp');
+  }
+}
+function pointerUp(e, vp){ drag=null; vp.style.cursor=''; }
+
+[[origVp],[resVp]].forEach(([vp])=>{
+  vp.addEventListener('pointerdown', e=>pointerDown(e,vp));
+  vp.addEventListener('pointermove', e=>pointerMove(e,vp));
+  vp.addEventListener('pointerup',   e=>pointerUp(e,vp));
+  vp.addEventListener('pointercancel', e=>pointerUp(e,vp));
+});
+resVp.addEventListener('pointerleave', ()=>{ $('brushCursor').style.display='none'; });
+
+function updateBrushCursor(e){
+  const bc=$('brushCursor');
+  const show = state.brush!=='off' && !state.spaceDown;
+  resVp.classList.toggle('brushing', show);
+  if(!show || !e){ if(!e) bc.style.display='none'; return; }
+  const r=resVp.getBoundingClientRect();
+  bc.style.display='block';
+  bc.style.left=(e.clientX-r.left)+'px';
+  bc.style.top=(e.clientY-r.top)+'px';
+  const d=state.brushSize*state.zoom;
+  bc.style.width=d+'px'; bc.style.height=d+'px';
+}
+
+/* ---------- eyedropper ---------- */
+function pickColor(e){
+  const {x,y}=imgCoords(e,origVp);
+  const xi=clamp(Math.round(x),1,state.prevW-2), yi=clamp(Math.round(y),1,state.prevH-2);
+  const d=state.prevData.data; let r=0,g=0,b=0;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){        // 3×3 average
+    const p=((yi+dy)*state.prevW+(xi+dx))*4; r+=d[p]; g+=d[p+1]; b+=d[p+2];
+  }
+  addKey({r:Math.round(r/9), g:Math.round(g/9), b:Math.round(b/9)});
+  // eyedropper stays active so several keys can be picked in a row (Esc to stop)
+}
+
+/* ---------- key color list ---------- */
+function addKey(c){
+  if(state.keys.length>=8) state.keys.pop();
+  state.keys.push(c);
+  state.key = state.keys[0];               // despill uses the first key
+  $('keyColor').value = rgb2hex(c);
+  renderKeyChips();
+  if(state.mode!=='chroma') setMode('chroma');
+  markDirty('mask');
+}
+function removeKey(idx){
+  state.keys.splice(idx,1);
+  state.key = state.keys[0] || {r:0,g:255,b:0};
+  renderKeyChips();
+  markDirty('mask');
+}
+function renderKeyChips(){
+  const box=$('keyChips'); box.innerHTML='';
+  state.keys.forEach((k,i)=>{
+    const el=document.createElement('button');
+    el.className='chip'; el.style.background=rgb2hex(k);
+    el.title=`${rgb2hex(k)} — click to remove`;
+    el.onclick=()=>removeKey(i);
+    box.appendChild(el);
+  });
+}
+function setPicking(on){
+  state.picking=on;
+  $('btnEyedrop').classList.toggle('active',on);
+  origVp.classList.toggle('picking',on);
+}
+$('btnEyedrop').onclick=()=>setPicking(!state.picking);
+
+/* =====================================================================
+   AI MODE (lazy-loaded from CDN, optional)
+   ===================================================================== */
+let aiLib=null, aiRunning=false;
+async function runAI(){
+  if(aiRunning || !state.file) return;
+  aiRunning=true;
+  const status=$('aiStatus'), prog=$('aiProg');
+  status.style.display='block'; prog.style.display='block'; prog.value=0;
+  status.textContent='Loading AI model (first time may take a while)…';
+  try{
+    if(!aiLib) aiLib = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1/+esm');
+    const blob = await aiLib.removeBackground(state.file, {
+      progress:(k,c,t)=>{ prog.value=t?Math.round(c/t*100):0;
+        status.textContent = k.startsWith('fetch')?'Downloading model…':'Segmenting image…'; }
+    });
+    // read alpha channel of the AI result at full + preview resolutions
+    const bmp = await createImageBitmap(blob);
+    const grab=(w,h)=>{ const c=document.createElement('canvas'); c.width=w; c.height=h;
+      const ctx=c.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(bmp,0,0,w,h);
+      const px=ctx.getImageData(0,0,w,h).data, m=new Float32Array(w*h);
+      for(let i=0;i<m.length;i++) m[i]=px[i*4+3]/255;
+      return m; };
+    state.aiMaskFull = grab(state.fullW,state.fullH);
+    state.aiMaskPrev = grab(state.prevW,state.prevH);
+    bmp.close?.();
+    status.textContent='AI matte ready — refine with feather & brush.';
+    setMode('ai');
+  }catch(err){
+    console.error(err);
+    status.textContent='AI unavailable (offline or CDN blocked). Chroma mode still works.';
+    setMode('chroma');
+  }finally{
+    aiRunning=false; prog.style.display='none';
+    setTimeout(()=>{status.style.display='none';},6000);
+  }
+}
+
+function setMode(mode, silent){
+  state.mode=mode;
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  $('chromaGroup').style.opacity = mode==='ai'?'.45':'1';
+  $('chromaGroup').style.pointerEvents = mode==='ai'?'none':'auto';
+  cache.baseMask=null;
+  if(!silent) markDirty('mask');
+}
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
+  if(b.dataset.mode==='ai'){ state.aiMaskPrev ? setMode('ai') : runAI(); }
+  else setMode('chroma');
+});
+
+/* =====================================================================
+   UI WIRING
+   ===================================================================== */
+function bindSlider(id, valId, prop, stage){
+  const el=$(id);
+  el.addEventListener('input',()=>{ state[prop]=+el.value; $(valId).textContent=el.value; markDirty(stage); });
+}
+bindSlider('sTol','vTol','tol','mask');
+bindSlider('sSoft','vSoft','soft','mask');
+bindSlider('sSpeck','vSpeck','cleanSpecks','clean');
+bindSlider('sHoles','vHoles','fillHoles','clean');
+bindSlider('sShrink','vShrink','shrink','refine');
+bindSlider('sFeather','vFeather','feather','refine');
+bindSlider('sEdge','vEdge','edgeThr','refine');
+$('sBSize').addEventListener('input',e=>{ state.brushSize=+e.target.value; $('vBSize').textContent=e.target.value; });
+$('sBHard').addEventListener('input',e=>{ state.brushHard=+e.target.value; $('vBHard').textContent=e.target.value; });
+$('sQual').addEventListener('input',e=>$('vQual').textContent=e.target.value);
+
+$('keyColor').addEventListener('change',e=>addKey(hex2rgb(e.target.value)));
+bindSlider('sSolid','vSolid','solidify','clean');
+$('chkIsolate').addEventListener('change',e=>{ state.isolate=e.target.checked; markDirty('clean'); });
+$('chkProtect').addEventListener('change',e=>{ state.protect=e.target.checked; markDirty('clean'); });
+$('chkDespill').addEventListener('change',e=>{ state.despill=e.target.checked; markDirty('comp'); });
+$('bgColor').addEventListener('input',e=>{ state.bgColor=hex2rgb(e.target.value); markDirty('comp'); });
+
+document.querySelectorAll('#bgSeg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#bgSeg button').forEach(x=>x.classList.toggle('active',x===b));
+  state.bgMode=b.dataset.bg;
+  $('bgColor').disabled = state.bgMode!=='solid';
+  markDirty('comp');
+});
+document.querySelectorAll('#brushSeg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#brushSeg button').forEach(x=>x.classList.toggle('active',x===b));
+  state.brush=b.dataset.brush;
+  updateBrushCursor();
+});
+$('btnUndo').onclick=()=>{ state.strokes.pop(); cache.brushDirty=true; markDirty('comp'); };
+$('btnClearBrush').onclick=()=>{ state.strokes=[]; cache.brushDirty=true; markDirty('comp'); };
+
+$('fmtSel').addEventListener('change',()=>{
+  const f=$('fmtSel').value;
+  $('qualityRow').classList.toggle('hidden', f==='image/png');
+  $('fmtHint').textContent = f==='image/png' ? 'PNG keeps transparency and full quality.'
+    : f==='image/jpeg' ? 'JPG has no transparency — it will be flattened onto the background color.'
+    : 'WEBP supports transparency with smaller files.';
+});
+$('btnDownload').onclick=download;
+
+/* ---------- advanced mode ---------- */
+// In simple mode these values are applied automatically — they're the
+// combination that works best across image types (protect interior on,
+// moderate cleanup, soft feather, despill on).
+const AUTO_DEFAULTS = {
+  tol:30, soft:12, despill:true,
+  shrink:0, feather:3, edgeThr:25,
+  protect:true, isolate:false, solidify:0, cleanSpecks:15, fillHoles:15,
+};
+function applyAutoDefaults(){
+  Object.assign(state, AUTO_DEFAULTS);
+  const sync=(id,valId,v)=>{ $(id).value=v; if(valId)$(valId).textContent=v; };
+  sync('sTol','vTol',state.tol);        sync('sSoft','vSoft',state.soft);
+  sync('sShrink','vShrink',state.shrink); sync('sFeather','vFeather',state.feather);
+  sync('sEdge','vEdge',state.edgeThr);  sync('sSolid','vSolid',state.solidify);
+  sync('sSpeck','vSpeck',state.cleanSpecks); sync('sHoles','vHoles',state.fillHoles);
+  $('chkDespill').checked=state.despill;
+  $('chkProtect').checked=state.protect;
+  $('chkIsolate').checked=state.isolate;
+  markDirty('mask');
+}
+function setAdvanced(on){
+  document.body.classList.toggle('adv-on', on);
+  $('chkAdv').checked = on;
+  try{ localStorage.setItem('keyout-adv', on?'1':'0'); }catch{}
+  if(!on) applyAutoDefaults();
+}
+$('chkAdv').addEventListener('change',e=>setAdvanced(e.target.checked));
+try{ setAdvanced(localStorage.getItem('keyout-adv')==='1'); }catch{ setAdvanced(false); }
+
+/* ---------- theme ---------- */
+const root=document.documentElement;
+function setTheme(t){ root.dataset.theme=t; $('btnTheme').textContent = t==='dark'?'☀️':'🌙'; }
+setTheme(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+$('btnTheme').onclick=()=>setTheme(root.dataset.theme==='dark'?'light':'dark');
+
+/* ---------- file input / drag & drop / paste ---------- */
+$('dropBox').onclick=()=>$('fileInput').click();
+$('btnNew').onclick=()=>$('fileInput').click();
+$('fileInput').addEventListener('change',e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); e.target.value=''; });
+
+let dragDepth=0;
+window.addEventListener('dragenter',e=>{ e.preventDefault(); if(++dragDepth===1)$('dropOverlay').style.display='flex'; });
+window.addEventListener('dragleave',e=>{ e.preventDefault(); if(--dragDepth<=0){dragDepth=0;$('dropOverlay').style.display='none';} });
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>{
+  e.preventDefault(); dragDepth=0; $('dropOverlay').style.display='none';
+  const f=[...e.dataTransfer.files].find(f=>/^image\//.test(f.type));
+  if(f) loadFile(f);
+});
+window.addEventListener('paste',e=>{
+  const it=[...(e.clipboardData?.items||[])].find(i=>/^image\//.test(i.type));
+  if(it) loadFile(it.getAsFile());
+});
+
+/* ---------- keyboard ---------- */
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space' && !e.repeat){ state.spaceDown=true; updateBrushCursor(); if(e.target===document.body) e.preventDefault(); }
+  if((e.ctrlKey||e.metaKey) && e.key==='z'){ e.preventDefault(); $('btnUndo').click(); }
+  if(e.key==='['){ $('sBSize').value=Math.max(4,state.brushSize-8); $('sBSize').dispatchEvent(new Event('input')); }
+  if(e.key===']'){ $('sBSize').value=Math.min(300,state.brushSize+8); $('sBSize').dispatchEvent(new Event('input')); }
+  if(e.key==='0' && state.prevData) fitView();
+  if(e.key==='Escape'){ setPicking(false); closeConvModal(); }
+});
+window.addEventListener('keyup',e=>{ if(e.code==='Space'){ state.spaceDown=false; updateBrushCursor(); } });
+
+/* =====================================================================
+   BATCH FORMAT CONVERTER (independent of the background-removal pipeline)
+   Lets the user load any number of images, pick a target format per
+   image (or apply one to all), then converts & downloads them one by one.
+   ===================================================================== */
+let convId = 0;
+let convItems = [];
+
+function fmtExt(fmt){ return fmt==='image/png'?'png' : fmt==='image/jpeg'?'jpg' : 'webp'; }
+
+function addConvFiles(files){
+  for(const f of files){
+    if(!/^image\//.test(f.type)) continue;
+    convItems.push({ id:convId++, file:f, name:f.name||'image', url:URL.createObjectURL(f), format:'image/png' });
+  }
+  renderConvList();
+}
+
+function renderConvList(){
+  const box = $('convList'); box.innerHTML='';
+  convItems.forEach(item=>{
+    const el = document.createElement('div'); el.className='convItem';
+    el.innerHTML = `
+      <img src="${item.url}" alt="">
+      <span class="name" title="${item.name}">${item.name}</span>
+      <select data-id="${item.id}">
+        <option value="image/png"${item.format==='image/png'?' selected':''}>PNG</option>
+        <option value="image/jpeg"${item.format==='image/jpeg'?' selected':''}>JPG</option>
+        <option value="image/webp"${item.format==='image/webp'?' selected':''}>WEBP</option>
+      </select>
+      <span class="status" data-status="${item.id}"></span>
+      <button class="rm" data-rm="${item.id}" title="Remove">✕</button>`;
+    box.appendChild(el);
+  });
+  box.querySelectorAll('select[data-id]').forEach(s=>{
+    s.onchange = ()=>{ const it=convItems.find(x=>x.id===+s.dataset.id); if(it) it.format=s.value; };
+  });
+  box.querySelectorAll('[data-rm]').forEach(b=>{
+    b.onclick = ()=>{
+      const id = +b.dataset.rm;
+      const it = convItems.find(x=>x.id===id);
+      if(it) URL.revokeObjectURL(it.url);
+      convItems = convItems.filter(x=>x.id!==id);
+      renderConvList();
+    };
+  });
+  $('convBulkRow').classList.toggle('hidden', convItems.length===0);
+  $('convGo').disabled = convItems.length===0;
+  if(!convItems.length) $('convStatus').textContent='';
+}
+
+$('convApplyAll').onclick = ()=>{
+  const fmt = $('convBulkFmt').value;
+  convItems.forEach(it=>it.format=fmt);
+  renderConvList();
+};
+$('convQuality').addEventListener('input', e=>$('convQualVal').textContent=e.target.value);
+
+async function convertAllAndDownload(){
+  if(!convItems.length) return;
+  const btn = $('convGo'); btn.disabled=true;
+  const q = +$('convQuality').value/100;
+  for(let i=0;i<convItems.length;i++){
+    const item = convItems[i];
+    const statusEl = document.querySelector(`[data-status="${item.id}"]`);
+    if(statusEl) statusEl.textContent='Converting…';
+    $('convStatus').textContent = `Converting ${i+1} / ${convItems.length}…`;
+    try{
+      let bmp;
+      try{ bmp = await createImageBitmap(item.file, {imageOrientation:'from-image'}); }
+      catch{ bmp = await createImageBitmap(item.file); }
+      const c = document.createElement('canvas'); c.width=bmp.width; c.height=bmp.height;
+      const ctx = c.getContext('2d');
+      if(item.format==='image/jpeg'){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); } // no alpha in JPG
+      ctx.drawImage(bmp,0,0);
+      bmp.close?.();
+      const blob = await new Promise(res=>c.toBlob(res, item.format, item.format==='image/png'?undefined:q));
+      const base = (item.name||'image').replace(/\.[^.]+$/,'') || 'image';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${base}.${fmtExt(item.format)}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+      if(statusEl) statusEl.textContent='✓ Done';
+    }catch(err){
+      console.error(err);
+      if(statusEl) statusEl.textContent='✗ Error';
+    }
+    await new Promise(r=>setTimeout(r,350)); // stagger so the browser doesn't block multi-downloads
+  }
+  $('convStatus').textContent = `Converted ${convItems.length} image(s).`;
+  btn.disabled = false;
+}
+$('convGo').onclick = convertAllAndDownload;
+
+function openConvModal(){ $('convOverlay').classList.remove('hidden'); }
+function closeConvModal(){ $('convOverlay')?.classList.add('hidden'); }
+$('btnBatchConvert').onclick = openConvModal;
+$('convClose').onclick = closeConvModal;
+$('convOverlay').addEventListener('click', e=>{ if(e.target===$('convOverlay')) closeConvModal(); });
+
+$('convDrop').onclick = ()=>$('convFileInput').click();
+$('convFileInput').addEventListener('change', e=>{ addConvFiles([...e.target.files]); e.target.value=''; });
+$('convDrop').addEventListener('dragover', e=>{ e.preventDefault(); e.stopPropagation(); $('convDrop').classList.add('over'); });
+$('convDrop').addEventListener('dragleave', e=>{ e.preventDefault(); e.stopPropagation(); $('convDrop').classList.remove('over'); });
+$('convDrop').addEventListener('drop', e=>{
+  e.preventDefault(); e.stopPropagation();
+  $('convDrop').classList.remove('over');
+  addConvFiles([...e.dataTransfer.files]);
+});
+</script>
+</body>
+</html>
