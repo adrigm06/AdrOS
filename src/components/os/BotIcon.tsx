@@ -107,6 +107,11 @@ export default function BotIcon({
 
   const handleClick = () => {
     if (hasMoved.current || !position) return;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (isMobile) {
+      onOpen();
+      return;
+    }
     const now = Date.now();
     if (now - lastClick.current < 380) {
       lastClick.current = 0;
@@ -116,6 +121,8 @@ export default function BotIcon({
       lastClick.current = now;
     }
   };
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const containerStyle: React.CSSProperties = position
     ? {
@@ -129,7 +136,8 @@ export default function BotIcon({
       }
     : {};
 
-  const iconScale = isDragging ? 0.95 : isHovered ? 1.03 : 1;
+  const iconScale = isDragging ? 0.95 : isHovered ? 1.05 : 1;
+  const avatarSize = isMobile ? 64 : 72;
 
   return (
     <div
@@ -146,74 +154,95 @@ export default function BotIcon({
         onTouchStart={handleTouchStart}
         onFocus={() => setIsHovered(true)}
         onBlur={() => setIsHovered(false)}
-        className="flex flex-col items-center justify-between p-4 outline-none transition-all duration-200"
-        style={{
-          width: 206, // ocupe aprox 2 celdas de ancho (220 - padding)
-          height: 224, // ocupe aprox 2 celdas de alto (236 - padding)
-          cursor: position ? 'grab' : 'pointer',
-          transform: `scale(${iconScale})`,
-          // Glassmorphism premium
-          background: 'rgba(20, 22, 30, 0.35)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1.5px solid rgba(0, 212, 170, 0.2)',
-          boxShadow: isHovered && !isDragging
-            ? '0 8px 32px rgba(0, 212, 170, 0.15), inset 0 0 12px rgba(0, 212, 170, 0.1)'
-            : '0 8px 24px rgba(0, 0, 0, 0.3)',
-          borderRadius: 24,
-        }}
+        className="flex flex-col items-center justify-between outline-none transition-all duration-200"
+        style={
+          isMobile
+            ? {
+                width: 80,
+                height: 'auto',
+                padding: '4px',
+                background: 'transparent',
+                border: 'none',
+                boxShadow: 'none',
+                backdropFilter: 'none',
+                WebkitBackdropFilter: 'none',
+                cursor: 'grab',
+                transform: `scale(${iconScale})`,
+              }
+            : {
+                width: 206,
+                height: 224,
+                padding: '16px',
+                cursor: position ? 'grab' : 'pointer',
+                transform: `scale(${iconScale})`,
+                background: 'rgba(20, 22, 30, 0.35)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1.5px solid rgba(0, 212, 170, 0.2)',
+                boxShadow: isHovered && !isDragging
+                  ? '0 8px 32px rgba(0, 212, 170, 0.15), inset 0 0 12px rgba(0, 212, 170, 0.1)'
+                  : '0 8px 24px rgba(0, 0, 0, 0.3)',
+                borderRadius: 20,
+              }
+        }
         tabIndex={0}
         aria-label="Abrir AdrBOT"
       >
-        {/* Top bar indicators or design detail */}
-        <div className="w-full flex items-center justify-between px-1">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+        {/* Top bar indicators (Desktop only) */}
+        {!isMobile && (
+          <div className="w-full flex items-center justify-between px-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+            </div>
+            <span className="font-mono text-[9px] text-[var(--os-muted)] uppercase tracking-widest font-bold">
+              SYS:BOT
+            </span>
           </div>
-          <span className="font-mono text-[9px] text-[var(--os-muted)] uppercase tracking-widest font-bold">
-            SYS:BOT
-          </span>
-        </div>
+        )}
 
         {/* Centered Robot Image */}
-        <div className="relative flex items-center justify-center flex-1 my-2">
+        <div className={`relative flex items-center justify-center ${isMobile ? 'my-0.5' : 'flex-1 my-1'}`}>
           {/* Subtle glowing backdrop pulse */}
           <div
-            className="absolute w-24 h-24 rounded-full transition-all duration-500"
+            className="absolute rounded-full transition-all duration-500"
             style={{
-              background: 'radial-gradient(circle, rgba(0, 212, 170, 0.15) 0%, transparent 70%)',
+              width: avatarSize + (isMobile ? 12 : 20),
+              height: avatarSize + (isMobile ? 12 : 20),
+              background: 'radial-gradient(circle, rgba(0, 212, 170, 0.25) 0%, transparent 70%)',
               transform: isHovered ? 'scale(1.25)' : 'scale(1.0)',
             }}
           />
           <img
             src={isHovered || isOpen ? '/AIHover.webp' : '/AI.webp'}
             alt="Robot AdrBOT"
-            width={72}
-            height={72}
-            className="object-contain relative z-10 transition-transform duration-300"
+            width={avatarSize}
+            height={avatarSize}
+            className="object-contain relative z-10 transition-transform duration-300 pointer-events-none"
             style={{
-              filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4))',
+              filter: 'drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5))',
               transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
             }}
           />
         </div>
 
         {/* Bottom Label & Info */}
-        <div className="w-full text-center flex flex-col gap-0.5 mt-auto">
+        <div className={`w-full text-center flex flex-col gap-0.5 ${isMobile ? 'mt-0.5' : 'mt-auto'}`}>
           <span
             className="font-mono text-xs font-bold transition-colors duration-200"
             style={{
               color: 'var(--os-accent)',
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+              textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)',
             }}
           >
             AdrBOT
           </span>
-          <span className="font-mono text-[9px] text-[var(--os-muted)]">
-            {lang === 'es' ? 'Doble click para chatear' : 'Double click to chat'}
-          </span>
+          {!isMobile && (
+            <span className="font-mono text-[9px] text-[var(--os-muted)] truncate px-1">
+              {lang === 'es' ? 'Doble click para chatear' : 'Double click to chat'}
+            </span>
+          )}
         </div>
       </button>
     </div>

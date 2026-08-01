@@ -44,6 +44,7 @@ export default function FolderIcon({
   /* ── Drag (only reports to parent after actual movement) ── */
   const handleDragStart = useCallback((clientX: number, clientY: number) => {
     if (!position || !onDragEnd) return;
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
     hasMoved.current = false;
     dragReported.current = false;
     dragStart.current = { x: clientX, y: clientY, posX: position.x, posY: position.y };
@@ -204,9 +205,14 @@ export default function FolderIcon({
     };
   }, [isInfoDragging]);
 
-  /* ── Double-click ── */
+  /* ── Double-click / Single-tap on Mobile ── */
   const handleClick = () => {
     if (hasMoved.current || !position) return;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (isMobile) {
+      onOpen();
+      return;
+    }
     const now = Date.now();
     if (now - lastClick.current < 380) {
       lastClick.current = 0;

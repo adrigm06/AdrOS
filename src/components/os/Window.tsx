@@ -29,21 +29,23 @@ export default function Window({
   onBringToFront,
   onUpdatePosition,
   onUpdateSize,
+  isMobile,
   accentColor,
   children,
 }: WindowProps) {
+  const isMaximized = win.isMaximized;
+  const accent = accentColor || 'var(--os-accent)';
+  const isFullScreen = isMaximized || Boolean(isMobile);
+
   const { dragRef, position, isDragging, handleMouseDown, handleTouchStart } = useDrag({
     initialPosition: win.position,
     onDragEnd: (pos) => onUpdatePosition(win.id, pos),
-    disabled: win.isMaximized,
+    disabled: isFullScreen,
   });
 
   const [isResizing, setIsResizing] = useState(false);
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const exitIntentRef = useRef<'minimize' | 'close' | null>(null);
-  const isMaximized = win.isMaximized;
-  const accent = accentColor || 'var(--os-accent)';
-  const isFullScreen = isMaximized;
 
   /* ── Resize ── */
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -100,13 +102,15 @@ export default function Window({
     return { opacity: 0, scale: 0.88, y: 16 };
   };
 
+  const fullScreenHeight = isMobile ? 'calc(100dvh - 76px)' : '100dvh';
+
   const winStyle: React.CSSProperties = isFullScreen
     ? {
         position: 'fixed',
         top: 0,
         left: 0,
         width: '100vw',
-        height: '100dvh',
+        height: fullScreenHeight,
         zIndex: win.zIndex,
       }
     : {
@@ -131,7 +135,7 @@ export default function Window({
         rotate: 0,
         filter: 'blur(0px)',
         width: isFullScreen ? '100vw' : win.size.width,
-        height: isFullScreen ? '100dvh' : win.size.height,
+        height: isFullScreen ? fullScreenHeight : win.size.height,
         top: isFullScreen ? 0 : position.y,
         left: isFullScreen ? 0 : position.x,
       }}
@@ -171,8 +175,8 @@ export default function Window({
           borderTopLeftRadius: isFullScreen ? 0 : 'var(--radius-lg)',
           borderTopRightRadius: isFullScreen ? 0 : 'var(--radius-lg)',
         }}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
+        onMouseDown={!isFullScreen ? handleMouseDown : undefined}
+        onTouchStart={!isFullScreen ? handleTouchStart : undefined}
       >
         {/* Traffic lights */}
         <div className="flex items-center gap-[8px] flex-shrink-0">

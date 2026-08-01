@@ -145,11 +145,16 @@ export default function Desktop({ projects }: DesktopProps) {
   useEffect(() => {
     const initial = calcInitialPositions(projects);
     const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
-    // Calculate the absolute rightmost column of the grid (normal icons)
-    const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
-    // AdrBOT takes 2 columns, so its left edge starts 1 column to the left of the rightmost column
-    const botX = maxColX - GRID_X;
-    initial['adrbot'] = { x: Math.max(GRID_OFFSET_X, botX), y: GRID_OFFSET_Y };
+    const isMobile = vw < 768;
+
+    if (isMobile) {
+      const vh = typeof window !== 'undefined' ? window.innerHeight : 700;
+      initial['adrbot'] = { x: 16, y: Math.max(40, vh - 165) };
+    } else {
+      const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
+      const botX = maxColX - GRID_X;
+      initial['adrbot'] = { x: Math.max(GRID_OFFSET_X, botX), y: GRID_OFFSET_Y };
+    }
     setIconPositions(initial);
   }, [projects]);
 
@@ -176,6 +181,17 @@ export default function Desktop({ projects }: DesktopProps) {
       const vh = window.innerHeight;
 
       if (id === 'adrbot') {
+        const isMobile = vw < 768;
+        if (isMobile) {
+          const botWidth = 80;
+          const minY = 40;
+          const maxY = vh - 150;
+          const clampedY = Math.max(minY, Math.min(maxY, rawPos.y));
+          const midX = vw / 2;
+          const snappedX = (rawPos.x + botWidth / 2) < midX ? 16 : Math.max(16, vw - botWidth - 16);
+          return { ...prev, [id]: { x: snappedX, y: clampedY } };
+        }
+
         const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
         const bounds = {
           minX: GRID_OFFSET_X,
@@ -384,8 +400,14 @@ export default function Desktop({ projects }: DesktopProps) {
             <DraggableEgg key={egg.id} egg={egg} onMove={updateEgg} />
           ))}
 
-          {/* QuickLinks — bottom-right */}
-          <div className="absolute" style={{ right: 28, bottom: 24 }}>
+          {/* QuickLinks — bottom-right (positioned above taskbar on mobile) */}
+          <div
+            className="absolute transition-all duration-200"
+            style={{
+              right: typeof window !== 'undefined' && window.innerWidth < 768 ? 16 : 28,
+              bottom: typeof window !== 'undefined' && window.innerWidth < 768 ? 82 : 24,
+            }}
+          >
             <QuickLinks
               lang={langState.lang}
               onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
