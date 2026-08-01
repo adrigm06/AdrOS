@@ -25,35 +25,75 @@ function extractContent(body: string | undefined, lang: Lang): string {
 }
 
 /**
- * Render a line of text that might be a heading (###), table row (|...|), etc.
+ * Helper to parse inline Markdown syntax (bold, italic, code, links) into HTML.
+ */
+function parseInlineMarkdown(text: string): string {
+  if (!text) return '';
+  return text
+    // 1. Links: [text](url)
+    .replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--os-accent);text-decoration:underline">$1</a>',
+    )
+    // 2. Bold with double asterisks **text** or double underscores __text__
+    .replace(
+      /(\*\*|__)(.*?)\1/g,
+      '<strong style="font-weight:700;color:var(--os-text)">$2</strong>',
+    )
+    // 3. Inline code `code`
+    .replace(
+      /`([^`]+)`/g,
+      '<code style="background:var(--os-surface-2);border:1px solid var(--os-border);padding:1px 4px;border-radius:4px;font-family:var(--font-mono);font-size:0.88em;color:var(--os-accent)">$1</code>',
+    )
+    // 4. Single asterisk / underscore bold or italic *text* or _text_
+    .replace(
+      /(^|[^\*_\w])(\*|_)(?!\s)(.*?)(?<!\s)\2(?=[^\*_\w]|$)/g,
+      '$1<strong style="font-weight:600;color:var(--os-text)">$3</strong>',
+    );
+}
+
+/**
+ * Render a line of text that might be a heading (###), table row (|...|), list item (-/*), etc.
  */
 function renderLine(line: string, i: number) {
   const trimmed = line.trim();
 
-  // h4 (###)
+  // h4 (####)
   if (trimmed.startsWith('#### ')) {
+    const text = trimmed.replace('#### ', '');
     return (
-      <h4 key={i} className="font-mono text-sm font-bold mt-5 mb-2" style={{ color: 'var(--os-accent)' }}>
-        {trimmed.replace('#### ', '')}
-      </h4>
+      <h4
+        key={i}
+        className="font-mono text-sm font-bold mt-5 mb-2"
+        style={{ color: 'var(--os-accent)' }}
+        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(text) }}
+      />
     );
   }
 
   // h3 (###)
   if (trimmed.startsWith('### ')) {
+    const text = trimmed.replace('### ', '');
     return (
-      <h3 key={i} className="font-mono text-base font-bold mt-6 mb-2" style={{ color: 'var(--os-accent)' }}>
-        {trimmed.replace('### ', '')}
-      </h3>
+      <h3
+        key={i}
+        className="font-mono text-base font-bold mt-6 mb-2"
+        style={{ color: 'var(--os-accent)' }}
+        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(text) }}
+      />
     );
   }
 
   // h2 (##)
   if (trimmed.startsWith('## ')) {
+    const text = trimmed.replace('## ', '');
     return (
-      <h2 key={i} className="font-sans text-lg font-bold mt-6 mb-2" style={{ color: 'var(--os-text)' }}>
-        {trimmed.replace('## ', '')}
-      </h2>
+      <h2
+        key={i}
+        className="font-sans text-lg font-bold mt-6 mb-2"
+        style={{ color: 'var(--os-text)' }}
+        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(text) }}
+      />
     );
   }
 
@@ -61,9 +101,12 @@ function renderLine(line: string, i: number) {
   if (trimmed.startsWith('> ')) {
     const inner = trimmed.replace('> ', '');
     return (
-      <blockquote key={i} className="pl-3 py-1 my-3 font-mono text-xs italic border-l-2" style={{ borderColor: 'var(--os-accent)', color: 'var(--os-muted)' }}>
-        {inner}
-      </blockquote>
+      <blockquote
+        key={i}
+        className="pl-3 py-1 my-3 font-mono text-xs italic border-l-2"
+        style={{ borderColor: 'var(--os-accent)', color: 'var(--os-muted)' }}
+        dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(inner) }}
+      />
     );
   }
 
@@ -72,17 +115,32 @@ function renderLine(line: string, i: number) {
     return <hr key={i} className="my-4 border-0" style={{ height: 1, backgroundColor: 'var(--os-border)' }} />;
   }
 
+  // List item (- or *)
+  if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+    const itemText = trimmed.slice(2);
+    return (
+      <div key={i} className="flex items-start gap-2 my-1 pl-2 font-sans text-sm" style={{ color: 'var(--os-text)', lineHeight: 1.6 }}>
+        <span style={{ color: 'var(--os-accent)' }} className="font-mono text-xs select-none mt-0.5">▸</span>
+        <span dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(itemText) }} />
+      </div>
+    );
+  }
+
   // Table row (|...|...|)
   if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
     const cells = trimmed.split('|').filter(Boolean).map((c) => c.trim());
     // Detect header separator row (|---|---|)
     if (cells.every((c) => /^-{3,}$/.test(c))) {
-      return null; // skip separator
+      return null;
     }
     return (
-      <div key={i} className="flex gap-4 py-1 font-mono text-xs" style={{ color: 'var(--os-text-dim)' }}>
+      <div key={i} className="flex gap-4 py-1.5 font-mono text-xs border-b border-white/5" style={{ color: 'var(--os-text-dim)' }}>
         {cells.map((c, ci) => (
-          <span key={`${i}-${c}-${ci}`} className="flex-1">{c}</span>
+          <span
+            key={`${i}-${c}-${ci}`}
+            className="flex-1"
+            dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(c) }}
+          />
         ))}
       </div>
     );
@@ -93,15 +151,10 @@ function renderLine(line: string, i: number) {
     return <div key={i} className="h-2" />;
   }
 
-  // Regular paragraph — detect inline links [text](url)
-  const withLinks = trimmed.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--os-accent);text-decoration:underline">$1</a>',
-  );
-
+  // Regular paragraph
   return (
     <p key={i} className="font-sans text-sm leading-relaxed mb-2" style={{ color: 'var(--os-text)', lineHeight: 1.7 }}>
-      <span dangerouslySetInnerHTML={{ __html: withLinks }} />
+      <span dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(trimmed) }} />
     </p>
   );
 }
@@ -118,7 +171,7 @@ export default function ProjectReadme({ project, lang }: ProjectReadmeProps) {
       <div className="prose-container">
         <div className="p-4 rounded-[var(--radius-md)] font-mono text-xs" style={{ backgroundColor: 'var(--os-bg)', color: 'var(--os-muted)' }}>
           <p className="mb-2" style={{ color: 'var(--os-accent)' }}>$ cat README.md</p>
-          <p>{desc}</p>
+          <p dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(desc) }} />
         </div>
       </div>
     );
