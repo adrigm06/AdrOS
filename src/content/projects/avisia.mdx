@@ -1,0 +1,114 @@
+---
+id: "avisia"
+title: "Avisia"
+subtitle: "B2B Real Estate AI Lead Qualification SaaS"
+zone: "fullstack"
+status: "active"
+date: "2026-07"
+color: "#00d4aa"
+hasImages: true
+githubUrl: ""
+demoUrl: "https://www.avisia.es/"
+linkedinUrl: ""
+stack:
+  - "Next.js 15"
+  - "TypeScript"
+  - "TailwindCSS"
+  - "Supabase"
+  - "Anthropic Claude API"
+  - "WhatsApp Cloud API"
+  - "Resend"
+  - "Vercel"
+description:
+  es: "SaaS B2B que responde y cualifica automáticamente los leads de portales inmobiliarios (Idealista, Fotocasa) por WhatsApp en menos de 60 segundos, 24/7. Incluye landing, panel multi-tenant en tiempo real y pipeline de IA conversacional."
+  en: "B2B SaaS that automatically responds to and qualifies real estate leads (Idealista, Fotocasa) via WhatsApp in under 60 seconds, 24/7. Features landing page, real-time multi-tenant dashboard, and conversational AI engine."
+videos:
+  - title: "Demo v1 — Dashboard & Conversación"
+    url: "https://drive.google.com/file/d/1MvRqVT8gczjGDJJ597n0ydmsPRtpVd6K/view?usp=drive_link"
+  - title: "Presentación de Producto"
+    url: "https://drive.google.com/file/d/1H2OSqgd8LZQ267UN7XWv07d25D02CxfA/view?usp=sharing"
+---
+
+<Content lang="es">
+
+<p align="center">
+  <img src="/projects/avisia/logo_mark.png" alt="Avisia Logo" width="72" height="72" style="margin-bottom:1rem;" />
+</p>
+
+**Avisia** es una plataforma SaaS B2B completa orientada al sector inmobiliario. Su propósito principal es eliminar la pérdida de clientes por falta de respuesta inmediata, capturando automáticamente los leads procedentes de portales inmobiliarios (Idealista, Fotocasa, Habitaclia), iniciando una conversación por WhatsApp en menos de 60 segundos (24/7) y cualificándolos mediante un motor conversacional impulsado por Inteligencia Artificial.
+
+El sistema abarca desde la landing page comercial hasta un panel de administración multi-tenant en tiempo real y una arquitectura backend serverless altamente escalable.
+
+#### Visión y Arquitectura General
+
+| Capa | Tecnología | Función Principal |
+|---|---|---|
+| **Frontend & Dashboard** | Next.js 15 (App Router), TailwindCSS, shadcn/ui | Panel multi-tenant, analíticas en tiempo real y vista transcripcional de chats |
+| **Backend & Base de Datos** | Supabase (Postgres 15, Auth, Realtime) | Gestión de datos con aislamiento estricto mediante RLS por agencia |
+| **Ingesta de Leads** | Resend Inbound Email / Webhooks | Recepción automatizada de correos desde portales inmobiliarios |
+| **Motor Conversacional** | Anthropic Claude API (Haiku / Sonnet) | Orquestador conversacional bilingüe (ES/EN) y generador de resúmenes |
+| **Mensajería** | WhatsApp Cloud API (Meta Oficial) | Comunicación directa y segura con compradores en modo gestionado o BYON |
+| **Infraestructura** | Vercel (Hosting & Crons) | Ejecución serverless de alta disponibilidad y tareas programadas |
+
+#### Flujo Operativo Principal
+
+1. **Ingesta Inmediata:** El correo enviado por el portal inmobiliario se redirige a la dirección única del tenant y es procesado mediante webhooks.
+2. **Extracción Automatizada:** Un conjunto de parsers con expresiones regulares avanzadas y fallback mediante LLM extrae el nombre, teléfono, correo, referencia del inmueble y mensaje inicial.
+3. **Respuesta en menos de 60 segundos:** Se crea la ficha del lead y la conversación en Supabase, disparando inmediatamente el primer mensaje oficial de WhatsApp.
+4. **Cualificación Dinámica por IA:** La IA dialoga de forma natural con el cliente para identificar intención (compra/alquiler), presupuesto, estado de financiación/hipoteca y plazo de decisión.
+5. **Score & Traspaso al Agente:** Al finalizar la cualificación, el lead es clasificado (*Hot / Warm / Cold*) y se notifica al agente inmobiliario asignado vía WhatsApp y correo con la transcripción completa.
+
+#### Características Clave
+
+- **Aislamiento Multi-Tenant Estricto:** Políticas RLS (Row Level Security) nativas en Postgres que garantizan que ninguna agencia pueda acceder a datos de otro tenant.
+- **Soporte Bilingüe Automático:** Detección automática del idioma del lead (Español e Inglés) adaptando la conversación y la notificación del agente.
+- **Modo Demo Integrado:** Herramienta interactiva en el panel para simular la llegada de leads y probar la cualificación conversacional en tiempo real.
+- **Observabilidad & Auditoría:** Registro de eventos del sistema, métricas de tiempo de primera respuesta y control de salud operativa.
+
+> **Demo interactiva:** [Visitar Avisia.es](https://www.avisia.es/)  
+> **Vídeo demostrativo:** [Ver demo v1 en Google Drive](https://drive.google.com/file/d/1MvRqVT8gczjGDJJ597n0ydmsPRtpVd6K/view?usp=drive_link)  
+> **Presentación ejecutiva:** [Ver PDF de producto](https://drive.google.com/file/d/1H2OSqgd8LZQ267UN7XWv07d25D02CxfA/view?usp=sharing)
+
+</Content>
+
+<Content lang="en">
+
+<p align="center">
+  <img src="/projects/avisia/logo_mark.png" alt="Avisia Logo" width="72" height="72" style="margin-bottom:1rem;" />
+</p>
+
+**Avisia** is a comprehensive B2B SaaS platform engineered for the real estate industry. Its core mission is to prevent lead loss due to slow response times by automatically capturing leads from real estate portals (Idealista, Fotocasa, Habitaclia), launching an automated WhatsApp conversation in under 60 seconds (24/7), and qualifying prospective buyers using an AI-powered conversational engine.
+
+The platform spans from the public-facing landing page to a real-time multi-tenant dashboard and a highly scalable serverless backend architecture.
+
+#### Architecture Overview
+
+| Layer | Technology | Primary Function |
+|---|---|---|
+| **Frontend & Dashboard** | Next.js 15 (App Router), TailwindCSS, shadcn/ui | Multi-tenant control panel, real-time analytics & live chat transcript viewer |
+| **Backend & Database** | Supabase (Postgres 15, Auth, Realtime) | Data management with strict tenant isolation via RLS |
+| **Lead Ingestion** | Resend Inbound Email / Webhooks | Automated ingestion of incoming lead emails from real estate portals |
+| **Conversational AI** | Anthropic Claude API (Haiku / Sonnet) | Bilingual (ES/EN) conversational agent and lead summary generator |
+| **Messaging Engine** | WhatsApp Cloud API (Meta Official) | Direct and secure WhatsApp messaging in managed or BYON mode |
+| **Infrastructure** | Vercel (Hosting & Crons) | High-availability serverless deployment and scheduled cron tasks |
+
+#### Core Execution Pipeline
+
+1. **Instant Ingestion:** Incoming portal lead emails are routed to a unique tenant address and ingested via webhooks.
+2. **Automated Parsing:** Structured regex parsers with LLM fallback extract lead details (name, phone, email, property reference, initial inquiry).
+3. **Response in under 60 seconds:** The lead record and conversation are created in Supabase, instantly triggering the initial official WhatsApp message.
+4. **AI Qualification:** The AI naturally converses with the buyer to qualify intent (buy/rent), budget, mortgage readiness, and decision timeframe.
+5. **Scoring & Handoff:** Once qualified, the lead is scored (*Hot / Warm / Cold*) and an executive summary with full transcript is sent directly to the agent via WhatsApp and email.
+
+#### Key Features
+
+- **Strict Multi-Tenant Isolation:** Native Postgres RLS (Row Level Security) policies guaranteeing complete data privacy across agency accounts.
+- **Automatic Bilingual Support:** Automatic lead language detection (Spanish & English), adapting templates, conversation flow, and summaries.
+- **Interactive Sales Demo Mode:** Panel utility for simulating lead arrivals and demonstrating live AI qualification to prospective clients.
+- **System Observability & Audit:** Event logging, response latency tracking, and operational monitoring.
+
+> **Live Product:** [Visit Avisia.es](https://www.avisia.es/)  
+> **Video Demo:** [Watch v1 Demo on Google Drive](https://drive.google.com/file/d/1MvRqVT8gczjGDJJ597n0ydmsPRtpVd6K/view?usp=drive_link)  
+> **Presentation PDF:** [View Product Deck](https://drive.google.com/file/d/1H2OSqgd8LZQ267UN7XWv07d25D02CxfA/view?usp=sharing)
+
+</Content>
