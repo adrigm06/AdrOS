@@ -302,9 +302,9 @@ export default function Desktop({ projects }: DesktopProps) {
   const activeWindow = windows
     .filter((w) => w.isOpen && !w.isMinimized)
     .sort((a, b) => b.zIndex - a.zIndex)[0];
-  const activeWindowTitle = activeWindow
-    ? activeWindow.title
-    : (viewMode === 'list' ? (langState.lang === 'es' ? 'Proyectos' : 'Projects') : 'AdrOS');
+  const activeWindowTitle = viewMode === 'list'
+    ? 'Finder'
+    : (activeWindow ? activeWindow.title : 'AdrOS');
 
   if (!booted) {
     return <BootScreen onComplete={() => setBooted(true)} />;
@@ -321,10 +321,22 @@ export default function Desktop({ projects }: DesktopProps) {
           lang={langState.lang}
           toggleLang={langState.toggleLang}
           activeWindowTitle={activeWindowTitle}
-          onOpenWallpaperPicker={() => setWallpaperPickerOpen(true)}
-          onOpenProfile={() => openWindow('profile', 'profile', t('profile_title'))}
-          onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
-          onOpenChat={() => openWindow('chat', 'chat', 'AdrBOT')}
+          onOpenWallpaperPicker={() => {
+            setWallpaperPickerOpen(true);
+            setViewMode('icons');
+          }}
+          onOpenProfile={() => {
+            openWindow('profile', 'profile', t('profile_title'));
+            setViewMode('icons');
+          }}
+          onOpenContact={() => {
+            openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me');
+            setViewMode('icons');
+          }}
+          onOpenChat={() => {
+            openWindow('chat', 'chat', 'AdrBOT');
+            setViewMode('icons');
+          }}
           viewMode={viewMode}
           onToggleView={() => setViewMode((v) => (v === 'icons' ? 'list' : 'icons'))}
           onRestart={() => setBooted(false)}
@@ -432,11 +444,26 @@ export default function Desktop({ projects }: DesktopProps) {
             viewMode={viewMode}
             onToggleView={() => setViewMode((v) => (v === 'icons' ? 'list' : 'icons'))}
             minimizedWindows={minimizedWindows}
-            onRestoreWindow={restoreWindow}
-            onOpenProfile={() => openWindow('profile', 'profile', t('profile_title'))}
-            onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
-            onOpenChat={() => openWindow('chat', 'chat', 'AdrBOT')}
-            onOpenWallpaperPicker={() => setWallpaperPickerOpen(true)}
+            onRestoreWindow={(id) => {
+              restoreWindow(id);
+              setViewMode('icons');
+            }}
+            onOpenProfile={() => {
+              openWindow('profile', 'profile', t('profile_title'));
+              setViewMode('icons');
+            }}
+            onOpenContact={() => {
+              openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me');
+              setViewMode('icons');
+            }}
+            onOpenChat={() => {
+              openWindow('chat', 'chat', 'AdrBOT');
+              setViewMode('icons');
+            }}
+            onOpenWallpaperPicker={() => {
+              setWallpaperPickerOpen(true);
+              setViewMode('icons');
+            }}
             openWindows={windows}
           />
         </motion.div>
@@ -668,11 +695,14 @@ function ListView({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-40 overflow-auto pt-[var(--menubar-h)] pb-[calc(var(--dock-h)+20px)]"
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      role="dialog"
+      aria-label={lang === 'es' ? 'Explorador Finder' : 'Finder Explorer'}
+      className="fixed inset-0 top-[var(--menubar-h)] z-[8000] overflow-auto pb-[calc(var(--dock-h)+24px)]"
       style={{
-        backgroundColor: 'rgba(18, 20, 29, 0.85)',
-        backdropFilter: 'blur(36px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(36px) saturate(180%)',
+        backgroundColor: 'rgba(18, 20, 29, 0.88)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
       }}
     >
       <div className="max-w-4xl mx-auto p-6">
