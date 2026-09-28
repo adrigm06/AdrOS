@@ -35,7 +35,7 @@
 
   /* ── Typography ── */
   --font-mono:      'JetBrains Mono', monospace;
-  --font-sans:      'Inter', sans-serif;
+  --font-sans:      -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Inter", "Helvetica Neue", sans-serif;
 
   /* ── Radii ── */
   --radius-sm:      6px;
@@ -45,7 +45,10 @@
   --radius-full:    9999px;
 
   /* ── Shadows ── */
-  --shadow-window:  0 12px 48px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-window:  0 26px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-window-inactive: 0 16px 44px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-dock:    0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  --shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12);
   --shadow-elevated: 0 8px 32px rgba(0,0,0,0.5);
   --shadow-soft:    0 2px 12px rgba(0,0,0,0.3);
   --shadow-glow:    0 0 0 1px var(--os-accent-dim);
@@ -57,9 +60,10 @@
   --ease-smooth:    cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ── Layout ── */
+  --menubar-h:      28px;
   --taskbar-h:      56px;
   --titlebar-h:     38px;
-  --dock-h:         64px;
+  --dock-h:         68px;
 
   /* ── Glass ── */
   --glass-bg:       rgba(20, 22, 30, 0.72);
@@ -68,6 +72,36 @@
 }
 
 @layer utilities {
+  .vibrancy-menubar {
+    background: rgba(18, 20, 29, 0.72);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .vibrancy-dock {
+    background: rgba(22, 25, 36, 0.55);
+    backdrop-filter: blur(36px) saturate(200%);
+    -webkit-backdrop-filter: blur(36px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: var(--shadow-dock);
+  }
+
+  .vibrancy-window {
+    background: rgba(20, 23, 34, 0.90);
+    backdrop-filter: blur(40px) saturate(160%);
+    -webkit-backdrop-filter: blur(40px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .vibrancy-popover {
+    background: rgba(24, 27, 39, 0.88);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: var(--shadow-popover);
+  }
+
   .glass {
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);

@@ -18,7 +18,7 @@ export default function ContextMenu({ items, position, onClose }: ContextMenuPro
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
+    const handleClick = (e: MouseEvent | TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -27,15 +27,17 @@ export default function ContextMenu({ items, position, onClose }: ContextMenuPro
       if (e.key === 'Escape') onClose();
     };
 
-    // Delay to avoid immediate close from the right-click that opened it
+    // Delay to avoid immediate close from the event that opened it
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClick);
+      document.addEventListener('touchstart', handleClick);
       document.addEventListener('keydown', handleEsc);
-    }, 0);
+    }, 50);
 
     return () => {
       clearTimeout(timer);
       document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick);
       document.removeEventListener('keydown', handleEsc);
     };
   }, [onClose]);

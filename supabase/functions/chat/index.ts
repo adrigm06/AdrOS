@@ -143,7 +143,7 @@ Deno.serve(async (req: Request) => {
       { role: 'user', content: message },
     ];
 
-    // 4. Call Groq API
+    // 4. Call Groq API (active available model)
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:  'POST',
       headers: {
@@ -151,7 +151,7 @@ Deno.serve(async (req: Request) => {
         'Content-Type':  'application/json',
       },
       body: JSON.stringify({
-        model:       'llama-3.3-70b-versatile',
+        model:       'openai/gpt-oss-120b',
         messages,
         temperature: 0.5,
         max_tokens:  800,
@@ -187,9 +187,10 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (err) {
-    console.error('Edge function error:', err);
+    const errorDetails = err instanceof Error ? err.message : String(err);
+    console.error('Edge function error:', errorDetails);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: errorDetails }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

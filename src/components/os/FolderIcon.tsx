@@ -16,8 +16,14 @@ interface FolderIconProps {
 }
 
 export default function FolderIcon({
-  project, zoneColor, isOpen, onOpen,
-  position, onDragMove, onDragEnd, onDragStateChange,
+  project,
+  zoneColor,
+  isOpen,
+  onOpen,
+  position,
+  onDragMove,
+  onDragEnd,
+  onDragStateChange,
 }: FolderIconProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -25,15 +31,14 @@ export default function FolderIcon({
   const dragRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const hasMoved = useRef(false);
-  const dragReported = useRef(false); // track if we told parent about drag
+  const dragReported = useRef(false);
   const lastClick = useRef(0);
   const clickTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const color = zoneColor;
   const topTechs = project.data.stack.slice(0, 3);
 
   const handleMouseEnter = () => {
-    hoverTimer.current = setTimeout(() => setIsHovered(true), 300);
+    hoverTimer.current = setTimeout(() => setIsHovered(true), 250);
   };
 
   const handleMouseLeave = () => {
@@ -49,7 +54,6 @@ export default function FolderIcon({
     dragReported.current = false;
     dragStart.current = { x: clientX, y: clientY, posX: position.x, posY: position.y };
     setIsDragging(true);
-    // Do NOT report drag to parent yet — wait for movement
   }, [position, onDragEnd]);
 
   const handleDragMove = useCallback((clientX: number, clientY: number) => {
@@ -58,7 +62,6 @@ export default function FolderIcon({
     const dy = clientY - dragStart.current.y;
     if (!hasMoved.current && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
       hasMoved.current = true;
-      // First real movement — now report drag state
       if (!dragReported.current) {
         dragReported.current = true;
         onDragStateChange?.(true);
@@ -67,7 +70,6 @@ export default function FolderIcon({
     if (dragRef.current) {
       dragRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
     }
-    // Report absolute raw position for snap markers (only after movement)
     if (hasMoved.current && position) {
       onDragMove?.({ x: position.x + dx, y: position.y + dy });
     }
@@ -86,7 +88,6 @@ export default function FolderIcon({
       if (match && hasMoved.current) {
         const deltaX = parseFloat(match[1]);
         const deltaY = parseFloat(match[2]);
-        // Send raw absolute position — Desktop handles snap + clamp + collision
         onDragEnd({ x: position.x + deltaX, y: position.y + deltaY });
       }
       el.style.transform = '';
@@ -143,14 +144,13 @@ export default function FolderIcon({
 
   const ctxItems: ContextMenuItem[] = [
     {
-      label: 'Open',
+      label: 'Abrir',
       onClick: () => { onOpen(); closeContextMenu(); },
     },
     {
-      label: 'Get Info',
+      label: 'Obtener información',
       onClick: () => {
         setShowInfo(true);
-        // Position info window near the folder icon
         if (position) {
           setInfoPos({ x: position.x + 30, y: position.y - 20 });
         }
@@ -229,7 +229,6 @@ export default function FolderIcon({
         left: position.x,
         top: position.y,
         zIndex: isDragging ? 100 : 1,
-        // Smooth snap animation when not dragging (transform handles drag movement)
         transition: isDragging
           ? 'none'
           : 'left 0.25s cubic-bezier(0.23, 1, 0.32, 1), top 0.25s cubic-bezier(0.23, 1, 0.32, 1)',
@@ -239,12 +238,11 @@ export default function FolderIcon({
   const iconScale = isDragging ? 0.95 : isHovered ? 1.05 : 1;
 
   const LANG = typeof navigator !== 'undefined' && navigator.language.startsWith('es') ? 'es' : 'en';
-  const langLabel = (en: string, es: string) => LANG === 'es' ? es : en;
 
   return (
     <div
       ref={dragRef}
-      className="inline-flex flex-col items-center gap-1"
+      className="inline-flex flex-col items-center gap-1 select-none"
       style={containerStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -257,70 +255,65 @@ export default function FolderIcon({
         onTouchStart={handleTouchStart}
         onFocus={() => setIsHovered(true)}
         onBlur={() => setIsHovered(false)}
-        className="flex flex-col items-center gap-1 p-2 outline-none rounded-[var(--radius-md)] transition-transform active:scale-[0.94]"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen();
+          }
+        }}
+        className="group flex flex-col items-center gap-1.5 p-1.5 outline-none rounded-[var(--radius-md)] transition-transform active:scale-[0.94]"
         style={{
-          width: 96,
-          minHeight: 90,
+          width: 92,
+          minHeight: 88,
           cursor: position ? 'grab' : 'pointer',
           transform: `scale(${iconScale})`,
-          transition: 'transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out)',
-          boxShadow: isHovered && !isDragging ? `0 0 0 2px ${color}44` : 'none',
+          transition: 'transform 0.18s var(--ease-out)',
         }}
         tabIndex={0}
         aria-label={`Abrir proyecto ${project.data.title}`}
       >
-        <svg
-          width={56}
-          height={56}
-          viewBox="0 0 56 56"
-          fill="none"
-          style={{
-            filter: isOpen || isHovered ? `drop-shadow(0 2px 8px ${color}66)` : 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))',
-            pointerEvents: 'none',
-          }}
-        >
-          <rect x="6" y="44" width="44" height="4" rx="2" fill="rgba(0,0,0,0.15)" />
-          <path
-            d="M9 17a5 5 0 0 1 5-5h9.5a5 5 0 0 1 3.535 1.465l3.5 3.5A5 5 0 0 0 34.07 18.5H42a5 5 0 0 1 5 5V39a5 5 0 0 1-5 5H14a5 5 0 0 1-5-5V17z"
-            fill={isOpen || isHovered ? color : `${color}cc`}
-            stroke={isOpen ? color : `${color}44`}
-            strokeWidth="0.5"
+        {/* Authentic macOS Folder Asset */}
+        <div className="relative w-14 h-14 flex items-center justify-center pointer-events-none">
+          <img
+            src="/icons/folder.webp"
+            alt={project.data.title}
+            className="w-14 h-14 object-contain"
+            style={{
+              filter: isOpen || isHovered
+                ? 'drop-shadow(0 3px 8px rgba(0, 0, 0, 0.5))'
+                : 'drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35))',
+            }}
           />
-          <path
-            d="M9 21a5 5 0 0 1 5-5h24a5 5 0 0 1 5 5v18a5 5 0 0 1-5 5H14a5 5 0 0 1-5-5V21z"
-            fill={isOpen || isHovered ? color : `${color}99`}
-            opacity={isOpen || isHovered ? 1 : 0.85}
-          />
-          <path
-            d="M9 21a5 5 0 0 1 5-5h24a5 5 0 0 1 5 5v2a5 5 0 0 0-5-5H14a5 5 0 0 0-5 5v-2z"
-            fill="rgba(255,255,255,0.1)"
-          />
-          {isOpen && (
-            <>
-              <rect x="16" y="27" width="20" height="2.5" rx="1.25" fill="rgba(255,255,255,0.2)" />
-              <rect x="16" y="32" width="14" height="2.5" rx="1.25" fill="rgba(255,255,255,0.15)" />
-            </>
-          )}
-        </svg>
 
+          {/* Finder Category Tag (Apple-style colored dot in bottom right of folder) */}
+          <div
+            className="absolute bottom-1 right-1.5 w-3 h-3 rounded-full border border-black/40 shadow-sm"
+            style={{ backgroundColor: zoneColor }}
+            title={`Categoría: ${project.data.zone}`}
+          />
+        </div>
+
+        {/* macOS Finder-style Label with Selection Pill on Hover */}
         <span
-          className="text-[11px] font-mono text-center leading-tight max-w-[88px] truncate px-1"
+          className={`font-sans text-[11px] font-medium text-center leading-tight max-w-[86px] truncate px-1.5 py-0.5 rounded-[4px] transition-colors pointer-events-none ${
+            isHovered || isOpen
+              ? 'bg-[var(--os-blue)] text-white shadow-sm'
+              : 'text-white'
+          }`}
           style={{
-            color: isOpen ? 'var(--os-text)' : isHovered ? 'var(--os-text)' : 'var(--os-muted-light, #8b95a5)',
-            textDecoration: isOpen ? 'underline' : 'none',
-            textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-            pointerEvents: 'none',
+            textShadow: isHovered || isOpen ? 'none' : '0 1px 3px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)',
           }}
         >
           {project.data.title}
         </span>
 
+        {/* Running Indicator Dot if open */}
         {isOpen && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: color, boxShadow: `0 0 4px ${color}` }}
+            className="w-1.5 h-1.5 rounded-full -mt-0.5"
+            style={{ backgroundColor: zoneColor, boxShadow: `0 0 5px ${zoneColor}` }}
           />
         )}
       </button>
@@ -332,15 +325,8 @@ export default function FolderIcon({
             initial={{ opacity: 0, y: 4, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
-            transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 py-1 font-mono text-[10px] pointer-events-none z-50"
-            style={{
-              backgroundColor: 'rgba(22, 24, 34, 0.92)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--os-text-dim)',
-            }}
+            transition={{ duration: 0.12 }}
+            className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 font-sans text-[10px] pointer-events-none z-50 rounded-[4px] vibrancy-popover text-white/90"
           >
             {topTechs.join(' · ')}
           </motion.div>
@@ -365,75 +351,68 @@ export default function FolderIcon({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.88 }}
             transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
-            className="fixed"
+            className="fixed vibrancy-window rounded-[var(--radius-lg)] overflow-hidden z-[99999]"
             style={{
               left: infoPos.x,
               top: infoPos.y,
-              width: 240,
-              zIndex: 9999,
-              backgroundColor: 'var(--os-surface)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-              overflow: 'hidden',
+              width: 250,
+              boxShadow: 'var(--shadow-window)',
             }}
           >
-            {/* Title bar — draggable, only close button */}
+            {/* Title bar — draggable */}
             <div
-              className="flex items-center justify-between px-3 select-none"
+              className="flex items-center justify-between px-3 select-none border-b border-white/10"
               style={{
                 height: 32,
-                backgroundColor: 'rgba(28, 31, 43, 0.85)',
-                backdropFilter: 'blur(16px) saturate(1.2)',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
+                backgroundColor: 'rgba(28, 31, 43, 0.75)',
                 cursor: 'grab',
               }}
               onMouseDown={handleInfoMouseDown}
             >
               <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                <span className="text-[10px] font-mono" style={{ color: 'var(--os-muted)' }}>
-                  {langLabel('Info', 'Info')}
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: zoneColor }} />
+                <span className="text-[11px] font-sans font-medium text-white/70">
+                  {LANG === 'es' ? 'Información' : 'Get Info'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowInfo(false)}
-                className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                className="w-4 h-4 rounded-full bg-[#ff5f57] flex items-center justify-center hover:opacity-80 transition-opacity"
                 aria-label="Cerrar"
               >
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: 'var(--os-muted)' }}>
-                  <path d="M1 1L7 7M7 1L1 7" />
-                </svg>
+                <span className="text-[8px] text-black/60 font-bold leading-none">×</span>
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-3 space-y-2" style={{ backgroundColor: 'var(--os-bg)' }}>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-sans text-sm font-semibold" style={{ color: 'var(--os-text)' }}>
-                  {project.data.title}
-                </span>
+            <div className="p-3.5 space-y-2 bg-[rgba(16,18,26,0.6)]">
+              <div className="flex items-center gap-2 mb-2">
+                <img src="/icons/folder.webp" alt="Folder" className="w-8 h-8 object-contain" />
+                <div className="flex flex-col overflow-hidden">
+                  <span className="font-sans text-xs font-semibold text-white truncate">
+                    {project.data.title}
+                  </span>
+                  <span className="font-sans text-[10px] text-white/50">
+                    {project.data.zone}
+                  </span>
+                </div>
               </div>
 
-              <InfoRow label={langLabel('Status', 'Estado')} value={project.data.status} colorKey="status" />
-              <InfoRow label={langLabel('Date', 'Fecha')} value={project.data.date} />
-              <InfoRow label={langLabel('Category', 'Categoría')} value={project.data.zone} />
+              <div className="space-y-1 pt-1 border-t border-white/5">
+                <InfoRow label={LANG === 'es' ? 'Estado' : 'Status'} value={project.data.status} colorKey="status" />
+                <InfoRow label={LANG === 'es' ? 'Fecha' : 'Date'} value={project.data.date} />
+              </div>
 
-              <div className="pt-1.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                <span className="font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
-                  {langLabel('Technologies', 'Tecnologías')}
+              <div className="pt-2 border-t border-white/5">
+                <span className="font-sans text-[10px] text-white/50 block mb-1">
+                  {LANG === 'es' ? 'Tecnologías' : 'Technologies'}
                 </span>
-                <div className="flex flex-wrap gap-1 mt-1.5">
+                <div className="flex flex-wrap gap-1">
                   {project.data.stack.map((tech) => (
                     <span
                       key={tech}
-                      className="text-[9px] px-1.5 py-0.5 font-mono rounded-[var(--radius-sm)]"
-                      style={{
-                        backgroundColor: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        color: 'var(--os-text-dim)',
-                      }}
+                      className="text-[9px] px-1.5 py-0.5 font-sans rounded-[4px] bg-white/10 text-white/80"
                     >
                       {tech}
                     </span>
@@ -450,17 +429,14 @@ export default function FolderIcon({
 
 function InfoRow({ label, value, colorKey }: { label: string; value: string; colorKey?: string }) {
   return (
-    <div className="flex justify-between items-center">
-      <span className="font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
-        {label}
-      </span>
+    <div className="flex justify-between items-center text-[10px] font-sans">
+      <span className="text-white/50">{label}</span>
       <span
-        className="font-mono text-[10px]"
-        style={{
-          color: colorKey === 'status'
-            ? value === 'active' ? 'var(--os-ok)' : value === 'completed' ? 'var(--os-warn)' : 'var(--os-muted)'
-            : 'var(--os-text-dim)',
-        }}
+        className={
+          colorKey === 'status'
+            ? value === 'active' ? 'text-[var(--os-ok)] font-medium' : 'text-white/70'
+            : 'text-white/80'
+        }
       >
         {value}
       </span>

@@ -46,7 +46,7 @@ export const WINDOW_MIN = { width: 280, height: 240 };
 
 const MAX_WINDOWS = 5;
 
-let _zCounter = 0;
+let _zCounter = 100;
 
 function randomOffset() {
   return (Math.random() - 0.5) * 40;

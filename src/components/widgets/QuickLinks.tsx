@@ -5,159 +5,143 @@ interface QuickLinksProps {
   onOpenContact: () => void;
 }
 
-/* ── Icon SVGs ── */
-
-function GithubIcon() {
+/** Authentic macOS Alias Badge (curved arrow in a white circular badge) */
+function MacAliasBadge() {
   return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" aria-label="GitHub">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-    </svg>
-  );
-}
-
-function LinkedinIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" aria-label="LinkedIn">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-    </svg>
-  );
-}
-
-function EmailIcon() {
-  return (
-    <svg
-      width="40"
-      height="40"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-label="Email"
-    >
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="M22 4L12 13L2 4" />
-    </svg>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg
-      width="40"
-      height="40"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-label="Download CV"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-/** Shortcut arrow badge (Windows/macOS style) */
-function ShortcutBadge() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      className="absolute -bottom-0.5 -left-0.5"
+    <div
+      className="absolute -bottom-1 -left-1 w-4 h-4 rounded-full bg-white flex items-center justify-center pointer-events-none"
       style={{
-        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))',
+        boxShadow: '0 1.5px 4px rgba(0,0,0,0.5)',
+        border: '0.5px solid rgba(0,0,0,0.15)',
       }}
+      title="Alias"
     >
-      {/* Badge background */}
-      <rect x="0.5" y="0.5" width="13" height="13" rx="2.5" fill="var(--os-surface-2)" stroke="var(--os-border)" strokeWidth="0.5" />
-      {/* Curved arrow */}
-      <path
-        d="M9.5 7.5V4.5H6.5M9.5 4.5L5.5 8.5"
-        stroke="var(--os-muted)"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
+      <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+        <path
+          d="M9 3H4.5M9 3V7.5M9 3L2.5 9.5"
+          stroke="#111"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
   );
 }
 
-/* ── Link definitions ── */
+/* ── Squircle Icons for Desktop Shortcuts ── */
 
-interface LinkItem {
-  label: string;
-  href: string;
-  labelKey: string;
-  Icon: React.FC;
-  isContact?: boolean;
+function GitHubIcon() {
+  return (
+    <div className="w-12 h-12 rounded-[12px] bg-gradient-to-b from-[#2d333b] to-[#1c2128] border border-white/10 flex items-center justify-center shadow-md">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+      </svg>
+    </div>
+  );
 }
 
-const LINKS: LinkItem[] = [
-  { label: "GitHub", href: "https://github.com/adrigm06", labelKey: "GitHub", Icon: GithubIcon },
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/adrigml/", labelKey: "LinkedIn", Icon: LinkedinIcon },
-  { label: "Email", href: "#contact", labelKey: "Email", Icon: EmailIcon, isContact: true },
-  { label: "CV", href: "/Adrian_Gomez_FullStack_English.pdf", labelKey: "CV", Icon: DownloadIcon },
-];
+function LinkedInIcon() {
+  return (
+    <div className="w-12 h-12 rounded-[12px] bg-gradient-to-b from-[#0a66c2] to-[#004182] border border-white/15 flex items-center justify-center shadow-md">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff">
+        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+      </svg>
+    </div>
+  );
+}
+
+function MailIcon() {
+  return (
+    <div className="w-12 h-12 flex items-center justify-center">
+      <img src="/icons/mail.webp" alt="Mail" className="w-12 h-12 object-contain" />
+    </div>
+  );
+}
+
+function CvIcon() {
+  return (
+    <div className="w-10 h-12 bg-white rounded-[4px] shadow-md border border-black/10 flex flex-col items-center justify-between p-1 relative overflow-hidden">
+      {/* Top red header for PDF */}
+      <div className="w-full bg-[#e11d48] text-white text-[7px] font-bold text-center rounded-[2px] py-0.5">
+        PDF
+      </div>
+      <div className="w-full flex flex-col gap-1 px-0.5">
+        <div className="w-full h-[2px] bg-slate-200 rounded" />
+        <div className="w-3/4 h-[2px] bg-slate-200 rounded" />
+        <div className="w-full h-[2px] bg-slate-200 rounded" />
+      </div>
+      <span className="text-[8px] font-bold text-slate-700">CV</span>
+    </div>
+  );
+}
 
 export default function QuickLinks({ lang, onOpenContact }: QuickLinksProps) {
-  return (
-    <div className="flex items-center gap-5">
-      {LINKS.map((link) => {
-        const { Icon } = link;
+  const links = [
+    {
+      label: 'GitHub',
+      href: 'https://github.com/adrigm06',
+      renderIcon: () => <GitHubIcon />,
+    },
+    {
+      label: 'LinkedIn',
+      href: 'https://www.linkedin.com/in/adrigml/',
+      renderIcon: () => <LinkedInIcon />,
+    },
+    {
+      label: lang === 'es' ? 'Contacto' : 'Contact',
+      onClick: onOpenContact,
+      renderIcon: () => <MailIcon />,
+    },
+    {
+      label: lang === 'es' ? 'CV Adrián' : 'Adrián CV',
+      href: '/Adrian_Gomez_FullStack_English.pdf',
+      renderIcon: () => <CvIcon />,
+    },
+  ];
 
-        if (link.isContact) {
+  return (
+    <div className="flex items-center gap-2.5 sm:gap-4 select-none">
+      {links.map((link) => {
+        const content = (
+          <div className="group flex flex-col items-center gap-1 p-0.5 sm:p-1 rounded-[6px] transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer">
+            <div className="relative">
+              {link.renderIcon()}
+              <MacAliasBadge />
+            </div>
+            <span
+              className="font-sans text-[10px] sm:text-[11px] font-medium text-white text-center leading-tight max-w-[68px] sm:max-w-[80px] truncate px-1 py-0.5 rounded-[4px] group-hover:bg-[var(--os-blue)] transition-colors"
+              style={{
+                textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.6)',
+              }}
+            >
+              {link.label}
+            </span>
+          </div>
+        );
+
+        if (link.onClick) {
           return (
             <button
-              key={link.labelKey}
+              key={link.label}
               type="button"
-              onClick={onOpenContact}
-              className="group flex flex-col items-center gap-1.5 transition-all duration-200 hover:scale-110 hover:drop-shadow-[0_0_8px_var(--os-accent-glow)] bg-transparent border-none p-0 cursor-pointer text-left"
-              style={{ color: 'var(--os-muted)' }}
+              onClick={link.onClick}
+              className="outline-none bg-transparent border-none p-0 cursor-pointer"
             >
-              {/* Icon container with shortcut badge */}
-              <div className="relative">
-                <Icon />
-                <ShortcutBadge />
-              </div>
-              {/* Label */}
-              <span
-                className="font-mono text-[10px] transition-colors duration-200 group-hover:text-[var(--os-accent)]"
-                style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
-              >
-                {lang === 'es' ? 'Contacto' : 'Contact'}
-              </span>
+              {content}
             </button>
           );
         }
 
         return (
           <a
-            key={link.labelKey}
+            key={link.label}
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex flex-col items-center gap-1.5 transition-all duration-200 hover:scale-110 hover:drop-shadow-[0_0_8px_var(--os-accent-glow)]"
-            style={{ color: 'var(--os-muted)' }}
+            className="outline-none no-underline"
           >
-            {/* Icon container with shortcut badge */}
-            <div className="relative">
-              <Icon />
-              <ShortcutBadge />
-            </div>
-            {/* Label */}
-            <span
-              className="font-mono text-[10px] transition-colors duration-200 group-hover:text-[var(--os-accent)]"
-              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
-            >
-              {link.label}
-            </span>
+            {content}
           </a>
         );
       })}

@@ -1,24 +1,26 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useDrag } from '@/hooks/useDrag';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { WindowState } from '@/hooks/useWindowManager';
 import { WINDOW_MIN } from '@/hooks/useWindowManager';
+import { useIsMobile } from '@/hooks/useIsMobile';
+
+import type { Lang } from '@/hooks/useLanguage';
 
 interface WindowProps {
   window: WindowState;
   onClose: (id: string) => void;
-  onMinimize: (id: string) => void;
+  onMinimize?: (id: string) => void;
   onMaximize: (id: string) => void;
   onBringToFront: (id: string) => void;
   onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
   onUpdateSize?: (id: string, size: { width: number; height: number }) => void;
   isMobile?: boolean;
   accentColor?: string;
+  lang?: Lang;
   children: React.ReactNode;
 }
 
-const TRAFFIC = { close: '#ff5f57', minimize: '#febc2e', maximize: '#28c840' } as const;
-
+const TRAFFIC = { close: '#ff5f56', minimize: '#ffbd2e', maximize: '#27c93f' } as const;
 const DOCK_Y_OFFSET = 70;
 
 export default function Window({
@@ -29,29 +31,123 @@ export default function Window({
   onBringToFront,
   onUpdatePosition,
   onUpdateSize,
-  isMobile,
+  isMobile: isMobileProp,
   accentColor,
+  lang = 'es',
   children,
 }: WindowProps) {
+  const detectedMobile = useIsMobile();
+  const isMobile = isMobileProp !== undefined ? isMobileProp : detectedMobile;
   const isMaximized = win.isMaximized;
-  const accent = accentColor || 'var(--os-accent)';
-  const isFullScreen = isMaximized || Boolean(isMobile);
-
-  const { dragRef, position, isDragging, handleMouseDown, handleTouchStart } = useDrag({
-    initialPosition: win.position,
-    onDragEnd: (pos) => onUpdatePosition(win.id, pos),
-    disabled: isFullScreen,
-  });
+  const isFullScreen = isMaximized || isMobile;
+  const dragRef = useRef<HTMLDivElement>(null);
 
   const [isResizing, setIsResizing] = useState(false);
+  const [trafficHovered, setTrafficHovered] = useState(false);
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const exitIntentRef = useRef<'minimize' | 'close' | null>(null);
 
+  // ── High-performance Direct Pointer Drag Engine ──
+  const isDragging = useRef(false);
+  const dragStart = useRef({ pointerX: 0, pointerY: 0, winX: 0, winY: 0 });
+  const currentPos = useRef(win.position);
+  const hasMoved = useRef(false);
+
+  useEffect(() => {
+    if (!isDragging.current) {
+      currentPos.current = win.position;
+    }
+  }, [win.position]);
+
+  // Clean up global cursor and select styles on unmount
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isFullScreen) return;
+    if (e.button !== 0) return; // Only main button
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, textarea')) return;
+
+    e.preventDefault();
+    onBringToFront(win.id);
+
+    isDragging.current = true;
+    hasMoved.current = false;
+    dragStart.current = {
+      pointerX: e.clientX,
+      pointerY: e.clientY,
+      winX: currentPos.current.x,
+      winY: currentPos.current.y,
+    };
+
+    if (dragRef.current) {
+      dragRef.current.style.transition = 'none';
+    }
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+
+    const onPointerMove = (ev: PointerEvent) => {
+      if (!isDragging.current) return;
+      const dx = ev.clientX - dragStart.current.pointerX;
+      const dy = ev.clientY - dragStart.current.pointerY;
+
+      if (!hasMoved.current && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+        hasMoved.current = true;
+      }
+
+      // Constrain window within viewport
+      const minX = 0;
+      const maxX = Math.max(0, window.innerWidth - win.size.width);
+      const minY = 28; // below macOS menubar
+      const maxY = Math.max(minY, window.innerHeight - 56);
+
+      const newX = Math.max(minX, Math.min(maxX, dragStart.current.winX + dx));
+      const newY = Math.max(minY, Math.min(maxY, dragStart.current.winY + dy));
+
+      currentPos.current = { x: newX, y: newY };
+
+      if (dragRef.current) {
+        dragRef.current.style.left = `${newX}px`;
+        dragRef.current.style.top = `${newY}px`;
+      }
+    };
+
+    const onPointerUp = () => {
+      isDragging.current = false;
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+
+      if (dragRef.current) {
+        dragRef.current.style.transition = '';
+      }
+
+      if (hasMoved.current) {
+        onUpdatePosition(win.id, currentPos.current);
+      }
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  }, [isFullScreen, win.id, win.size.width, onBringToFront, onUpdatePosition]);
+
   /* ── Resize ── */
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+  const handleResizeStart = useCallback((e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
     if (isFullScreen) return;
     e.stopPropagation();
     resizeStart.current = { x: e.clientX, y: e.clientY, w: win.size.width, h: win.size.height };
+    if (dragRef.current) {
+      dragRef.current.style.transition = 'none';
+    }
     setIsResizing(true);
   }, [isFullScreen, win.size]);
 
@@ -64,179 +160,222 @@ export default function Window({
       const newH = Math.max(WINDOW_MIN.height, resizeStart.current.h + dh);
       onUpdateSize?.(win.id, { width: newW, height: newH });
     };
-    const onUp = () => setIsResizing(false);
+    const onUp = () => {
+      setIsResizing(false);
+      if (dragRef.current) {
+        dragRef.current.style.transition = '';
+      }
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
   }, [isResizing, win.id, onUpdateSize]);
-
-  const handleMinimize = () => {
-    exitIntentRef.current = 'minimize';
-    onMinimize(win.id);
-  };
 
   const handleClose = () => {
     exitIntentRef.current = 'close';
     onClose(win.id);
   };
 
+  const handleMinimize = () => {
+    exitIntentRef.current = 'minimize';
+    onMinimize?.(win.id);
+  };
+
   const handleMaximize = () => {
     onMaximize(win.id);
   };
 
-  // ── Dock center (genie target) ──
+  // ── Dock center (genie effect target) ──
   const dockX = typeof window !== 'undefined' ? window.innerWidth / 2 : 0;
   const dockY = typeof window !== 'undefined' ? window.innerHeight - DOCK_Y_OFFSET : 0;
-  const winCenterX = position.x + win.size.width / 2;
-  const winCenterY = position.y + win.size.height / 2;
+  const winCenterX = win.position.x + win.size.width / 2;
+  const winCenterY = win.position.y + win.size.height / 2;
   const genieDX = dockX - winCenterX;
   const genieDY = dockY - winCenterY;
 
+  const shouldReduce = useReducedMotion();
+
   const getExit = () => {
+    if (shouldReduce) {
+      return { opacity: 0 };
+    }
     if (exitIntentRef.current === 'minimize') {
       return { opacity: 0, scale: 0.08, x: genieDX, y: genieDY, filter: 'blur(4px)' };
     }
     if (exitIntentRef.current === 'close') {
-      return { opacity: 0, scale: 0.6, rotate: -1.5, filter: 'blur(3px)' };
+      return { opacity: 0, scale: 0.85, filter: 'blur(3px)' };
     }
-    return { opacity: 0, scale: 0.88, y: 16 };
+    return { opacity: 0, scale: 0.9, y: 16 };
   };
 
-  const fullScreenHeight = isMobile ? 'calc(100dvh - 76px)' : '100dvh';
+  const fullScreenHeight = isMobile
+    ? 'calc(100dvh - var(--menubar-h) - 62px)'
+    : 'calc(100dvh - var(--menubar-h))';
 
   const winStyle: React.CSSProperties = isFullScreen
     ? {
         position: 'fixed',
-        top: 0,
+        top: 'var(--menubar-h)',
         left: 0,
+        right: 0,
         width: '100vw',
         height: fullScreenHeight,
         zIndex: win.zIndex,
+        borderRadius: 0,
       }
     : {
         position: 'fixed',
-        top: position.y,
-        left: position.x,
+        top: isDragging.current ? currentPos.current.y : win.position.y,
+        left: isDragging.current ? currentPos.current.x : win.position.x,
         width: win.size.width,
         height: win.size.height,
         zIndex: win.zIndex,
-        cursor: isDragging ? 'grabbing' : (isResizing ? 'se-resize' : 'default'),
       };
 
   return (
     <motion.div
       ref={dragRef}
-      initial={{ opacity: 0, scale: 0.88, y: 20 }}
+      initial={shouldReduce ? { opacity: 0 } : { opacity: 0, scale: 0.92, y: 16 }}
       animate={{
         opacity: 1,
         scale: 1,
         y: 0,
-        x: 0,
-        rotate: 0,
-        filter: 'blur(0px)',
-        width: isFullScreen ? '100vw' : win.size.width,
-        height: isFullScreen ? fullScreenHeight : win.size.height,
-        top: isFullScreen ? 0 : position.y,
-        left: isFullScreen ? 0 : position.x,
       }}
       exit={getExit()}
-      transition={{
-        duration: 0.28,
+      transition={shouldReduce ? { duration: 0.05 } : {
+        duration: 0.22,
         ease: [0.16, 1, 0.3, 1],
-        width: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
-        height: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
-        top: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
-        left: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
       }}
       style={{
         ...winStyle,
-        backgroundColor: 'var(--os-surface)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: isFullScreen ? 0 : 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-window)',
         display: 'flex',
         flexDirection: 'column',
+        boxShadow: isFullScreen ? 'none' : 'var(--shadow-window)',
+        borderRadius: isFullScreen ? 0 : 'var(--radius-xl)',
         overflow: 'hidden',
+        borderTopColor: accentColor ? `${accentColor}55` : undefined,
+        transition: isResizing || isDragging.current ? 'none' : 'width 0.22s cubic-bezier(0.16, 1, 0.3, 1), height 0.22s cubic-bezier(0.16, 1, 0.3, 1), top 0.22s cubic-bezier(0.16, 1, 0.3, 1), left 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
+      className="vibrancy-window select-none border border-white/10"
       onClick={() => onBringToFront(win.id)}
       role="dialog"
       aria-label={win.title}
       aria-modal="true"
     >
-      {/* macOS Titlebar */}
+      {/* ── macOS Unified Titlebar ── */}
       <div
-        className="flex items-center gap-2 px-3 flex-shrink-0 select-none"
+        className="mac-titlebar flex items-center justify-between px-3.5 flex-shrink-0 select-none border-b border-white/5 cursor-default relative z-20"
         style={{
           height: 'var(--titlebar-h)',
-          backgroundColor: 'rgba(28, 31, 43, 0.85)',
-          backdropFilter: 'blur(16px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-          borderTopLeftRadius: isFullScreen ? 0 : 'var(--radius-lg)',
-          borderTopRightRadius: isFullScreen ? 0 : 'var(--radius-lg)',
+          backgroundColor: 'rgba(25, 28, 40, 0.75)',
+          touchAction: 'none',
         }}
-        onMouseDown={!isFullScreen ? handleMouseDown : undefined}
-        onTouchStart={!isFullScreen ? handleTouchStart : undefined}
+        onPointerDown={handlePointerDown}
+        onDoubleClick={!isMobile ? handleMaximize : undefined}
       >
-        {/* Traffic lights */}
-        <div className="flex items-center gap-[8px] flex-shrink-0">
-          <MacOSTrafficLight color={TRAFFIC.close} label="Cerrar" onClick={handleClose} icon="×" />
-          <MacOSTrafficLight color={TRAFFIC.minimize} label="Minimizar" onClick={handleMinimize} icon="−" />
-          <MacOSTrafficLight color={TRAFFIC.maximize} label="Maximizar" onClick={handleMaximize} icon="⤢" />
+        {/* Window Controls: macOS Traffic Lights */}
+        <div
+          className="flex items-center gap-2 flex-shrink-0 py-1"
+          onMouseEnter={() => setTrafficHovered(true)}
+          onMouseLeave={() => setTrafficHovered(false)}
+        >
+          <MacOSTrafficLight
+            color={TRAFFIC.close}
+            label={lang === 'es' ? 'Cerrar' : 'Close'}
+            onClick={handleClose}
+            icon="×"
+            showIcon={isMobile || trafficHovered}
+          />
+          {!isMobile && (
+            <>
+              <MacOSTrafficLight
+                color={TRAFFIC.minimize}
+                label={lang === 'es' ? 'Minimizar' : 'Minimize'}
+                onClick={handleMinimize}
+                icon="–"
+                showIcon={trafficHovered}
+              />
+              <MacOSTrafficLight
+                color={TRAFFIC.maximize}
+                label={isMaximized ? (lang === 'es' ? 'Restaurar' : 'Restore') : (lang === 'es' ? 'Maximizar' : 'Maximize')}
+                onClick={handleMaximize}
+                icon={isMaximized ? '⤡' : '+'}
+                showIcon={trafficHovered}
+              />
+            </>
+          )}
         </div>
 
         {/* Title — centered */}
-        <div className="flex-1 flex items-center justify-center min-w-0 mr-[52px]">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded flex-shrink-0" style={{ backgroundColor: accent }} />
-            <span className="text-[11px] font-mono truncate" style={{ color: 'var(--os-muted)' }}>
-              {win.title}
-            </span>
-          </div>
+        <div className="flex-1 flex items-center justify-center min-w-0 px-2 sm:px-4">
+          <span className="font-sans text-[12px] sm:text-[13px] font-medium text-white/90 truncate tracking-tight">
+            {win.title}
+          </span>
         </div>
+
+        {/* Spacer on right to balance traffic lights on left */}
+        <div className={`flex items-center justify-end flex-shrink-0 ${isMobile ? 'w-[15px]' : 'w-[62px]'}`} />
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto" style={{ backgroundColor: 'var(--os-bg)' }}>
+      {/* ── Content View ── */}
+      <div className="flex-1 overflow-hidden flex flex-col bg-[rgba(16,18,26,0.75)]">
         {children}
       </div>
 
-      {/* Resize handle (drag to resize) */}
+      {/* ── Resize Handle (bottom-right) ── */}
       {!isFullScreen && (
         <div
-          onMouseDown={handleResizeStart}
-          className="absolute bottom-0 right-0 cursor-se-resize"
-          style={{
-            width: 20,
-            height: 20,
-            borderRight: '2px solid rgba(255,255,255,0.1)',
-            borderBottom: '2px solid rgba(255,255,255,0.1)',
-            borderBottomRightRadius: 'var(--radius-sm)',
-            zIndex: 10,
-          }}
+          onPointerDown={handleResizeStart}
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-20"
         />
       )}
     </motion.div>
   );
 }
 
-function MacOSTrafficLight({ color, label, onClick, icon }: { color: string; label: string; onClick: () => void; icon: string }) {
+function MacOSTrafficLight({
+  color,
+  label,
+  onClick,
+  icon,
+  showIcon,
+}: {
+  color: string;
+  label: string;
+  onClick: () => void;
+  icon: string;
+  showIcon: boolean;
+}) {
   return (
     <button
       type="button"
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className="flex items-center justify-center group"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onTouchEnd={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        onClick();
+      }}
+      className="flex items-center justify-center rounded-full relative group transition-transform active:scale-90 cursor-pointer"
       style={{
-        width: 12,
-        height: 12,
-        borderRadius: '50%',
+        width: 15,
+        height: 15,
         backgroundColor: color,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.2)',
-        transition: 'filter 0.1s ease, transform 0.1s ease',
+        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.3)',
       }}
       aria-label={label}
     >
-      <span className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity leading-none font-bold" style={{ color: 'rgba(0,0,0,0.45)' }}>
+      <span
+        className={`text-[9px] font-bold leading-none select-none transition-opacity duration-100 ${
+          showIcon ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ color: 'rgba(0, 0, 0, 0.65)' }}
+      >
         {icon}
       </span>
     </button>

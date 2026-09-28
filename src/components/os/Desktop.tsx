@@ -6,6 +6,7 @@ import { useReducedMotion } from 'framer-motion';
 import { useKonamiCode, useLsCommand } from '@/hooks/useEasterEggs';
 import type { EasterEgg } from '@/hooks/useEasterEggs';
 import Taskbar from './Taskbar';
+import MenuBar from './MenuBar';
 import BootScreen from './BootScreen';
 import WindowManager from './WindowManager';
 import FolderIcon from './FolderIcon';
@@ -48,15 +49,7 @@ function getOccupiedSetSnapshot(
   for (const [id, pos] of Object.entries(positions)) {
     if (id === excludeId) continue;
     const s = snapToGrid(pos);
-    if (id === 'adrbot') {
-      // AdrBOT occupies a 2x2 block in the grid to prevent project folders overlapping
-      set.add(`${s.x},${s.y}`);
-      set.add(`${s.x + GRID_X},${s.y}`);
-      set.add(`${s.x},${s.y + GRID_Y}`);
-      set.add(`${s.x + GRID_X},${s.y + GRID_Y}`);
-    } else {
-      set.add(`${s.x},${s.y}`);
-    }
+    set.add(`${s.x},${s.y}`);
   }
   return set;
 }
@@ -99,9 +92,39 @@ const COL_START_X = GRID_OFFSET_X;
 const ROW_START_Y = GRID_OFFSET_Y;
 
 function calcInitialPositions(projects: ProjectEntry[]): Record<string, { x: number; y: number }> {
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const positions: Record<string, { x: number; y: number }> = {};
+
+  if (isMobile) {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 390;
+    const available = vw - 24;
+    const colWidth = Math.floor(available / 3);
+    const rowHeight = 104;
+    const startX = 12 + Math.floor((colWidth - 92) / 2);
+    const startY = 44; // below menubar
+    const cols = 3;
+
+    // Cell 0 (0, 0) is reserved for AdrBOT
+    positions['adrbot'] = {
+      x: startX,
+      y: startY,
+    };
+
+    // Projects start from cell 1
+    projects.forEach((p, idx) => {
+      const slot = idx + 1;
+      const col = slot % cols;
+      const row = Math.floor(slot / cols);
+      positions[p.data.id] = {
+        x: startX + col * colWidth,
+        y: startY + row * rowHeight,
+      };
+    });
+    return positions;
+  }
+
   const zoneOrder = ['android', 'fullstack', 'ai-tools'];
   const zones = zoneOrder.filter((z) => projects.some((p) => p.data.zone === z));
-  const positions: Record<string, { x: number; y: number }> = {};
 
   zones.forEach((zone, col) => {
     const baseX = COL_START_X + col * GRID_X;
@@ -123,8 +146,8 @@ export default function Desktop({ projects }: DesktopProps) {
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const [desktopCtxMenu, setDesktopCtxMenu] = useState<{ x: number; y: number } | null>(null);
   const [wallpaperId, setWallpaperId] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'sonoma';
-    return localStorage.getItem('adros-wallpaper') || 'sonoma';
+    if (typeof window === 'undefined') return 'sequoia-dark';
+    return localStorage.getItem('adros-wallpaper') || 'sequoia-dark';
   });
   const [wallpaperPickerOpen, setWallpaperPickerOpen] = useState(false);
   const desktopRef = useRef<HTMLDivElement>(null);
@@ -147,10 +170,7 @@ export default function Desktop({ projects }: DesktopProps) {
     const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const isMobile = vw < 768;
 
-    if (isMobile) {
-      const vh = typeof window !== 'undefined' ? window.innerHeight : 700;
-      initial['adrbot'] = { x: 16, y: Math.max(40, vh - 165) };
-    } else {
+    if (!isMobile) {
       const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
       const botX = maxColX - GRID_X;
       initial['adrbot'] = { x: Math.max(GRID_OFFSET_X, botX), y: GRID_OFFSET_Y };
@@ -179,31 +199,6 @@ export default function Desktop({ projects }: DesktopProps) {
       const snapped = snapToGrid(rawPos);
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-
-      if (id === 'adrbot') {
-        const isMobile = vw < 768;
-        if (isMobile) {
-          const botWidth = 80;
-          const minY = 40;
-          const maxY = vh - 150;
-          const clampedY = Math.max(minY, Math.min(maxY, rawPos.y));
-          const midX = vw / 2;
-          const snappedX = (rawPos.x + botWidth / 2) < midX ? 16 : Math.max(16, vw - botWidth - 16);
-          return { ...prev, [id]: { x: snappedX, y: clampedY } };
-        }
-
-        const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
-        const bounds = {
-          minX: GRID_OFFSET_X,
-          minY: GRID_OFFSET_Y,
-          maxX: maxColX - GRID_X,
-          maxY: Math.floor((vh - 160 - GRID_OFFSET_Y) / GRID_Y) * GRID_Y + GRID_OFFSET_Y,
-        };
-        const resolved = { ...snapped };
-        resolved.x = Math.max(bounds.minX, Math.min(bounds.maxX, resolved.x));
-        resolved.y = Math.max(bounds.minY, Math.min(bounds.maxY, resolved.y));
-        return { ...prev, [id]: resolved };
-      }
 
       const occupied = getOccupiedSetSnapshot(prev, id);
       const bounds = {
@@ -235,38 +230,34 @@ export default function Desktop({ projects }: DesktopProps) {
     const snapped = snapToGrid(dragPos);
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const isBot = draggingId === 'adrbot';
     const maxColX = Math.floor((vw - GRID_OFFSET_X - 40) / GRID_X) * GRID_X + GRID_OFFSET_X;
     const bounds = {
       minX: GRID_OFFSET_X,
       minY: GRID_OFFSET_Y,
-      maxX: isBot ? (maxColX - GRID_X) : maxColX,
+      maxX: maxColX,
       maxY: Math.floor((vh - 160 - GRID_OFFSET_Y) / GRID_Y) * GRID_Y + GRID_OFFSET_Y,
     };
-    if (!isBot && occupiedKeys.has(`${snapped.x},${snapped.y}`)) {
+    if (occupiedKeys.has(`${snapped.x},${snapped.y}`)) {
       return findNearestFreeCell(snapped, occupiedKeys, bounds);
     }
     return snapped;
-  }, [dragPos, occupiedKeys, draggingId]);
+  }, [dragPos, occupiedKeys]);
 
   const nearbyCells = useMemo(() => {
     if (!snapTarget) return [];
     const cells: Array<{ x: number; y: number; isTarget: boolean }> = [];
     const range = 2;
-    const isBot = draggingId === 'adrbot';
     for (let dx = -range; dx <= range; dx++) {
       for (let dy = -range; dy <= range; dy++) {
         cells.push({
           x: snapTarget.x + dx * GRID_X,
           y: snapTarget.y + dy * GRID_Y,
-          isTarget: isBot
-            ? (dx >= 0 && dx <= 2 && dy >= 0 && dy <= 2)
-            : (dx >= 0 && dx <= 1 && dy >= 0 && dy <= 1),
+          isTarget: dx >= 0 && dx <= 1 && dy >= 0 && dy <= 1,
         });
       }
     }
     return cells;
-  }, [snapTarget, draggingId]);
+  }, [snapTarget]);
 
   /* ── Desktop context menu ── */
   const handleDesktopContext = useCallback((e: React.MouseEvent) => {
@@ -300,10 +291,20 @@ export default function Desktop({ projects }: DesktopProps) {
   /* ── Wallpaper from state ── */
   const currentWallpaper = WALLPAPERS.find((w) => w.id === wallpaperId) || WALLPAPERS[0];
   const wallpaperStyle: React.CSSProperties = {
-    background: currentWallpaper.css,
+    backgroundImage: `url('${currentWallpaper.image}')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
     position: 'relative',
-    transition: 'background 0.4s ease',
+    transition: 'background-image 0.4s ease',
   };
+
+  const activeWindow = windows
+    .filter((w) => w.isOpen && !w.isMinimized)
+    .sort((a, b) => b.zIndex - a.zIndex)[0];
+  const activeWindowTitle = viewMode === 'list'
+    ? 'Finder'
+    : (activeWindow ? activeWindow.title : 'AdrOS');
 
   if (!booted) {
     return <BootScreen onComplete={() => setBooted(true)} />;
@@ -315,32 +316,31 @@ export default function Desktop({ projects }: DesktopProps) {
         className="flex flex-col h-screen"
         style={wallpaperStyle}
       >
-        {/* ── macOS-style menubar (normal flow, pushes content down) ── */}
-        <div
-          className="flex-shrink-0 flex items-center px-3 select-none"
-          style={{
-            height: 28,
-            backgroundColor: 'rgba(16, 18, 26, 0.82)',
-            backdropFilter: 'blur(20px) saturate(1.3)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.3)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+        {/* ── macOS Menu Bar ── */}
+        <MenuBar
+          lang={langState.lang}
+          toggleLang={langState.toggleLang}
+          activeWindowTitle={activeWindowTitle}
+          onOpenWallpaperPicker={() => {
+            setWallpaperPickerOpen(true);
+            setViewMode('icons');
           }}
-        >
-          <div className="flex items-center gap-1.5">
-            <img
-              src="/AdrOS.webp"
-              alt="AdrOS"
-              className="w-[16px] h-[16px]"
-              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }}
-            />
-            <span
-              className="font-mono text-[11px] font-semibold tracking-wide"
-              style={{ color: 'var(--os-text)' }}
-            >
-              AdrOS
-            </span>
-          </div>
-        </div>
+          onOpenProfile={() => {
+            openWindow('profile', 'profile', t('profile_title'));
+            setViewMode('icons');
+          }}
+          onOpenContact={() => {
+            openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me');
+            setViewMode('icons');
+          }}
+          onOpenChat={() => {
+            openWindow('chat', 'chat', 'AdrBOT');
+            setViewMode('icons');
+          }}
+          viewMode={viewMode}
+          onToggleView={() => setViewMode((v) => (v === 'icons' ? 'list' : 'icons'))}
+          onRestart={() => setBooted(false)}
+        />
 
         <div
           ref={desktopRef}
@@ -400,12 +400,13 @@ export default function Desktop({ projects }: DesktopProps) {
             <DraggableEgg key={egg.id} egg={egg} onMove={updateEgg} />
           ))}
 
-          {/* QuickLinks — bottom-right (positioned above taskbar on mobile) */}
+          {/* QuickLinks — bottom-right on desktop, centered above dock on mobile */}
           <div
-            className="absolute transition-all duration-200"
+            className="absolute transition-all duration-200 z-10"
             style={{
-              right: typeof window !== 'undefined' && window.innerWidth < 768 ? 16 : 28,
-              bottom: typeof window !== 'undefined' && window.innerWidth < 768 ? 82 : 24,
+              ...(typeof window !== 'undefined' && window.innerWidth < 768
+                ? { left: '50%', transform: 'translateX(-50%)', bottom: 78 }
+                : { right: 28, bottom: 24 }),
             }}
           >
             <QuickLinks
@@ -432,7 +433,7 @@ export default function Desktop({ projects }: DesktopProps) {
           onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
         />
 
-        {/* ── Taskbar ── */}
+        {/* ── macOS Dock ── */}
         <motion.div
           initial={reduce ? false : { y: 48 }}
           animate={{ y: 0 }}
@@ -440,12 +441,30 @@ export default function Desktop({ projects }: DesktopProps) {
         >
           <Taskbar
             lang={langState.lang}
-            toggleLang={langState.toggleLang}
             viewMode={viewMode}
             onToggleView={() => setViewMode((v) => (v === 'icons' ? 'list' : 'icons'))}
             minimizedWindows={minimizedWindows}
-            onRestoreWindow={restoreWindow}
-            onOpenProfile={() => openWindow('profile', 'profile', t('profile_title'))}
+            onRestoreWindow={(id) => {
+              restoreWindow(id);
+              setViewMode('icons');
+            }}
+            onOpenProfile={() => {
+              openWindow('profile', 'profile', t('profile_title'));
+              setViewMode('icons');
+            }}
+            onOpenContact={() => {
+              openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me');
+              setViewMode('icons');
+            }}
+            onOpenChat={() => {
+              openWindow('chat', 'chat', 'AdrBOT');
+              setViewMode('icons');
+            }}
+            onOpenWallpaperPicker={() => {
+              setWallpaperPickerOpen(true);
+              setViewMode('icons');
+            }}
+            openWindows={windows}
           />
         </motion.div>
 
@@ -464,6 +483,7 @@ export default function Desktop({ projects }: DesktopProps) {
           currentId={wallpaperId}
           onSelect={handleWallpaperSelect}
           onClose={() => setWallpaperPickerOpen(false)}
+          lang={langState.lang}
         />
 
         {/* ── List view ── */}
@@ -675,17 +695,38 @@ function ListView({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-40 overflow-auto"
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      role="dialog"
+      aria-label={lang === 'es' ? 'Explorador Finder' : 'Finder Explorer'}
+      className="fixed inset-0 top-[var(--menubar-h)] z-[8000] overflow-auto pb-[calc(var(--dock-h)+24px)]"
       style={{
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(13, 15, 20, 0.98)',
-        backdropFilter: 'blur(16px)',
+        backgroundColor: 'rgba(18, 20, 29, 0.88)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
       }}
     >
       <div className="max-w-4xl mx-auto p-6">
+        {/* Finder Header bar */}
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <img src="/icons/finder.webp" alt="Finder" className="w-5 h-5 object-contain" />
+            <span className="font-sans text-xs font-semibold text-white tracking-tight">
+              {lang === 'es' ? 'Explorador de Proyectos' : 'Projects Explorer'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              onClose();
+            }}
+            className="px-2.5 py-1 rounded-[6px] bg-white/15 active:bg-white/30 hover:bg-white/20 text-white font-medium text-[11px] font-sans transition-colors cursor-pointer border border-white/10"
+          >
+            {lang === 'es' ? '✕ Cerrar' : '✕ Close'}
+          </button>
+        </div>
+
         {/* Search input */}
         <div className="relative mb-5">
           <svg
@@ -698,7 +739,7 @@ function ListView({
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ color: 'var(--os-muted)' }}
+            style={{ color: 'rgba(255,255,255,0.4)' }}
           >
             <circle cx="6" cy="6" r="4.5" />
             <path d="M9.5 9.5L13 13" />
@@ -708,14 +749,8 @@ function ListView({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={lang === 'es' ? 'Buscar por nombre o tecnología...' : 'Search by name or technology...'}
-            className="w-full pl-9 pr-8 py-2 font-mono text-sm outline-none transition-colors duration-150"
-            style={{
-              backgroundColor: 'var(--os-surface-2)',
-              border: '1px solid var(--os-border)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--os-text)',
-            }}
+            placeholder={lang === 'es' ? 'Buscar proyecto por nombre o tecnología...' : 'Search project by name or tech...'}
+            className="w-full pl-9 pr-8 py-2 font-sans text-xs outline-none transition-colors duration-150 text-white placeholder:text-white/30 rounded-[8px] bg-white/5 border border-white/10 focus:border-[var(--os-blue)]"
             onKeyDown={(e) => {
               if (e.key === 'Escape') setQuery('');
             }}
@@ -727,7 +762,7 @@ function ListView({
               className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
               aria-label="Clear search"
             >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: 'var(--os-muted)' }}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 <path d="M1 1L9 9M9 1L1 9" />
               </svg>
             </button>
@@ -735,90 +770,86 @@ function ListView({
         </div>
 
         {/* Results count */}
-        <div className="mb-3 font-mono text-[10px]" style={{ color: 'var(--os-muted)' }}>
+        <div className="mb-3 font-sans text-[11px] text-white/50">
           {filtered.length === 0
-            ? (lang === 'es' ? 'Sin resultados' : 'No results')
+            ? (lang === 'es' ? 'Sin proyectos coincidentes' : 'No matching projects')
             : `${filtered.length} ${lang === 'es' ? 'proyecto' : 'project'}${filtered.length !== 1 ? 's' : ''}`}
         </div>
 
         {/* Table */}
         {filtered.length > 0 && (
-          <table className="w-full" style={{ fontFamily: 'var(--font-mono)' }}>
-            <thead>
-              <tr className="text-left text-xs" style={{ color: 'var(--os-muted)' }}>
-                <th className="pb-3 font-normal">{lang === 'es' ? 'Proyecto' : 'Project'}</th>
-                <th className="pb-3 font-normal">{lang === 'es' ? 'Categoría' : 'Category'}</th>
-                <th className="pb-3 font-normal hidden sm:table-cell">Stack</th>
-                <th className="pb-3 font-normal">{lang === 'es' ? 'Fecha' : 'Date'}</th>
-                <th className="pb-3 font-normal" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((project, i) => {
-                const zone = project.data.zone as keyof typeof ZONE_COLORS;
-                return (
-                  <motion.tr
-                    key={project.data.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.02, duration: 0.1 }}
-                    className="group cursor-pointer transition-colors duration-100"
-                    style={{ borderBottom: '1px solid var(--os-border)' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--os-surface-2)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    onClick={() => onOpenProject(project)}
-                  >
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: ZONE_COLORS[zone] }}
-                        />
-                        <span className="text-sm" style={{ color: 'var(--os-text)' }}>
-                          {project.data.title}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span className="text-xs" style={{ color: 'var(--os-muted)' }}>
-                        {project.data.zone}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 hidden sm:table-cell">
-                      <div className="flex gap-1 flex-wrap">
-                        {project.data.stack.slice(0, 3).map((tech) => (
-                          <span
-                            key={tech}
-                            className="text-[10px] px-1.5 py-0.5 rounded-[var(--radius-sm)]"
-                            style={{
-                              backgroundColor: 'var(--os-surface-2)',
-                              border: '1px solid var(--os-border)',
-                              color: 'var(--os-muted)',
-                            }}
-                          >
-                            {tech}
+          <div className="rounded-[10px] border border-white/10 overflow-hidden bg-white/[0.03]">
+            <table className="w-full font-sans">
+              <thead>
+                <tr className="text-left text-[11px] text-white/50 border-b border-white/10 bg-white/[0.04]">
+                  <th className="py-2.5 px-3.5 font-medium">{lang === 'es' ? 'Nombre' : 'Name'}</th>
+                  <th className="py-2.5 px-3.5 font-medium">{lang === 'es' ? 'Categoría' : 'Category'}</th>
+                  <th className="py-2.5 px-3.5 font-medium hidden sm:table-cell">Stack</th>
+                  <th className="py-2.5 px-3.5 font-medium whitespace-nowrap">{lang === 'es' ? 'Fecha' : 'Date'}</th>
+                  <th className="py-2.5 px-3.5 font-medium text-right hidden sm:table-cell">{lang === 'es' ? 'Abrir' : 'Open'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((project, i) => {
+                  const zone = project.data.zone as keyof typeof ZONE_COLORS;
+                  return (
+                    <motion.tr
+                      key={project.data.id}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.02, duration: 0.12 }}
+                      className="group cursor-pointer transition-colors duration-100 hover:bg-[var(--os-blue)]/20 active:bg-[var(--os-blue)]/30 border-b border-white/5 last:border-b-0"
+                      onClick={() => onOpenProject(project)}
+                    >
+                      <td className="py-2.5 px-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <img src="/icons/folder.webp" alt="folder" className="w-4 h-4 object-contain flex-shrink-0" />
+                          <span className="text-xs font-medium text-white group-hover:text-white">
+                            {project.data.title}
                           </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4">
-                      <span className="text-xs" style={{ color: 'var(--os-muted)' }}>
-                        {project.data.date}
-                      </span>
-                    </td>
-                    <td className="py-3">
-                      <span
-                        className="text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                        style={{ color: 'var(--os-accent)' }}
-                      >
-                        →
-                      </span>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: ZONE_COLORS[zone] }}
+                          />
+                          <span className="text-xs text-white/70">
+                            {project.data.zone}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3.5 hidden sm:table-cell">
+                        <div className="flex gap-1 flex-wrap">
+                          {project.data.stack.slice(0, 3).map((tech) => (
+                            <span
+                              key={tech}
+                              className="text-[10px] px-1.5 py-0.5 rounded-[4px] bg-white/10 text-white/80"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3.5 whitespace-nowrap">
+                        <span className="text-xs text-white/50 font-mono whitespace-nowrap">
+                          {project.data.date}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3.5 text-right hidden sm:table-cell">
+                        <span
+                          className="text-xs font-semibold text-[var(--os-blue)] opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          →
+                        </span>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Empty state */}

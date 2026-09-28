@@ -1,76 +1,56 @@
 import { useEffect, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-interface BootLine {
-  text: string;
-  delay: number;
-}
-
-const BOOT_LINES: BootLine[] = [
-  { text: '', delay: 0 },
-  { text: 'AdrOS v1.0.0', delay: 400 },
-  { text: 'Copyright © 2026 Adrián Gómez', delay: 700 },
-  { text: '', delay: 1000 },
-  { text: 'Loading kernel modules...', delay: 1100 },
-  { text: 'Initializing file system...', delay: 1300 },
-  { text: 'Mounting project volumes...', delay: 1500 },
-  { text: 'All systems nominal.', delay: 1800 },
-  { text: '', delay: 2000 },
-  { text: 'Click or press any key to continue.', delay: 2100 },
-];
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 
 interface BootScreenProps {
   onComplete: () => void;
 }
 
 export default function BootScreen({ onComplete }: BootScreenProps) {
-  const [visibleLines, setVisibleLines] = useState(0);
-  const [skipped, setSkipped] = useState(false);
-  const [fadingOut, setFadingOut] = useState(false);
+  const shouldReduce = useReducedMotion();
   const [progress, setProgress] = useState(0);
+  const [fadingOut, setFadingOut] = useState(false);
 
   const skipBoot = useCallback(() => {
-    if (!skipped) {
-      setSkipped(true);
-      setProgress(100);
-      setFadingOut(true);
-      setTimeout(() => onComplete(), 350);
-    }
-  }, [skipped, onComplete]);
+    setProgress(100);
+    setFadingOut(true);
+    setTimeout(() => onComplete(), 300);
+  }, [onComplete]);
 
   useEffect(() => {
-    if (skipped) return;
+    if (shouldReduce) {
+      onComplete();
+      return;
+    }
+    // Elegant Apple boot progress simulation
+    const steps = [
+      { progress: 15, delay: 150 },
+      { progress: 38, delay: 400 },
+      { progress: 65, delay: 750 },
+      { progress: 88, delay: 1100 },
+      { progress: 100, delay: 1350 },
+    ];
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    BOOT_LINES.forEach((line, i) => {
-      if (i === 0) setVisibleLines(1);
-      const timer = setTimeout(() => {
-        setVisibleLines(i + 1);
-        if (i >= 4 && i <= 7) {
-          // Progress goes from 0 to 100 during boot messages
-          const bootProgress = Math.min(100, ((i - 3) / 4) * 100);
-          setTimeout(() => setProgress(bootProgress), 50);
-        }
-        if (i === BOOT_LINES.length - 1) {
+    steps.forEach(({ progress: p, delay }) => {
+      const t = setTimeout(() => {
+        setProgress(p);
+        if (p === 100) {
           setTimeout(() => {
-            setProgress(100);
-            setTimeout(() => {
-              setFadingOut(true);
-              setTimeout(() => onComplete(), 350);
-            }, 500);
-          }, 300);
+            setFadingOut(true);
+            setTimeout(() => onComplete(), 400);
+          }, 200);
         }
-      }, line.delay);
-      timers.push(timer);
+      }, delay);
+      timers.push(t);
     });
 
     return () => timers.forEach(clearTimeout);
-  }, [skipped, onComplete]);
+  }, [onComplete]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter') skipBoot();
+      if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') skipBoot();
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
@@ -78,65 +58,44 @@ export default function BootScreen({ onComplete }: BootScreenProps) {
 
   return (
     <AnimatePresence>
-      {!fadingOut ? (
+      {!fadingOut && (
         <motion.div
-          key="boot"
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
-          style={{
-            backgroundColor: '#000',
-            fontFamily: 'var(--font-mono)',
-          }}
+          key="apple-boot"
+          className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black cursor-pointer select-none"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           onClick={skipBoot}
         >
-          {/* Central content */}
-          <div className="flex flex-col items-center gap-6" style={{ maxWidth: 520, width: '90%' }}>
-            {/* AdrOS Logo */}
+          <div className="flex flex-col items-center gap-10">
+            {/* AdrOS Logo (Apple Boot style) */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-2"
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              className="relative flex items-center justify-center"
             >
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="22" stroke="var(--os-accent)" strokeWidth="1.5" opacity="0.5" />
-                <path d="M24 4a30 30 0 0 1 8 20 30 30 0 0 1-8 20 30 30 0 0 1-8-20 30 30 0 0 1 8-20z" fill="var(--os-accent)" opacity="0.8" />
-                <path d="M6 24h36" stroke="var(--os-accent)" strokeWidth="1.5" opacity="0.4" />
-              </svg>
+              <img
+                src="/AdrOS.webp"
+                alt="AdrOS"
+                className="w-16 h-16 object-contain pointer-events-none"
+                style={{
+                  filter: 'drop-shadow(0 2px 12px rgba(255,255,255,0.15))',
+                }}
+              />
             </motion.div>
 
-            {/* Boot lines */}
-            <div className="flex flex-col gap-0 w-full">
-              {BOOT_LINES.slice(0, visibleLines).map((line, i) => (
-                <motion.p
-                  key={`boot-${i}`}
-                  className="text-sm whitespace-pre text-center"
-                  style={{ color: 'var(--os-accent)' }}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.1, ease: [0.23, 1, 0.32, 1] }}
-                >
-                  {line.text}
-                  {i === visibleLines - 1 && !skipped && i > 0 && (
-                    <span className="cursor-blink" style={{ marginLeft: 2 }}>▊</span>
-                  )}
-                </motion.p>
-              ))}
-            </div>
-
-            {/* Progress bar */}
-            <div className="w-48 h-[2px] rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+            {/* Apple signature minimalist progress bar */}
+            <div className="w-48 h-[4px] rounded-full bg-white/20 overflow-hidden relative">
               <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: 'var(--os-accent)', width: `${progress}%` }}
-                transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                className="h-full rounded-full bg-white"
+                style={{ width: `${progress}%` }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
               />
             </div>
           </div>
         </motion.div>
-      ) : null}
+      )}
     </AnimatePresence>
   );
 }
