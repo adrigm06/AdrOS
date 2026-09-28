@@ -4,6 +4,7 @@ import type { Lang } from '@/hooks/useLanguage';
 import type { ProjectEntry } from './Desktop';
 import { ZONE_COLORS } from '@/data/projects';
 import type { ZoneId } from '@/data/projects';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import Window from './Window';
 import ProjectWindow from '@/components/project/ProjectWindow';
 import ProfileWindow from '@/components/widgets/ProfileWindow';
@@ -36,7 +37,7 @@ export default function WindowManager({
   lang,
   onOpenContact,
 }: WindowManagerProps) {
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const isMobile = useIsMobile();
 
   return (
     <AnimatePresence>
@@ -61,6 +62,7 @@ export default function WindowManager({
             onUpdateSize={onUpdateSize}
             isMobile={isMobile}
             accentColor={accentColor}
+            lang={lang}
           >
             {win.type === 'profile' ? (
               <ProfileWindow lang={lang} onOpenContact={onOpenContact} />
@@ -69,7 +71,10 @@ export default function WindowManager({
             ) : win.type === 'chat' ? (
               <ChatWindow lang={lang} />
             ) : project ? (
-              <ProjectWindow project={project} lang={lang} />
+              <ProjectWindow
+                project={project}
+                lang={lang}
+              />
             ) : null}
           </Window>
         );

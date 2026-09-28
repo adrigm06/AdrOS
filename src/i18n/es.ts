@@ -23,9 +23,9 @@ export const translations = {
 
   // Perfil
   profile_title: 'Adrián Gómez — adrigm',
-  profile_role: 'Full-Stack & AI Developer',
+  profile_role: 'Full Stack Developer | AI Engineer',
   profile_location: '📍 Málaga, España',
-  profile_bio: 'Construyo productos digitales completos — apps Android, plataformas web y sistemas de IA. Me obsesiona el código limpio, las arquitecturas escalables y la experiencia de usuario.',
+  profile_bio: 'AI Engineer y Full Stack Developer especializado en Java y Spring Boot, con experiencia en desarrollo backend y arquitecturas de microservicios en entornos FinTech. Mi especialización está en AI Engineering, especialmente en la integración de LLMs, RAG, agentes y automatización de procesos de software. También trabajo con frontend y desarrollo móvil.',
 
   // QuickLinks
   quicklinks_github: 'GitHub',

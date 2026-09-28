@@ -6,6 +6,7 @@ interface CalendarPopoverProps {
   onClose: () => void;
   /** Ref del elemento que abre el calendario para posicionarlo */
   anchorEl: HTMLElement | null;
+  lang?: 'es' | 'en';
 }
 
 const WEEKDAYS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
@@ -21,9 +22,7 @@ const MONTHS_EN = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const LANG = typeof navigator !== 'undefined' && navigator.language.startsWith('es') ? 'es' : 'en';
-
-export default function CalendarPopover({ isOpen, onClose, anchorEl }: CalendarPopoverProps) {
+export default function CalendarPopover({ isOpen, onClose, anchorEl, lang = 'es' }: CalendarPopoverProps) {
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -59,6 +58,7 @@ export default function CalendarPopover({ isOpen, onClose, anchorEl }: CalendarP
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
   const weeks: (number | null)[][] = [];
   let day = 1;
+
   for (let w = 0; w < 6; w++) {
     const week: (number | null)[] = [];
     for (let d = 0; d < 7; d++) {
@@ -97,8 +97,8 @@ export default function CalendarPopover({ isOpen, onClose, anchorEl }: CalendarP
     };
   }, [isOpen, onClose, anchorEl]);
 
-  const months = LANG === 'es' ? MONTHS : MONTHS_EN;
-  const weekdays = LANG === 'es' ? WEEKDAYS : WEEKDAYS_EN;
+  const months = lang === 'es' ? MONTHS : MONTHS_EN;
+  const weekdays = lang === 'es' ? WEEKDAYS : WEEKDAYS_EN;
   const isToday = (d: number) =>
     d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
 
@@ -107,17 +107,11 @@ export default function CalendarPopover({ isOpen, onClose, anchorEl }: CalendarP
       {isOpen && (
         <motion.div
           ref={popoverRef}
-          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+          initial={{ opacity: 0, y: -6, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 8, scale: 0.95 }}
+          exit={{ opacity: 0, y: -6, scale: 0.96 }}
           transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
-          className="fixed z-[99999]"
-          style={{
-            bottom: anchorEl ? anchorEl.getBoundingClientRect().height + 12 : 70,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 260,
-          }}
+          className="fixed right-2 top-[calc(var(--menubar-h)+4px)] z-[99999] w-[260px] max-w-[calc(100vw-16px)]"
         >
           <div
             className="rounded-[var(--radius-lg)] overflow-hidden"
@@ -136,7 +130,7 @@ export default function CalendarPopover({ isOpen, onClose, anchorEl }: CalendarP
                 onClick={goPrevMonth}
                 disabled={!canGoPrev}
                 className="w-7 h-7 rounded-full flex items-center justify-center transition-colors duration-150 hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Mes anterior"
+                aria-label={lang === 'es' ? 'Mes anterior' : 'Previous month'}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--os-text)' }}>
                   <path d="M7 10L3 6L7 2" />
@@ -152,7 +146,7 @@ export default function CalendarPopover({ isOpen, onClose, anchorEl }: CalendarP
                 onClick={goNextMonth}
                 disabled={!canGoNext}
                 className="w-7 h-7 rounded-full flex items-center justify-center transition-colors duration-150 hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                aria-label="Mes siguiente"
+                aria-label={lang === 'es' ? 'Mes siguiente' : 'Next month'}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--os-text)' }}>
                   <path d="M5 2L9 6L5 10" />

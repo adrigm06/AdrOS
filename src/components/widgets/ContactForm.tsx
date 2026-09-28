@@ -10,34 +10,36 @@ interface ContactFormProps {
 
 const TEXTS = {
   es: {
-    subject: '$ contacto --tema consulta',
+    subject: 'Nuevo mensaje',
     labelName: 'Nombre',
     placeholderName: 'Tu nombre',
     labelContact: 'Email / Contacto',
     placeholderContact: 'tu@email.com o @usuario',
     labelMessage: 'Mensaje',
-    placeholderMessage: 'Cuéntame sobre tu proyecto...',
+    placeholderMessage: 'Cuéntame sobre tu proyecto o consulta...',
     optional: '(opcional)',
     rateLimitError: 'Demasiadas solicitudes. Por favor, inténtalo más tarde.',
     genericError: 'Algo salió mal. Por favor, inténtalo de nuevo.',
     buttonSending: 'Enviando...',
-    buttonSend: '$ enviar_mensaje',
+    buttonSend: 'Enviar mensaje',
+    toRecipient: 'Para: adriglc6@gmail.com',
     successTitle: 'Mensaje enviado con éxito',
     successSubtitle: 'Me pondré en contacto contigo pronto.',
   },
   en: {
-    subject: '$ contact --subject inquiry',
+    subject: 'New Message',
     labelName: 'Name',
     placeholderName: 'Your name',
     labelContact: 'Email / Contact',
     placeholderContact: 'your@email.com',
     labelMessage: 'Message',
-    placeholderMessage: 'Tell me about your project...',
+    placeholderMessage: 'Tell me about your project or inquiry...',
     optional: '(optional)',
     rateLimitError: 'Too many submissions. Please try again later.',
     genericError: 'Something went wrong. Please try again.',
     buttonSending: 'Sending...',
-    buttonSend: '$ send_message',
+    buttonSend: 'Send Message',
+    toRecipient: 'To: adriglc6@gmail.com',
     successTitle: 'Message sent successfully',
     successSubtitle: 'I will get back to you soon.',
   },
@@ -53,7 +55,7 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
   const getFieldError = (fieldName: string) =>
     errors.find(e => e.field === fieldName)?.message;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors([]);
     setErrorId(null);
@@ -90,7 +92,7 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
   };
 
   const inputClass = (hasError?: boolean) =>
-    `w-full bg-[var(--os-bg)] border ${hasError ? 'border-[var(--os-danger)] focus:border-[var(--os-danger)]' : 'border-[var(--os-border)] focus:border-[var(--os-accent)]'} rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-sans text-[var(--os-text)] placeholder:text-[var(--os-muted)] focus:outline-none transition-colors duration-150`;
+    `w-full bg-white/5 border ${hasError ? 'border-[var(--os-danger)] focus:border-[var(--os-danger)]' : 'border-white/10 focus:border-[var(--os-blue)]'} rounded-[8px] px-3 py-2 text-xs font-sans text-white placeholder:text-white/30 focus:outline-none transition-colors duration-150`;
 
   return (
     <AnimatePresence mode="wait">
@@ -102,15 +104,15 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
           exit={{ opacity: 0, scale: 0.95 }}
           className="flex flex-col items-center justify-center h-full gap-4 p-6 text-center select-none"
         >
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[var(--os-ok)] shadow-[0_0_12px_rgba(40,200,64,0.3)]">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0a0c12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label={t.successTitle}>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[var(--os-ok)] shadow-[0_0_16px_rgba(40,200,64,0.4)]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label={t.successTitle}>
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p className="font-mono text-sm text-[var(--os-accent)] font-semibold">
+          <p className="font-sans text-sm text-white font-semibold">
             {t.successTitle}
           </p>
-          <p className="font-sans text-xs text-[var(--os-text-dim)]">
+          <p className="font-sans text-xs text-white/60">
             {t.successSubtitle}
           </p>
         </motion.div>
@@ -122,11 +124,19 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
           exit={{ opacity: 0 }}
           onSubmit={handleSubmit}
           noValidate
-          className="flex flex-col gap-4 p-5 h-full overflow-y-auto"
+          className="flex flex-col gap-3.5 p-5 h-full overflow-y-auto"
         >
-          <h2 className="font-mono text-sm text-[var(--os-accent)] font-medium">
-            {t.subject}
-          </h2>
+          <div className="flex items-center justify-between pb-2 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <img src="/icons/mail.webp" alt="Mail" className="w-5 h-5 object-contain" />
+              <h2 className="font-sans text-xs text-white/90 font-medium">
+                {t.subject}
+              </h2>
+            </div>
+            <span className="text-[11px] font-sans text-white/40">
+              {t.toRecipient}
+            </span>
+          </div>
 
           {/* Honeypot - invisible to humans */}
           <div className="absolute opacity-0 -z-50 w-0 h-0 overflow-hidden pointer-events-none">
@@ -135,8 +145,8 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
           </div>
 
           {/* Name */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="name" className="font-mono text-[10px] uppercase tracking-wider text-[var(--os-muted)] select-none">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="name" className="font-sans text-[11px] font-medium text-white/70 select-none">
               {t.labelName}
             </label>
             <input
@@ -149,15 +159,15 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
               className={inputClass(!!getFieldError('name'))}
             />
             {getFieldError('name') && (
-              <span className="font-mono text-[10px] text-[var(--os-danger)]">
+              <span className="font-sans text-[10px] text-[var(--os-danger)]">
                 {getFieldError('name')}
               </span>
             )}
           </div>
 
           {/* Contact info */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="contactInfo" className="font-mono text-[10px] uppercase tracking-wider text-[var(--os-muted)] select-none">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="contactInfo" className="font-sans text-[11px] font-medium text-white/70 select-none">
               {t.labelContact}
             </label>
             <input
@@ -170,16 +180,16 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
               className={inputClass(!!getFieldError('contactInfo'))}
             />
             {getFieldError('contactInfo') && (
-              <span className="font-mono text-[10px] text-[var(--os-danger)]">
+              <span className="font-sans text-[10px] text-[var(--os-danger)]">
                 {getFieldError('contactInfo')}
               </span>
             )}
           </div>
 
           {/* Message */}
-          <div className="flex flex-col gap-1.5 flex-1">
-            <label htmlFor="message" className="font-mono text-[10px] uppercase tracking-wider text-[var(--os-muted)] select-none">
-              {t.labelMessage} <span className="normal-case font-normal text-[var(--os-muted)]">{t.optional}</span>
+          <div className="flex flex-col gap-1 flex-1">
+            <label htmlFor="message" className="font-sans text-[11px] font-medium text-white/70 select-none">
+              {t.labelMessage} <span className="text-white/40">{t.optional}</span>
             </label>
             <textarea
               id="message"
@@ -193,12 +203,12 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
 
           {/* Error banners */}
           {errorId === 'rate_limit' && (
-            <div className="p-3 rounded-[var(--radius-md)] border text-xs font-mono border-[var(--os-danger)] bg-[rgba(255,95,87,0.08)] text-[var(--os-danger)]">
+            <div className="p-2.5 rounded-[8px] border text-xs font-sans border-[var(--os-danger)]/40 bg-[var(--os-danger)]/10 text-[var(--os-danger)]">
               {t.rateLimitError}
             </div>
           )}
           {errorId === 'generic' && (
-            <div className="p-3 rounded-[var(--radius-md)] border text-xs font-mono border-[var(--os-danger)] bg-[rgba(255,95,87,0.08)] text-[var(--os-danger)]">
+            <div className="p-2.5 rounded-[8px] border text-xs font-sans border-[var(--os-danger)]/40 bg-[var(--os-danger)]/10 text-[var(--os-danger)]">
               {t.genericError}
             </div>
           )}
@@ -207,17 +217,15 @@ export default function ContactForm({ lang, onClose }: ContactFormProps) {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full py-3 rounded-[var(--radius-md)] font-mono text-xs font-semibold transition-all duration-150 flex items-center justify-center hover:brightness-110 active:scale-[0.98]"
+            className="w-full py-2.5 rounded-[8px] font-sans text-xs font-semibold text-white transition-all duration-150 flex items-center justify-center hover:brightness-110 active:scale-[0.98] shadow-sm"
             style={{
-              backgroundColor: isPending ? 'var(--os-surface-2)' : 'var(--os-accent)',
-              color: isPending ? 'var(--os-muted)' : 'var(--os-bg)',
-              border: isPending ? '1px solid var(--os-border)' : '1px solid var(--os-accent)',
+              backgroundColor: isPending ? 'rgba(255,255,255,0.1)' : 'var(--os-blue)',
               cursor: isPending ? 'not-allowed' : 'pointer',
             }}
           >
             {isPending ? (
               <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-[var(--os-muted)] border-t-transparent rounded-full animate-spin" />
+                <span className="w-3.5 h-3.5 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
                 {t.buttonSending}
               </span>
             ) : (

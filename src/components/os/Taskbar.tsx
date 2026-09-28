@@ -1,276 +1,230 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, useReducedMotion, type MotionValue } from 'framer-motion';
 import type { WindowState } from '@/hooks/useWindowManager';
 import type { Lang } from '@/hooks/useLanguage';
-import CalendarPopover from './CalendarPopover';
 
 interface TaskbarProps {
   lang: Lang;
-  toggleLang: () => void;
+  toggleLang?: () => void;
   viewMode: 'icons' | 'list';
   onToggleView: () => void;
   minimizedWindows: WindowState[];
   onRestoreWindow: (id: string) => void;
   onOpenProfile: () => void;
+  onOpenContact?: () => void;
+  onOpenChat?: () => void;
+  onOpenWallpaperPicker?: () => void;
+  openWindows?: WindowState[];
 }
 
-/**
- * macOS Sonoma Dock
- * Glass pill centered at bottom
- */
 export default function Taskbar({
   lang,
-  toggleLang,
   viewMode,
   onToggleView,
   minimizedWindows,
   onRestoreWindow,
   onOpenProfile,
+  onOpenContact,
+  onOpenChat,
+  onOpenWallpaperPicker,
+  openWindows = [],
 }: TaskbarProps) {
-  const [time, setTime] = useState('');
-  const [date, setDate] = useState('');
-  const [clickCount, setClickCount] = useState(0);
-  const [showEaster, setShowEaster] = useState(false);
-  const clickTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const mouseX = useMotionValue(Infinity);
+  const [bouncingApp, setBouncingApp] = useState<string | null>(null);
 
-  useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      setTime(`${h}:${m}`);
-      const day = String(now.getDate()).padStart(2, '0');
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      setDate(`${day}/${month}`);
-    };
-    update();
-    const interval = setInterval(update, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const calendarBtnRef = useRef<HTMLButtonElement>(null);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const handleClockClick = () => {
-    // Toggle calendar on single click
-    setCalendarOpen((prev) => !prev);
-    // Easter egg on 5th click (only when closing)
-    const newCount = clickCount + 1;
-    setClickCount(newCount);
-    if (clickTimer.current) clearTimeout(clickTimer.current);
-    clickTimer.current = setTimeout(() => setClickCount(0), 3000);
-    if (newCount >= 5) {
-      if (!calendarOpen) {
-        setShowEaster(true);
-        setClickCount(0);
-        setTimeout(() => setShowEaster(false), 4000);
-      }
-    }
+  const triggerBounce = (name: string, callback?: () => void) => {
+    setBouncingApp(name);
+    setTimeout(() => {
+      setBouncingApp(null);
+      callback?.();
+    }, 180);
   };
 
-  const hasWindows = minimizedWindows.length > 0;
+  const isProfileOpen = openWindows.some((w) => w.type === 'profile' && w.isOpen && !w.isMinimized);
+  const isChatOpen = openWindows.some((w) => w.type === 'chat' && w.isOpen && !w.isMinimized);
+  const isContactOpen = openWindows.some((w) => w.type === 'contact' && w.isOpen && !w.isMinimized);
 
   return (
-    <>
-      {/* ── macOS DOCK ── */}
-      <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9999] flex items-center justify-center">
-        <div
-          className="glass-dock flex items-center gap-1.5 px-3 py-2"
-          style={{ borderRadius: 'var(--radius-xl)', height: 60 }}
-        >
-          {/* ── LEFT: Fixed apps ── */}
-          <DockItem onClick={onOpenProfile} label="Adrián">
-            <div className="w-9 h-9 rounded-[var(--radius-md)] overflow-hidden ring-1 ring-white/10">
-              <img
-                src="/avatar.webp"
-                alt="Profile"
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
-            </div>
-          </DockItem>
+    <div className="fixed bottom-2 sm:bottom-2.5 left-1/2 -translate-x-1/2 z-[9999] flex items-center justify-center pointer-events-auto max-w-[96vw]">
+      {/* ── macOS 3D Frosted Glass Dock Shelf ── */}
+      <motion.div
+        onMouseMove={(e) => mouseX.set(e.pageX)}
+        onMouseLeave={() => mouseX.set(Infinity)}
+        className="vibrancy-dock flex items-end gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-[20px] sm:rounded-[22px] overflow-visible"
+        style={{
+          height: 60,
+        }}
+      >
+        {/* ── 1. Finder (Proyectos / Explorador) ── */}
+        <DockIcon
+          mouseX={mouseX}
+          src="/icons/finder.webp"
+          label={lang === 'es' ? 'Finder' : 'Finder'}
+          onClick={() => triggerBounce('finder', onToggleView)}
+          isOpen={viewMode === 'list'}
+          isBouncing={bouncingApp === 'finder'}
+        />
 
-          <DockItem onClick={onToggleView} label={viewMode === 'icons' ? 'List view' : 'Grid view'}>
-            <div
-              className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center transition-colors duration-150 hover:bg-white/5"
-              style={{ backgroundColor: 'var(--os-surface-2)' }}
-            >
-              {viewMode === 'icons' ? (
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" style={{ color: 'var(--os-muted)' }}>
-                  <rect x="1" y="1" width="6" height="6" rx="1.5" />
-                  <rect x="11" y="1" width="6" height="6" rx="1.5" />
-                  <rect x="1" y="11" width="6" height="6" rx="1.5" />
-                  <rect x="11" y="11" width="6" height="6" rx="1.5" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" style={{ color: 'var(--os-muted)' }}>
-                  <rect x="1" y="1" width="16" height="4" rx="1.5" />
-                  <rect x="1" y="7" width="16" height="4" rx="1.5" />
-                  <rect x="1" y="13" width="16" height="4" rx="1.5" />
-                </svg>
-              )}
-            </div>
-          </DockItem>
+        {/* ── 2. Siri (AdrBOT) ── */}
+        <DockIcon
+          mouseX={mouseX}
+          src="/icons/siri.webp"
+          label="AdrBOT (Siri)"
+          onClick={() => triggerBounce('siri', onOpenChat)}
+          isOpen={isChatOpen}
+          isBouncing={bouncingApp === 'siri'}
+        />
 
-          {/* ── Separator (only if there are windows) ── */}
-          {hasWindows && <div className="w-px h-7 mx-0.5" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />}
+        {/* ── 3. Safari (Web / GitHub) ── */}
+        <DockIcon
+          mouseX={mouseX}
+          src="/icons/safari.webp"
+          label="Safari — GitHub"
+          onClick={() => triggerBounce('safari', () => window.open('https://github.com/adrigm06', '_blank'))}
+          isBouncing={bouncingApp === 'safari'}
+        />
 
-          {/* ── CENTER: Minimized windows ── */}
-          <AnimatePresence>
-            {minimizedWindows.map((w, idx) => (
-              <motion.button
-                key={w.id}
-                type="button"
-                initial={{ scale: 0, opacity: 0, x: -10 }}
-                animate={{ scale: 1, opacity: 1, x: 0 }}
-                exit={{ scale: 0, opacity: 0, x: 10 }}
-                transition={{ duration: 0.2, delay: idx * 0.04, ease: [0.23, 1, 0.32, 1] }}
-                onClick={() => onRestoreWindow(w.id)}
-                className="dock-icon flex flex-col items-center justify-center gap-0.5 relative group"
-                style={{ width: 44, height: 44 }}
-                title={w.title}
-              >
-                <div
-                  className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden"
-                  style={{
-                    backgroundColor: 'var(--os-surface-2)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    transition: 'border-color 0.15s ease',
-                  }}
-                >
-                  <span
-                    className="text-[11px] font-mono font-bold tracking-wider"
-                    style={{ color: 'var(--os-muted)' }}
-                  >
-                    {w.title.slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-                {/* Mini dot indicator */}
-                <div
-                  className="w-1 h-1 rounded-full absolute -bottom-0.5"
-                  style={{ backgroundColor: 'var(--os-muted)' }}
-                />
-                {/* Tooltip on hover */}
-                <span
-                  className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 font-mono text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
-                  style={{
-                    backgroundColor: 'rgba(22, 24, 34, 0.92)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 'var(--radius-sm)',
-                    color: 'var(--os-text)',
-                  }}
-                >
-                  {w.title}
-                </span>
-              </motion.button>
-            ))}
-          </AnimatePresence>
+        {/* ── 4. Notas / TextEdit (Perfil & CV) ── */}
+        <DockIcon
+          mouseX={mouseX}
+          src="/icons/notes.webp"
+          label={lang === 'es' ? 'Notas — Perfil' : 'Notes — Profile'}
+          onClick={() => triggerBounce('notes', onOpenProfile)}
+          isOpen={isProfileOpen}
+          isBouncing={bouncingApp === 'notes'}
+        />
 
-          {/* ── RIGHT: System ── */}
-          {hasWindows && <div className="w-px h-7 mx-0.5" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />}
+        {/* ── 5. Mail (Contacto) ── */}
+        <DockIcon
+          mouseX={mouseX}
+          src="/icons/mail.webp"
+          label={lang === 'es' ? 'Mail — Contacto' : 'Mail — Contact'}
+          onClick={() => triggerBounce('mail', onOpenContact)}
+          isOpen={isContactOpen}
+          isBouncing={bouncingApp === 'mail'}
+        />
 
-          <DockItem onClick={toggleLang} label={lang === 'es' ? 'Español' : 'English'}>
-            <div
-              className="w-9 h-9 rounded-[var(--radius-md)] flex items-center justify-center font-mono text-[10px] font-bold tracking-wider transition-colors duration-150 hover:bg-white/5"
-              style={{
-                backgroundColor: 'var(--os-surface-2)',
-                color: 'var(--os-muted)',
-                border: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              {lang === 'es' ? 'ES' : 'EN'}
-            </div>
-          </DockItem>
+        {/* ── 6. Ajustes del Sistema (Fondos) ── */}
+        <DockIcon
+          mouseX={mouseX}
+          src="/icons/settings.webp"
+          label={lang === 'es' ? 'Ajustes del Sistema' : 'System Settings'}
+          onClick={() => triggerBounce('settings', onOpenWallpaperPicker)}
+          isBouncing={bouncingApp === 'settings'}
+        />
 
-          {/* Clock — click to toggle calendar */}
-          <button
-            ref={calendarBtnRef}
-            type="button"
-            onClick={handleClockClick}
-            className="flex flex-col items-center justify-center px-1.5 rounded-[var(--radius-md)] transition-colors duration-150 hover:bg-white/5"
-            style={{ height: 36, minWidth: 36 }}
-          >
-            <span className="font-mono text-[10px] leading-tight" style={{ color: 'var(--os-muted)' }}>
-              {time}
-            </span>
-            <span className="font-mono text-[8px] leading-tight" style={{ color: 'rgba(107,114,128,0.6)' }}>
-              {date}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* Calendar popover */}
-      <CalendarPopover
-        isOpen={calendarOpen}
-        onClose={() => setCalendarOpen(false)}
-        anchorEl={calendarBtnRef.current}
-      />
-
-      {/* Easter egg notification */}
-      <AnimatePresence>
-        {showEaster && (
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-[68px] left-1/2 -translate-x-1/2 z-[9999] px-4 py-2 font-mono text-xs glass-strong"
-            style={{ borderRadius: 'var(--radius-md)', color: 'var(--os-accent)' }}
-          >
-            ✦ Easter egg! Nothing here... yet.
-          </motion.div>
+        {/* ── Separator (If minimized windows exist) ── */}
+        {minimizedWindows.length > 0 && (
+          <div className="w-[1px] h-8 mx-1 bg-white/20 rounded-full self-center" />
         )}
-      </AnimatePresence>
-    </>
+
+        {/* ── Minimized Windows Section ── */}
+        <AnimatePresence>
+          {minimizedWindows.map((win) => (
+            <motion.div
+              key={win.id}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              <DockIcon
+                mouseX={mouseX}
+                src="/icons/folder.webp"
+                label={win.title}
+                onClick={() => onRestoreWindow(win.id)}
+                isOpen={false}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
+    </div>
   );
 }
 
-/* ── Dock Item ── */
-function DockItem({
-  children,
-  onClick,
+/* ── Magnified Dock Item Component ── */
+
+function DockIcon({
+  mouseX,
+  src,
   label,
+  onClick,
+  isOpen,
+  isBouncing,
 }: {
-  children: React.ReactNode;
-  onClick: () => void;
+  mouseX: MotionValue<number>;
+  src: string;
   label: string;
+  onClick: () => void;
+  isOpen?: boolean;
+  isBouncing?: boolean;
 }) {
-  const [hovered, setHovered] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const shouldReduce = useReducedMotion();
+
+  // Distance from mouse to icon center
+  const distance = useTransform(mouseX, (val) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+    return val - (bounds.x + bounds.width / 2);
+  });
+
+  // Parabolic magnification curve: 48px baseline up to 66px when hovered
+  const widthSync = useTransform(distance, [-100, 0, 100], [46, 64, 46]);
+  const springWidth = useSpring(widthSync, { mass: 0.1, stiffness: 220, damping: 16 });
+  const width = shouldReduce ? 46 : springWidth;
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="dock-icon flex items-center justify-center relative"
-      style={{ width: 36, height: 36 }}
-      title={label}
+    <div
+      ref={ref}
+      className={`relative flex flex-col items-center justify-end ${isHovered ? 'z-30' : 'z-10'}`}
+      style={{ transformOrigin: 'bottom' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {children}
-      {/* macOS-style floating label */}
+      {/* Floating Tooltip */}
       <AnimatePresence>
-        {hovered && (
-          <motion.span
-            initial={{ opacity: 0, y: 6, scale: 0.92 }}
+        {isHovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 4, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.92 }}
-            transition={{ duration: 0.12, ease: [0.23, 1, 0.32, 1] }}
-            className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 font-mono text-[10px] pointer-events-none z-50"
-            style={{
-              backgroundColor: 'rgba(22, 24, 34, 0.94)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--os-text)',
-            }}
+            exit={{ opacity: 0, y: 4, scale: 0.95 }}
+            transition={{ duration: 0.12 }}
+            className="absolute -top-10 whitespace-nowrap px-2.5 py-1 rounded-[6px] vibrancy-popover text-[11px] font-sans font-medium text-white shadow-lg pointer-events-none z-[99999]"
           >
             {label}
-          </motion.span>
+          </motion.div>
         )}
       </AnimatePresence>
-    </button>
+
+      {/* Interactive App Button with Spring Width */}
+      <motion.button
+        type="button"
+        onClick={onClick}
+        style={{ width, height: width, originY: 1 }}
+        animate={isBouncing && !shouldReduce ? { y: [0, -18, 0, -8, 0] } : { y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeInOut' }}
+        className="flex items-center justify-center rounded-[12px] p-0.5 outline-none transition-transform active:scale-95"
+        aria-label={label}
+      >
+        <img
+          src={src}
+          alt={label}
+          className="w-full h-full object-contain pointer-events-none"
+          style={{
+            filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35))',
+          }}
+        />
+      </motion.button>
+
+      {/* Running App Indicator Dot */}
+      <div className="h-1 flex items-center justify-center mt-0.5">
+        {isOpen && (
+          <div className="w-1 h-1 rounded-full bg-white/90 shadow-[0_0_4px_rgba(255,255,255,0.8)]" />
+        )}
+      </div>
+    </div>
   );
 }
