@@ -1,6 +1,5 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useDraggable } from '@neodrag/react';
 import type { WindowState } from '@/hooks/useWindowManager';
 import { WINDOW_MIN } from '@/hooks/useWindowManager';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -48,29 +47,107 @@ export default function Window({
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const exitIntentRef = useRef<'minimize' | 'close' | null>(null);
 
-  // Smooth Neodrag draggable hook
-  useDraggable(dragRef as unknown as React.RefObject<HTMLDivElement>, {
-    handle: '.mac-titlebar',
-    cancel: 'button, input, textarea, a',
-    disabled: isFullScreen,
-    position: isFullScreen ? { x: 0, y: 0 } : win.position,
-    onDragEnd: (data) => {
-      onUpdatePosition(win.id, { x: data.offsetX, y: data.offsetY });
-    },
-  });
+  // ── High-performance Direct Pointer Drag Engine ──
+  const isDragging = useRef(false);
+  const dragStart = useRef({ pointerX: 0, pointerY: 0, winX: 0, winY: 0 });
+  const currentPos = useRef(win.position);
+  const hasMoved = useRef(false);
 
-  // When switching between fullscreen / windowed, ensure Neodrag's transform is cleared or synced
   useEffect(() => {
-    if (isFullScreen && dragRef.current) {
-      dragRef.current.style.transform = 'translate3d(0px, 0px, 0px)';
+    if (!isDragging.current) {
+      currentPos.current = win.position;
     }
-  }, [isFullScreen]);
+  }, [win.position]);
+
+  // Clean up global cursor and select styles on unmount
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isFullScreen) return;
+    if (e.button !== 0) return; // Only main button
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, textarea')) return;
+
+    e.preventDefault();
+    onBringToFront(win.id);
+
+    isDragging.current = true;
+    hasMoved.current = false;
+    dragStart.current = {
+      pointerX: e.clientX,
+      pointerY: e.clientY,
+      winX: currentPos.current.x,
+      winY: currentPos.current.y,
+    };
+
+    if (dragRef.current) {
+      dragRef.current.style.transition = 'none';
+    }
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+
+    const onPointerMove = (ev: PointerEvent) => {
+      if (!isDragging.current) return;
+      const dx = ev.clientX - dragStart.current.pointerX;
+      const dy = ev.clientY - dragStart.current.pointerY;
+
+      if (!hasMoved.current && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+        hasMoved.current = true;
+      }
+
+      // Constrain window within viewport
+      const minX = 0;
+      const maxX = Math.max(0, window.innerWidth - win.size.width);
+      const minY = 28; // below macOS menubar
+      const maxY = Math.max(minY, window.innerHeight - 56);
+
+      const newX = Math.max(minX, Math.min(maxX, dragStart.current.winX + dx));
+      const newY = Math.max(minY, Math.min(maxY, dragStart.current.winY + dy));
+
+      currentPos.current = { x: newX, y: newY };
+
+      if (dragRef.current) {
+        dragRef.current.style.left = `${newX}px`;
+        dragRef.current.style.top = `${newY}px`;
+      }
+    };
+
+    const onPointerUp = () => {
+      isDragging.current = false;
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+
+      if (dragRef.current) {
+        dragRef.current.style.transition = '';
+      }
+
+      if (hasMoved.current) {
+        onUpdatePosition(win.id, currentPos.current);
+      }
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  }, [isFullScreen, win.id, win.size.width, onBringToFront, onUpdatePosition]);
 
   /* ── Resize ── */
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+  const handleResizeStart = useCallback((e: React.PointerEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
     if (isFullScreen) return;
     e.stopPropagation();
     resizeStart.current = { x: e.clientX, y: e.clientY, w: win.size.width, h: win.size.height };
+    if (dragRef.current) {
+      dragRef.current.style.transition = 'none';
+    }
     setIsResizing(true);
   }, [isFullScreen, win.size]);
 
@@ -83,7 +160,12 @@ export default function Window({
       const newH = Math.max(WINDOW_MIN.height, resizeStart.current.h + dh);
       onUpdateSize?.(win.id, { width: newW, height: newH });
     };
-    const onUp = () => setIsResizing(false);
+    const onUp = () => {
+      setIsResizing(false);
+      if (dragRef.current) {
+        dragRef.current.style.transition = '';
+      }
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => {
@@ -146,8 +228,8 @@ export default function Window({
       }
     : {
         position: 'fixed',
-        top: 0,
-        left: 0,
+        top: isDragging.current ? currentPos.current.y : win.position.y,
+        left: isDragging.current ? currentPos.current.x : win.position.x,
         width: win.size.width,
         height: win.size.height,
         zIndex: win.zIndex,
@@ -161,11 +243,6 @@ export default function Window({
         opacity: 1,
         scale: 1,
         y: 0,
-        x: 0,
-        width: isFullScreen ? '100vw' : win.size.width,
-        height: isFullScreen ? fullScreenHeight : win.size.height,
-        top: isFullScreen ? 'var(--menubar-h)' : undefined,
-        left: isFullScreen ? 0 : undefined,
       }}
       exit={getExit()}
       transition={shouldReduce ? { duration: 0.05 } : {
@@ -180,6 +257,7 @@ export default function Window({
         borderRadius: isFullScreen ? 0 : 'var(--radius-xl)',
         overflow: 'hidden',
         borderTopColor: accentColor ? `${accentColor}55` : undefined,
+        transition: isResizing || isDragging.current ? 'none' : 'width 0.22s cubic-bezier(0.16, 1, 0.3, 1), height 0.22s cubic-bezier(0.16, 1, 0.3, 1), top 0.22s cubic-bezier(0.16, 1, 0.3, 1), left 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
       className="vibrancy-window select-none border border-white/10"
       onClick={() => onBringToFront(win.id)}
@@ -193,7 +271,9 @@ export default function Window({
         style={{
           height: 'var(--titlebar-h)',
           backgroundColor: 'rgba(25, 28, 40, 0.75)',
+          touchAction: 'none',
         }}
+        onPointerDown={handlePointerDown}
         onDoubleClick={!isMobile ? handleMaximize : undefined}
       >
         {/* Window Controls: macOS Traffic Lights */}
@@ -248,7 +328,7 @@ export default function Window({
       {/* ── Resize Handle (bottom-right) ── */}
       {!isFullScreen && (
         <div
-          onMouseDown={handleResizeStart}
+          onPointerDown={handleResizeStart}
           className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-20"
         />
       )}
