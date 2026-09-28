@@ -22,7 +22,7 @@ export default function ZoneLegend({ lang }: ZoneLegendProps) {
 
   return (
     <div
-      className="fixed right-0 z-30 flex items-center cursor-pointer select-none"
+      className="fixed right-0 z-20 hidden md:flex items-center cursor-pointer select-none"
       style={{
         top: '50%',
         transform: 'translateY(-50%)',

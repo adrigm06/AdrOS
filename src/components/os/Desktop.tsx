@@ -96,10 +96,12 @@ function calcInitialPositions(projects: ProjectEntry[]): Record<string, { x: num
   const positions: Record<string, { x: number; y: number }> = {};
 
   if (isMobile) {
-    const colWidth = 100;
-    const rowHeight = 100;
-    const startX = 20;
-    const startY = 48; // below menubar
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 390;
+    const available = vw - 24;
+    const colWidth = Math.floor(available / 3);
+    const rowHeight = 104;
+    const startX = 12 + Math.floor((colWidth - 92) / 2);
+    const startY = 44; // below menubar
     const cols = 3;
 
     // Cell 0 (0, 0) is reserved for AdrBOT
@@ -386,12 +388,13 @@ export default function Desktop({ projects }: DesktopProps) {
             <DraggableEgg key={egg.id} egg={egg} onMove={updateEgg} />
           ))}
 
-          {/* QuickLinks — bottom-right (positioned above taskbar on mobile) */}
+          {/* QuickLinks — bottom-right on desktop, centered above dock on mobile */}
           <div
-            className="absolute transition-all duration-200"
+            className="absolute transition-all duration-200 z-10"
             style={{
-              right: typeof window !== 'undefined' && window.innerWidth < 768 ? 16 : 28,
-              bottom: typeof window !== 'undefined' && window.innerWidth < 768 ? 82 : 24,
+              ...(typeof window !== 'undefined' && window.innerWidth < 768
+                ? { left: '50%', transform: 'translateX(-50%)', bottom: 78 }
+                : { right: 28, bottom: 24 }),
             }}
           >
             <QuickLinks
@@ -752,8 +755,8 @@ function ListView({
                   <th className="py-2.5 px-3.5 font-medium">{lang === 'es' ? 'Nombre' : 'Name'}</th>
                   <th className="py-2.5 px-3.5 font-medium">{lang === 'es' ? 'Categoría' : 'Category'}</th>
                   <th className="py-2.5 px-3.5 font-medium hidden sm:table-cell">Stack</th>
-                  <th className="py-2.5 px-3.5 font-medium">{lang === 'es' ? 'Fecha' : 'Date'}</th>
-                  <th className="py-2.5 px-3.5 font-medium text-right">{lang === 'es' ? 'Abrir' : 'Open'}</th>
+                  <th className="py-2.5 px-3.5 font-medium whitespace-nowrap">{lang === 'es' ? 'Fecha' : 'Date'}</th>
+                  <th className="py-2.5 px-3.5 font-medium text-right hidden sm:table-cell">{lang === 'es' ? 'Abrir' : 'Open'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -799,12 +802,12 @@ function ListView({
                           ))}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3.5">
-                        <span className="text-xs text-white/50 font-mono">
+                      <td className="py-2.5 px-3.5 whitespace-nowrap">
+                        <span className="text-xs text-white/50 font-mono whitespace-nowrap">
                           {project.data.date}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3.5 text-right">
+                      <td className="py-2.5 px-3.5 text-right hidden sm:table-cell">
                         <span
                           className="text-xs font-semibold text-[var(--os-blue)] opacity-0 group-hover:opacity-100 transition-opacity"
                         >

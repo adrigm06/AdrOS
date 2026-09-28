@@ -159,6 +159,12 @@ export default function BotIcon({
         onTouchStart={handleTouchStart}
         onFocus={() => setIsHovered(true)}
         onBlur={() => setIsHovered(false)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen();
+          }
+        }}
         className="group flex flex-col items-center gap-1.5 p-1.5 outline-none rounded-[var(--radius-md)] transition-transform active:scale-[0.94]"
         style={{
           width: 90,

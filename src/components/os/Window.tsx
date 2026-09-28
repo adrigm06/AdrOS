@@ -27,6 +27,7 @@ const DOCK_Y_OFFSET = 70;
 export default function Window({
   window: win,
   onClose,
+  onMinimize,
   onMaximize,
   onBringToFront,
   onUpdatePosition,
@@ -94,6 +95,11 @@ export default function Window({
   const handleClose = () => {
     exitIntentRef.current = 'close';
     onClose(win.id);
+  };
+
+  const handleMinimize = () => {
+    exitIntentRef.current = 'minimize';
+    onMinimize?.(win.id);
   };
 
   const handleMaximize = () => {
@@ -190,7 +196,7 @@ export default function Window({
         }}
         onDoubleClick={!isMobile ? handleMaximize : undefined}
       >
-        {/* Window Controls: Only close button */}
+        {/* Window Controls: macOS Traffic Lights */}
         <div
           className="flex items-center gap-2 flex-shrink-0 py-1"
           onMouseEnter={() => setTrafficHovered(true)}
@@ -203,6 +209,24 @@ export default function Window({
             icon="×"
             showIcon={isMobile || trafficHovered}
           />
+          {!isMobile && (
+            <>
+              <MacOSTrafficLight
+                color={TRAFFIC.minimize}
+                label={lang === 'es' ? 'Minimizar' : 'Minimize'}
+                onClick={handleMinimize}
+                icon="–"
+                showIcon={trafficHovered}
+              />
+              <MacOSTrafficLight
+                color={TRAFFIC.maximize}
+                label={isMaximized ? (lang === 'es' ? 'Restaurar' : 'Restore') : (lang === 'es' ? 'Maximizar' : 'Maximize')}
+                onClick={handleMaximize}
+                icon={isMaximized ? '⤡' : '+'}
+                showIcon={trafficHovered}
+              />
+            </>
+          )}
         </div>
 
         {/* Title — centered */}
@@ -212,8 +236,8 @@ export default function Window({
           </span>
         </div>
 
-        {/* Spacer on right to balance traffic light on left */}
-        <div className="w-[15px] sm:w-[20px] flex items-center justify-end flex-shrink-0" />
+        {/* Spacer on right to balance traffic lights on left */}
+        <div className={`flex items-center justify-end flex-shrink-0 ${isMobile ? 'w-[15px]' : 'w-[62px]'}`} />
       </div>
 
       {/* ── Content View ── */}

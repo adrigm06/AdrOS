@@ -118,6 +118,9 @@ export default function WallpaperPicker({ isOpen, currentId, onSelect, onClose, 
             className="fixed inset-0 z-[99999] flex items-center justify-center p-4 pointer-events-none"
           >
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={effectiveLang === 'es' ? 'Fondos de pantalla' : 'Wallpaper Settings'}
               className="vibrancy-popover rounded-[var(--radius-xl)] p-4 sm:p-5 overflow-hidden w-full max-w-[460px] max-h-[85vh] flex flex-col pointer-events-auto"
               style={{
                 boxShadow: 'var(--shadow-window)',
@@ -164,7 +167,7 @@ export default function WallpaperPicker({ isOpen, currentId, onSelect, onClose, 
                           src={wp.thumb}
                           alt={wp.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                          loading="lazy"
+                          loading="eager"
                         />
                       </div>
 

@@ -175,7 +175,7 @@ export default function MenuBar({
         </div>
 
         {/* Current App Title (Bold) */}
-        <span className="font-semibold px-2 py-0.5 text-white tracking-tight">
+        <span className="font-semibold px-2 py-0.5 text-white tracking-tight truncate max-w-[120px] sm:max-w-[240px] md:max-w-none whitespace-nowrap">
           {activeWindowTitle || 'AdrOS'}
         </span>
 
@@ -294,11 +294,12 @@ export default function MenuBar({
           ref={clockBtnRef}
           type="button"
           onClick={() => setCalendarOpen(!calendarOpen)}
-          className={`px-2 py-0.5 rounded-[4px] transition-colors font-medium tracking-tight ${
+          className={`px-1.5 sm:px-2 py-0.5 rounded-[4px] transition-colors font-medium tracking-tight whitespace-nowrap ${
             calendarOpen ? 'bg-white/20' : 'hover:bg-white/10'
           }`}
         >
-          {time}
+          <span className="hidden sm:inline">{time}</span>
+          <span className="sm:hidden">{time.split(' ').slice(-1)[0]}</span>
         </button>
 
         <CalendarPopover
