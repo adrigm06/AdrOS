@@ -313,7 +313,7 @@ export default function Desktop({ projects }: DesktopProps) {
   return (
     <LanguageContext.Provider value={langState}>
       <div
-        className="flex flex-col h-screen"
+        className="flex flex-col h-screen h-[100dvh]"
         style={wallpaperStyle}
       >
         {/* ── macOS Menu Bar ── */}
@@ -402,12 +402,7 @@ export default function Desktop({ projects }: DesktopProps) {
 
           {/* QuickLinks — bottom-right on desktop, centered above dock on mobile */}
           <div
-            className="absolute transition-all duration-200 z-10"
-            style={{
-              ...(typeof window !== 'undefined' && window.innerWidth < 768
-                ? { left: '50%', transform: 'translateX(-50%)', bottom: 78 }
-                : { right: 28, bottom: 24 }),
-            }}
+            className="absolute transition-all duration-200 z-10 left-1/2 -translate-x-1/2 bottom-[88px] md:left-auto md:translate-x-0 md:right-7 md:bottom-6"
           >
             <QuickLinks
               lang={langState.lang}

@@ -59,23 +59,6 @@ function MailIcon() {
   );
 }
 
-function CvIcon() {
-  return (
-    <div className="w-10 h-12 bg-white rounded-[4px] shadow-md border border-black/10 flex flex-col items-center justify-between p-1 relative overflow-hidden">
-      {/* Top red header for PDF */}
-      <div className="w-full bg-[#e11d48] text-white text-[7px] font-bold text-center rounded-[2px] py-0.5">
-        PDF
-      </div>
-      <div className="w-full flex flex-col gap-1 px-0.5">
-        <div className="w-full h-[2px] bg-slate-200 rounded" />
-        <div className="w-3/4 h-[2px] bg-slate-200 rounded" />
-        <div className="w-full h-[2px] bg-slate-200 rounded" />
-      </div>
-      <span className="text-[8px] font-bold text-slate-700">CV</span>
-    </div>
-  );
-}
-
 export default function QuickLinks({ lang, onOpenContact }: QuickLinksProps) {
   const links = [
     {
@@ -93,15 +76,10 @@ export default function QuickLinks({ lang, onOpenContact }: QuickLinksProps) {
       onClick: onOpenContact,
       renderIcon: () => <MailIcon />,
     },
-    {
-      label: lang === 'es' ? 'CV Adrián' : 'Adrián CV',
-      href: '/Adrian_Gomez_FullStack_English.pdf',
-      renderIcon: () => <CvIcon />,
-    },
   ];
 
   return (
-    <div className="flex items-center gap-2.5 sm:gap-4 select-none">
+    <div className="flex items-center justify-center gap-3.5 sm:gap-5 select-none">
       {links.map((link) => {
         const content = (
           <div className="group flex flex-col items-center gap-1 p-0.5 sm:p-1 rounded-[6px] transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer">
