@@ -84,7 +84,6 @@ export default function ProfileWindow({ lang, onOpenContact }: ProfileWindowProp
         <div className="flex flex-wrap items-center gap-2 mt-5 pt-3 border-t border-white/10">
           <ProfileActionButton href={p.github} label="GitHub" icon="github" />
           <ProfileActionButton href={p.linkedin} label="LinkedIn" icon="linkedin" />
-          <ProfileActionButton href="/Adrian_Gomez_FullStack_English.pdf" label="CV" icon="cv" />
           {onOpenContact ? (
             <button
               type="button"

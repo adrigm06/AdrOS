@@ -65,11 +65,11 @@ export default function Taskbar({
           isBouncing={bouncingApp === 'finder'}
         />
 
-        {/* ── 2. Siri (AdrBOT) ── */}
+        {/* ── 2. AdrBOT ── */}
         <DockIcon
           mouseX={mouseX}
           src="/icons/siri.webp"
-          label="AdrBOT (Siri)"
+          label="AdrBOT"
           onClick={() => triggerBounce('siri', onOpenChat)}
           isOpen={isChatOpen}
           isBouncing={bouncingApp === 'siri'}
@@ -84,7 +84,7 @@ export default function Taskbar({
           isBouncing={bouncingApp === 'safari'}
         />
 
-        {/* ── 4. Notas / TextEdit (Perfil & CV) ── */}
+        {/* ── 4. Notas / TextEdit (Perfil) ── */}
         <DockIcon
           mouseX={mouseX}
           src="/icons/notes.webp"

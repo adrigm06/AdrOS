@@ -31,7 +31,6 @@ export const translations = {
   quicklinks_github: 'GitHub',
   quicklinks_linkedin: 'LinkedIn',
   quicklinks_email: 'Email',
-  quicklinks_cv: 'Download CV',
   quicklinks_about: 'About me',
 
   // Tooltips

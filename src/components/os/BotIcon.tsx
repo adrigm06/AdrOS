@@ -173,9 +173,9 @@ export default function BotIcon({
           transition: 'transform 0.18s var(--ease-out)',
         }}
         tabIndex={0}
-        aria-label="Abrir AdrBOT (Siri)"
+        aria-label="Abrir AdrBOT"
       >
-        {/* Siri Icon Container with Apple Intelligence Halo */}
+        {/* AdrBOT Icon Container with Apple Intelligence Halo */}
         <div className="relative flex items-center justify-center w-14 h-14">
           {/* Subtle Ambient Chromatic Halo */}
           <div

@@ -60,7 +60,7 @@ function MessageBubble({ msg }: { msg: Message }) {
       {!isUser && (
         <img
           src="/icons/siri.webp"
-          alt="Siri"
+          alt="AdrBOT"
           className="w-6 h-6 object-contain mr-2 mt-0.5 flex-shrink-0"
         />
       )}
@@ -179,10 +179,10 @@ export default function ChatWindow({ lang }: ChatWindowProps) {
 
   return (
     <div className="flex flex-col h-full bg-[rgba(16,18,26,0.85)] overflow-hidden">
-      {/* Siri Header */}
+      {/* AdrBOT Header */}
       <div className="flex items-center gap-2.5 px-4 py-2.5 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
         <div className="relative">
-          <img src="/icons/siri.webp" alt="Siri" className="w-5 h-5 object-contain" />
+          <img src="/icons/siri.webp" alt="AdrBOT" className="w-5 h-5 object-contain" />
           <div className="absolute -inset-0.5 rounded-full bg-[var(--os-blue)]/30 blur-[4px] -z-10" />
         </div>
         <div className="flex flex-col">
@@ -203,7 +203,7 @@ export default function ChatWindow({ lang }: ChatWindowProps) {
         ))}
         {thinking && (
           <div className="flex items-center gap-2 mb-3">
-            <img src="/icons/siri.webp" alt="Siri" className="w-6 h-6 object-contain flex-shrink-0" />
+            <img src="/icons/siri.webp" alt="AdrBOT" className="w-6 h-6 object-contain flex-shrink-0" />
             <div className="rounded-[16px] rounded-bl-[4px] bg-white/10 border border-white/10 backdrop-blur-md">
               <SiriThinkingDots />
             </div>
@@ -212,7 +212,7 @@ export default function ChatWindow({ lang }: ChatWindowProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input container (Spotlight / Siri style prompt) */}
+      {/* Input container (Spotlight style prompt) */}
       <div className="p-3 sm:p-4 border-t border-white/10 bg-[rgba(22,25,36,0.6)] flex-shrink-0">
         <div className="flex items-center gap-2 px-3 py-2 rounded-[14px] bg-white/10 border border-white/15 focus-within:border-[var(--os-blue)] transition-all">
           <input

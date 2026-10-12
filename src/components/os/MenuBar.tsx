@@ -122,8 +122,6 @@ export default function MenuBar({
   const goMenu: MenuItem[] = [
     { label: 'GitHub', action: () => window.open('https://github.com/adrigm06', '_blank') },
     { label: 'LinkedIn', action: () => window.open('https://www.linkedin.com/in/adrigml/', '_blank') },
-    { divider: true, label: '' },
-    { label: lang === 'es' ? 'Descargar CV' : 'Download CV', action: () => window.open('/Adrian_Gomez_FullStack_English.pdf', '_blank') },
   ];
 
   const helpMenu: MenuItem[] = [
@@ -245,16 +243,16 @@ export default function MenuBar({
           </svg>
         </div>
 
-        {/* Siri / Apple Intelligence Icon */}
+        {/* AdrBOT / Apple Intelligence Icon */}
         <button
           type="button"
           onClick={onOpenChat}
           className="flex items-center px-1.5 py-0.5 hover:bg-white/10 rounded-[4px] transition-colors"
-          title="AdrBOT (Siri)"
+          title="AdrBOT"
         >
           <img
             src="/icons/siri.webp"
-            alt="Siri"
+            alt="AdrBOT"
             className="w-4 h-4 object-contain transition-transform hover:scale-110 active:scale-95"
             style={{ filter: 'drop-shadow(0 0 4px rgba(96, 165, 250, 0.5))' }}
           />
