@@ -13,6 +13,7 @@ interface TaskbarProps {
   onOpenProfile: () => void;
   onOpenContact?: () => void;
   onOpenChat?: () => void;
+  onOpenSafari?: () => void;
   onOpenWallpaperPicker?: () => void;
   openWindows?: WindowState[];
 }
@@ -26,6 +27,7 @@ export default function Taskbar({
   onOpenProfile,
   onOpenContact,
   onOpenChat,
+  onOpenSafari,
   onOpenWallpaperPicker,
   openWindows = [],
 }: TaskbarProps) {
@@ -43,6 +45,7 @@ export default function Taskbar({
   const isProfileOpen = openWindows.some((w) => w.type === 'profile' && w.isOpen && !w.isMinimized);
   const isChatOpen = openWindows.some((w) => w.type === 'chat' && w.isOpen && !w.isMinimized);
   const isContactOpen = openWindows.some((w) => w.type === 'contact' && w.isOpen && !w.isMinimized);
+  const isSafariOpen = openWindows.some((w) => w.type === 'safari' && w.isOpen && !w.isMinimized);
 
   return (
     <div className="fixed bottom-2 sm:bottom-2.5 left-1/2 -translate-x-1/2 z-[9999] flex items-center justify-center pointer-events-auto max-w-[96vw]">
@@ -75,12 +78,13 @@ export default function Taskbar({
           isBouncing={bouncingApp === 'siri'}
         />
 
-        {/* ── 3. Safari (Web / GitHub) ── */}
+        {/* ── 3. Safari ── */}
         <DockIcon
           mouseX={mouseX}
           src="/icons/safari.webp"
-          label="Safari — GitHub"
-          onClick={() => triggerBounce('safari', () => window.open('https://github.com/adrigm06', '_blank'))}
+          label="Safari"
+          onClick={() => triggerBounce('safari', onOpenSafari)}
+          isOpen={isSafariOpen}
           isBouncing={bouncingApp === 'safari'}
         />
 

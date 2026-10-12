@@ -11,6 +11,7 @@ interface MenuBarProps {
   onOpenProfile: () => void;
   onOpenContact: () => void;
   onOpenChat: () => void;
+  onOpenSafari?: () => void;
   viewMode: 'icons' | 'list';
   onToggleView: () => void;
   onRestart?: () => void;
@@ -32,6 +33,7 @@ export default function MenuBar({
   onOpenProfile,
   onOpenContact,
   onOpenChat,
+  onOpenSafari,
   viewMode,
   onToggleView,
   onRestart,
@@ -120,7 +122,7 @@ export default function MenuBar({
   ];
 
   const goMenu: MenuItem[] = [
-    { label: 'GitHub', action: () => window.open('https://github.com/adrigm06', '_blank') },
+    { label: 'Safari', action: onOpenSafari || (() => window.open('https://github.com/adrigm06', '_blank')) },
     { label: 'LinkedIn', action: () => window.open('https://www.linkedin.com/in/adrigml/', '_blank') },
   ];
 

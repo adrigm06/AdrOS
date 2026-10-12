@@ -9,12 +9,12 @@ export interface WindowState {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
-  type: 'project' | 'profile' | 'contact' | 'chat';
+  type: 'project' | 'profile' | 'contact' | 'chat' | 'safari';
   projectId?: string;
 }
 
 /** Default sizes clamped to viewport so windows fit any screen. */
-function defaultSize(type: 'project' | 'profile' | 'contact' | 'chat') {
+function defaultSize(type: 'project' | 'profile' | 'contact' | 'chat' | 'safari') {
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
 
@@ -36,6 +36,12 @@ function defaultSize(type: 'project' | 'profile' | 'contact' | 'chat') {
       height: Math.min(680, vh * 0.85),
     };
   }
+  if (type === 'safari') {
+    return {
+      width: Math.min(880, vw * 0.92),
+      height: Math.min(620, vh * 0.85),
+    };
+  }
   return {
     width: Math.min(720, vw * 0.92),
     height: Math.min(560, vh * 0.82),
@@ -55,7 +61,7 @@ function randomOffset() {
 export function useWindowManager() {
   const [windows, setWindows] = useState<WindowState[]>([]);
 
-  const openWindow = useCallback((id: string, type: 'project' | 'profile' | 'contact' | 'chat', title: string, projectId?: string) => {
+  const openWindow = useCallback((id: string, type: 'project' | 'profile' | 'contact' | 'chat' | 'safari', title: string, projectId?: string) => {
     setWindows(prev => {
       const existing = prev.find(w => w.id === id);
       if (existing) {

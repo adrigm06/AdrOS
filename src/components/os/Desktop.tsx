@@ -337,6 +337,10 @@ export default function Desktop({ projects }: DesktopProps) {
             openWindow('chat', 'chat', 'AdrBOT');
             setViewMode('icons');
           }}
+          onOpenSafari={() => {
+            openWindow('safari', 'safari', 'Safari');
+            setViewMode('icons');
+          }}
           viewMode={viewMode}
           onToggleView={() => setViewMode((v) => (v === 'icons' ? 'list' : 'icons'))}
           onRestart={() => setBooted(false)}
@@ -453,6 +457,10 @@ export default function Desktop({ projects }: DesktopProps) {
             }}
             onOpenChat={() => {
               openWindow('chat', 'chat', 'AdrBOT');
+              setViewMode('icons');
+            }}
+            onOpenSafari={() => {
+              openWindow('safari', 'safari', 'Safari');
               setViewMode('icons');
             }}
             onOpenWallpaperPicker={() => {

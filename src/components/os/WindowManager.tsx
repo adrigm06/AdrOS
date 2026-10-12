@@ -11,6 +11,7 @@ import ProfileWindow from '@/components/widgets/ProfileWindow';
 import ContactForm from '@/components/widgets/ContactForm';
 
 import ChatWindow from '@/components/widgets/ChatWindow';
+import SafariWindow from '@/components/widgets/SafariWindow';
 
 interface WindowManagerProps {
   windows: WindowState[];
@@ -70,6 +71,8 @@ export default function WindowManager({
               <ContactForm lang={lang} onClose={() => onClose(win.id)} />
             ) : win.type === 'chat' ? (
               <ChatWindow lang={lang} />
+            ) : win.type === 'safari' ? (
+              <SafariWindow lang={lang} />
             ) : project ? (
               <ProjectWindow
                 project={project}
