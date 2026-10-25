@@ -47,7 +47,7 @@ function parseInlineMarkdown(text: string): string {
     )
     // 4. Single asterisk / underscore bold or italic *text* or _text_
     .replace(
-      /(^|[^\*_\w])(\*|_)(?!\s)(.*?)(?<!\s)\2(?=[^\*_\w]|$)/g,
+      /(^|[^*_\w])(\*|_)(?!\s)(.*?)(?<!\s)\2(?=[^*_\w]|$)/g,
       '$1<strong style="font-weight:600;color:var(--os-text)">$3</strong>',
     );
 }

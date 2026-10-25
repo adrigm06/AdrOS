@@ -147,7 +147,7 @@ export default function SafariWindow({ lang }: SafariWindowProps) {
         if (!cancelled && reposRes.ok) {
           const reposData = await reposRes.json();
           if (Array.isArray(reposData) && reposData.length > 0) {
-            setRepos(reposData.map((r: any) => ({
+            setRepos(reposData.map((r: GitHubRepo) => ({
               id: r.id,
               name: r.name,
               description: r.description,

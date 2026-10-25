@@ -14,7 +14,12 @@
     "ingest": "tsx scripts/ingest.ts",
     "ingest:mdx": "tsx scripts/ingest.ts --source mdx",
     "ingest:profile": "tsx scripts/ingest.ts --source profile",
-    "ingest:pdf": "tsx scripts/ingest.ts --source pdf"
+    "ingest:pdf": "tsx scripts/ingest.ts --source pdf",
+    "lint": "eslint . --max-warnings 0",
+    "type-check:scripts": "tsc --project tsconfig.scripts.json",
+    "type-check:ci": "node scripts/ci-astro.mjs check",
+    "test": "vitest run",
+    "build:ci": "node scripts/ci-astro.mjs build"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
@@ -31,15 +36,22 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@eslint/js": "10.0.1",
     "@types/node": "^25.9.3",
+    "@types/pdf-parse": "1.1.5",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.21",
     "dotenv": "^16.4.5",
+    "eslint": "10.13.0",
+    "eslint-plugin-astro": "3.2.1",
+    "globals": "17.4.0",
     "gray-matter": "^4.0.3",
     "pdf-parse": "^1.1.1",
     "postcss": "^8.5.5",
     "tsx": "^4.19.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "5.0.5"
   }
 }

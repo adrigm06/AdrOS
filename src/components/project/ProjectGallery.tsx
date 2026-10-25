@@ -33,7 +33,7 @@ export default function ProjectGallery({ project }: ProjectGalleryProps) {
     }
   }
 
-  const projectVideos = (p as any).videos;
+  const projectVideos = p.videos;
   if (projectVideos && projectVideos.length > 0) {
     projectVideos.forEach((vid: { title: string; url: string }) => {
       let previewUrl = vid.url;

@@ -2,7 +2,7 @@
  * RAG Ingestion Script — AdrOS Portfolio
  *
  * Reads all project MDX files, the profile corpus and the CV PDF,
- * generates embeddings via HuggingFace Inference API (all-MiniLM-L6-v2),
+ * generates embeddings via Google Gemini (gemini-embedding-2),
  * and upserts everything into Supabase pgvector table.
  *
  * Usage:
@@ -12,14 +12,15 @@
  *   npx tsx scripts/ingest.ts --source pdf       # only CV
  *
  * Requires in .env:
- *   SUPABASE_URL
+ *   PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
- *   HF_API_KEY
+ *   GEMINI_API_KEY
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
-import matter from 'gray-matter';
+import { parseMdxProject, extractPdfChunks, type Chunk } from './lib/chunks.js';
+import { EMBEDDING_DIMENSIONS } from '../supabase/functions/_shared/embedding.ts';
 import { createClient } from '@supabase/supabase-js';
 import { profileChunks } from './corpus/profile.js';
 
@@ -43,13 +44,6 @@ const sourceFilter = process.argv.find(a => a.startsWith('--source='))?.split('=
   ?? (sourceIndex !== -1 && process.argv[sourceIndex + 1] ? process.argv[sourceIndex + 1] : 'all');
 
 // ── Types ─────────────────────────────────────────────────────
-interface Chunk {
-  source_id: string;  // unique key for upsert
-  content:   string;
-  metadata:  Record<string, unknown>;
-  source:    'mdx' | 'pdf' | 'profile';
-}
-
 // ── Gemini batch embedding ────────────────────────────────────
 async function embed(texts: string[]): Promise<number[][]> {
   // AQ. keys require x-goog-api-key header (not ?key= query param)
@@ -60,7 +54,7 @@ async function embed(texts: string[]): Promise<number[][]> {
     content: {
       parts: [{ text }],
     },
-    outputDimensionality: 768,
+    outputDimensionality: EMBEDDING_DIMENSIONS,
   }));
 
   const res = await fetch(url, {
@@ -83,12 +77,12 @@ async function embed(texts: string[]): Promise<number[][]> {
     throw new Error('Invalid response format from Gemini Batch API');
   }
 
-  return embeddings.map((e: any) => e.values);
+  return embeddings.map((e: { values: number[] }) => e.values);
 }
 
 // ── Upsert chunks into Supabase ───────────────────────────────
 async function upsertChunks(chunks: Chunk[]): Promise<void> {
-  // Embed in batches of 32 (HF limit)
+  // Keep the existing batch size of 32
   const BATCH = 32;
   let inserted = 0;
 
@@ -130,89 +124,12 @@ async function upsertChunks(chunks: Chunk[]): Promise<void> {
 
     console.log(`  ✅ Batch ${Math.floor(i / BATCH) + 1} done (${inserted} total)`);
 
-    // Rate limit: HF free tier allows ~10 req/s
+    // Preserve the existing pause between embedding batches
     if (i + BATCH < chunks.length) await sleep(500);
   }
 }
 
 // ── MDX parser ────────────────────────────────────────────────
-function parseMdxProject(filePath: string): Chunk[] {
-  const raw      = fs.readFileSync(filePath, 'utf-8');
-  const { data, content } = matter(raw);
-  const id       = data.id as string;
-  const title    = data.title as string;
-  const subtitle = data.subtitle as string ?? '';
-  const stack    = (data.stack as string[] ?? []).join(', ');
-  const descEs   = (data.description as Record<string, string>)?.es ?? '';
-  const descEn   = (data.description as Record<string, string>)?.en ?? '';
-
-  // Chunk 1 — metadata summary (bilingual)
-  const metaChunk: Chunk = {
-    source_id: `mdx-${id}-meta`,
-    content: `
-Project: ${title}
-Subtitle: ${subtitle}
-Zone: ${data.zone}
-Status: ${data.status}
-Date: ${data.date}
-Stack: ${stack}
-GitHub: ${data.githubUrl ?? ''}
-Demo: ${data.demoUrl ?? ''}
-Description (ES): ${descEs}
-Description (EN): ${descEn}
-    `.trim(),
-    metadata: { project_id: id, title, lang: 'both', section: 'meta' },
-    source: 'mdx',
-  };
-
-  // Chunks 2 & 3 — full content per language
-  const langRegex = /<Content lang="(\w+)">([\s\S]*?)<\/Content>/g;
-  const langChunks: Chunk[] = [];
-  let match: RegExpExecArray | null;
-
-  while ((match = langRegex.exec(content)) !== null) {
-    const lang = match[1];
-    const body = match[2].trim();
-    langChunks.push({
-      source_id: `mdx-${id}-${lang}`,
-      content:   `[${title}] ${body}`,
-      metadata:  { project_id: id, title, lang, section: 'content' },
-      source:    'mdx',
-    });
-  }
-
-  return [metaChunk, ...langChunks];
-}
-
-// ── PDF extractor ─────────────────────────────────────────────
-async function extractPdfChunks(pdfPath: string): Promise<Chunk[]> {
-  // pdf-parse is a CommonJS module — dynamic import
-  const pdfParse = (await import('pdf-parse')).default;
-  const buffer   = fs.readFileSync(pdfPath);
-  const data     = await pdfParse(buffer);
-
-  // Split by double newline into sections, filter noise, max 800 chars each
-  const rawSections = data.text
-    .split(/\n{2,}/)
-    .map((s: string) => s.trim())
-    .filter((s: string) => s.length > 60);
-
-  // Remove any lines that look like private contact info (safety net)
-  const sanitize = (text: string) =>
-    text
-      .replace(/\b[\w.+-]+@[\w-]+\.\w+\b/g, '[email removed]')
-      .replace(/\+?\d[\d\s\-().]{8,}\d/g, '[phone removed]');
-
-  const chunks: Chunk[] = rawSections.map((section: string, idx: number) => ({
-    source_id: `pdf-cv-section-${idx}`,
-    content:   sanitize(`[CV Adrián Gómez] ${section}`),
-    metadata:  { section: `cv-${idx}`, lang: 'es', source: 'pdf' },
-    source:    'pdf' as const,
-  }));
-
-  return chunks;
-}
-
 // ── Profile chunks ────────────────────────────────────────────
 function getProfileChunks(): Chunk[] {
   return profileChunks.map(pc => ({
@@ -261,7 +178,7 @@ async function main() {
   }
 
   console.log(`\n🔢 Total chunks to ingest: ${allChunks.length}`);
-  console.log('🤗 Generating embeddings via HuggingFace...\n');
+  console.log('🤗 Generating embeddings via Gemini...\n');
 
   await upsertChunks(allChunks);
 
