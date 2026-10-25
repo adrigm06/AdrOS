@@ -7,8 +7,7 @@ import ProjectGallery from './ProjectGallery';
 import ProjectStack from './ProjectStack';
 import ProjectLinks from './ProjectLinks';
 
-const TABS = ['readme', 'screenshots', 'stack', 'links'] as const;
-type Tab = (typeof TABS)[number];
+type Tab = 'readme' | 'screenshots' | 'stack' | 'links';
 
 interface ProjectWindowProps {
   project: CollectionEntry<'projects'>;

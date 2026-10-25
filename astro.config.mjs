@@ -9,4 +9,6 @@ export default defineConfig({
   integrations: [react(), mdx()],
   output: 'static',
   adapter: vercel(),
+  // CI must never read a developer's .env files.
+  vite: process.env.ASTRO_CI === '1' ? { envDir: false } : {},
 });

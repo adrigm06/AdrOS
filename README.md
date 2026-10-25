@@ -58,3 +58,85 @@ Builds to a static `dist/` folder. Ready for Vercel, Netlify, or any static host
 ```bash
 npm run build    # → dist/
 ```
+
+## Continuous integration
+
+Every push and pull request runs three independent GitHub Actions jobs. Any failed
+check fails CI. Permissions are read-only; newer runs cancel older runs for the
+same branch/event or pull request. Actions are pinned to verified commit SHAs.
+
+| Check | Purpose |
+|---|---|
+| `npm ci` with npm cache | Reproduce the committed lockfile without committing `node_modules`. |
+| `npm run lint` | Catch non-style correctness issues in Astro, TypeScript, React and scripts. |
+| `npm run type-check:ci` | Run `astro check` without reading local environment files. |
+| `npm run type-check:scripts` | Check ingestion and Node tests, excluded by the app's tsconfig. |
+| `npm test` | Run deterministic Vitest ingestion and embedding-schema contract tests. |
+| `npm run build:ci` | Compile the actual Astro/Vercel production build without application secrets. |
+| Deno check/test | Check the complete Edge Function and test chat validation/prompt assembly. |
+| Gitleaks | Scan all fetched Git history; redact findings and fail if a secret is found. |
+
+### Run locally
+
+Use Node **24** (see `.nvmrc`; compatible with the project's `>=22.12.0` engine).
+Install [Deno 2.9.8](https://github.com/denoland/deno/releases/tag/v2.9.8) from its
+official release or installer. Deno is separate from Node because Supabase Edge
+Functions run in Deno. No global npm package installation is required.
+
+```sh
+npm ci
+npm run lint
+npm run type-check:ci
+npm run type-check:scripts
+npm test
+npm run build:ci
+cd supabase/functions
+deno task check
+deno task test
+```
+
+`type-check:ci` and `build:ci` use a small launcher that forwards only host runtime
+settings, sets `ASTRO_CI=1`, disables Astro/Vite `.env` loading (`envDir: false`),
+and supplies fake loopback Supabase settings. The fake values only allow module
+initialization; no service is called. Using `--mode ci` alone would still load
+the base `.env`. Normal `dev`, `build` and `type-check` behavior is unchanged.
+Vitest also disables `.env` loading. Do not deploy the CI build artifact: it
+intentionally contains placeholder public configuration.
+
+Tests never execute ingestion, query Supabase or call Gemini/Groq. The PDF parser
+is stubbed. Deno tests grant no network, environment, filesystem or subprocess
+permissions. Dependency downloads during setup/check are not model API calls.
+
+### Contracts and safe schema rollout
+
+- MDX chunks retain bilingual metadata and content. PDF sections are trimmed,
+  discarded at **60 characters or less**, and sanitized as before. **There is no
+  800-character cap today**: tests preserve sections above that size rather than
+  silently changing ingestion behavior.
+- Chat accepts only `user`/`assistant` history with non-empty string content.
+  Current and historical messages have a **4000-character inclusive limit**;
+  invalid bodies return HTTP 400 before secrets or APIs are accessed. Valid text,
+  the system prompt, language detection, context order and last-six history stay
+  unchanged. Gemini key prefixes are never logged.
+- The embedding test compares both actual producers with the effective table
+  **and** RPC declarations across ordered migrations. It reproduces the old
+  **768 versus 384** failure and catches table-only/RPC-only fixes.
+- The new migration changes the column, cosine index and RPC declaration to
+  768. It takes an exclusive lock and **aborts transactionally if incompatible
+  non-null vectors exist**. It never deletes, pads or truncates vectors. Review
+  a backup and plan an explicitly authorized re-embedding/data migration first
+  if that guard triggers; vectors from different embedding models are not
+  interchangeable. Creating this file does not apply it anywhere. CI does not
+  deploy, migrate, ingest or prove the current remote database schema.
+
+ESLint plus its TypeScript/Astro adapters catch errors a compiler does not;
+`globals` supplies browser/Node names. Vitest provides deterministic module mocks
+for the existing TypeScript/PDF dependencies; `@types/pdf-parse` lets scripts be
+checked without `any`. These are development-only dependencies, pinned in the
+manifest and lockfile. Deno uses its native test runner and a frozen lockfile,
+avoiding a second testing framework there.
+
+Optional follow-ups (not enabled): Dependabot for dependency PRs and a separately
+approved manual RAG evaluation workflow. Paid-provider evaluation must never run
+on every push. Making these checks required before merging is a separate GitHub
+branch-protection/ruleset setting; a failed workflow alone does not forbid a merge.

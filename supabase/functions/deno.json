@@ -1,0 +1,8 @@
+{
+  "nodeModulesDir": "none",
+  "compilerOptions": { "strict": true },
+  "tasks": {
+    "check": "deno check --frozen chat/index.ts chat/core_test.ts chat/request_test.ts",
+    "test": "deno test --frozen chat/core_test.ts chat/request_test.ts"
+  }
+}
