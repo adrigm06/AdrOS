@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import type { WindowState } from '@/hooks/useWindowManager';
+import type { WindowState, WindowType } from '@/hooks/useWindowManager';
 import type { Lang } from '@/hooks/useLanguage';
 import type { ProjectEntry } from './Desktop';
 import { ZONE_COLORS } from '@/data/projects';
@@ -16,6 +16,10 @@ import DocumentWindow from '@/components/widgets/DocumentWindow';
 import { useState } from 'react';
 import { initialBrowserHistory } from '@/lib/browser';
 import { useContactSession } from '@/hooks/useContactSession';
+import { useTerminalSession } from '@/hooks/useTerminalSession';
+import TerminalWindow from '@/components/widgets/TerminalWindow';
+import { navigateBrowser, parseBrowserTarget } from '@/lib/browser';
+import type { TerminalAction } from '@/lib/terminal/types';
 
 interface WindowManagerProps {
   windows: WindowState[];
@@ -28,6 +32,7 @@ interface WindowManagerProps {
   projects: ProjectEntry[];
   lang: Lang;
   onOpenContact: () => void;
+  onOpenWindow: (id: string, type: WindowType, title: string, projectId?: string) => void;
 }
 
 export default function WindowManager({
@@ -41,13 +46,31 @@ export default function WindowManager({
   projects,
   lang,
   onOpenContact,
+  onOpenWindow,
 }: WindowManagerProps) {
   const isMobile = useIsMobile();
   const contact = useContactSession();
   const [browserHistory, setBrowserHistory] = useState(initialBrowserHistory);
+  const onTerminalAction = (action: TerminalAction) => {
+    if (action.kind === 'contact') onOpenContact();
+    if (action.kind === 'cv') onOpenWindow('cv', 'cv', 'CV · Adrian Gomez');
+    if (action.kind === 'project') {
+      const project = projects.find(entry => entry.data.id === action.id);
+      if (project) onOpenWindow(project.data.id, 'project', project.data.title, project.data.id);
+    }
+    if (action.kind === 'browser') {
+      const target = parseBrowserTarget(action.url);
+      if (target) {
+        setBrowserHistory(previous => navigateBrowser(previous, target));
+        onOpenWindow('safari', 'safari', 'Safari');
+      }
+    }
+  };
+  const terminal = useTerminalSession(projects.map(project => project.data), lang, onTerminalAction);
   const closeApp = (id: string) => {
     if (id === 'contact') contact.reset();
     if (id === 'safari') setBrowserHistory(initialBrowserHistory());
+    if (id === 'terminal') terminal.reset();
     onClose(id);
   };
 
@@ -86,6 +109,8 @@ export default function WindowManager({
               <SafariWindow lang={lang} projects={projects} history={browserHistory} onHistoryChange={setBrowserHistory} />
             ) : win.type === 'cv' ? (
               <DocumentWindow lang={lang} />
+            ) : win.type === 'terminal' ? (
+              <TerminalWindow lang={lang} session={terminal} />
             ) : project ? (
               <ProjectWindow
                 project={project}

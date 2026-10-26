@@ -11,6 +11,7 @@
 - **Safari bookmarks** — Curated project destinations from MDX, real public GitHub metadata, and external website previews with an explicit external-open fallback
 - **CV shortcut** — English PDF résumé in a separate browser-style window with a download action
 - **Mail composer** — Gmail-inspired contact form, copyable recipient, subject, and in-memory draft retention while minimized
+- **Terminal app** — Read-only virtual folders, project launching, public GitHub file browsing, filtered projects, guided tour, and recruiter overview
 - **i18n** — Spanish / English toggle with smooth transition
 - **List view** — Table view of all projects sorted by date
 - **Easter eggs** — Konami code (high contrast theme), `ls` command, midnight clock glitch
@@ -21,6 +22,32 @@
 The Mail composer stores contact submissions through the existing Astro action; it does not send Gmail messages. Drafts are not written to localStorage. Safari fetches public GitHub metadata without tokens; network and rate-limit errors offer a direct GitHub link. External sites can prohibit iframe embedding, so an external-open action is always available. Opening the CV does not change Safari's default GitHub home. The published PDF is an unchanged copy of `docs/EN_Adrian_Gomez_AI_Engineer.pdf`; publishing it does not run AdrBOT ingestion.
 
 The CV uses pre-rendered WebP pages instead of relying on browser PDF plugins. After replacing the source PDF, run `python scripts/render-cv.py` with local Poppler (`pdftoppm` on PATH) and Pillow available. The Codex bundled runtime provides both. This regenerates `public/documents/cv/`, updates the checksum/page manifest in `src/data/cv-preview.json`, and copies the original PDF unchanged. Each preview is at most 1200px wide and below 150KB. Unit tests reject a stale checksum or oversized previews. The original PDF remains available for selectable/accessibility text and download; preview images are not a substitute for its text layer.
+
+### Terminal usage
+
+Open Terminal from the dock. Start with `help` or `tour`, then `tour next`, `tour back`, or `tour exit`. `/projects`, `/documents`, and `/about` form a **virtual, read-only** filesystem, never the visitor's computer or a server shell. Commands do not evaluate scripts, shell operators, or repository code. Example commands:
+
+```text
+ls /projects
+projects AI --zone ai-tools
+projects --stack Kotlin
+open "Android Engineering Skill"
+open androbox --github
+repo androbox
+ls
+cd src
+cat README.md
+cd /documents
+open CV.pdf
+hire
+contact
+```
+
+Use `help <command>` or `<command> --help` for usage. Tab completes commands and paths, quoted paths support spaces, ↑/↓ recall up to 100 commands, Ctrl+L clears output, and Ctrl+C cancels a pending request unless text is selected for copying. The mobile keyboard has a submit button and a visible cancel action. Session state survives minimization but is cleared on closing Terminal; raw commands are never stored in localStorage. The transcript retains at most 200 entries/approximately 200,000 characters.
+
+GitHub exploration is on demand and unauthenticated, only for linked public repositories. Metadata resolves the default branch to a pinned commit/tree, and shallow Git Trees preserve file modes so symlinks and submodules cannot be followed. Text blobs are limited to 128 KiB and displayed as plain text, not executable HTML. Directories display at most 1,000 entries with an explicit limit notice. API responses have a 2 MiB download bound; a bounded 4 MiB/32-entry, five-minute cache deduplicates active requests. Requests time out after 12 seconds, support cancellation, and never retry automatically. Network failures, private/missing repositories, rate limits, malformed data, binary files and oversize files produce explicit errors. No GitHub token is shipped to the browser.
+
+The traversal design follows GitHub's official [Git Trees](https://docs.github.com/en/rest/git/trees#get-a-tree) and [Git Blobs](https://docs.github.com/en/rest/git/blobs#get-a-blob) endpoints rather than following untrusted download URLs. Tree mode checks happen before any blob request.
 
 ```bash
 npm install

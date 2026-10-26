@@ -312,4 +312,21 @@ a { color: inherit; text-decoration: none; }
   .mail-body:focus { outline: 2px solid var(--os-blue); outline-offset: -4px; }
   .mail-footer { @apply px-5 py-3 shrink-0; border-top: 1px solid var(--os-border); background: var(--os-surface); }
   .mail-error { color: var(--os-danger); font-size: 12px; }
+
+  .terminal-app { @apply flex flex-col h-full min-h-0; background: var(--os-bg); color: var(--os-text); font-family: var(--font-mono); }
+  .terminal-output { @apply flex-1 min-h-0 overflow-y-auto p-4 select-text; }
+  .terminal-output pre { @apply whitespace-pre-wrap break-words text-xs leading-relaxed mb-3; overflow-wrap: anywhere; font-family: inherit; }
+  .terminal-command { color: var(--os-accent); }
+  .terminal-error { color: var(--os-danger); }
+  .terminal-suggestions { @apply flex flex-wrap gap-1 px-2 py-1 shrink-0; border-top: 1px solid var(--os-border); }
+  .terminal-prompt { @apply flex items-center gap-2 px-4 py-2 shrink-0; border-top: 1px solid var(--os-border); }
+  .terminal-prompt input { @apply flex-1 min-w-0 bg-transparent py-2 text-sm outline-none; color: var(--os-text); font-family: inherit; }
+  .terminal-prompt:focus-within { outline: 1px solid var(--os-accent); outline-offset: -1px; }
+  .terminal-status { @apply flex justify-between items-center gap-2 px-4 py-1 shrink-0 text-[10px]; min-height: 28px; color: var(--os-text-dim); }
+}
+
+@media (max-width: 767px) {
+  .vibrancy-dock { max-width: 96vw; overflow-x: auto; overflow-y: hidden; }
+  .dock-app-button { width: 38px !important; height: 38px !important; }
+  .vibrancy-dock > div { flex-shrink: 0; }
 }

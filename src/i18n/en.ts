@@ -49,3 +49,5 @@ export const translations = {
 };
 
 export { mailEnglish as appTranslations } from './apps';
+
+export { terminalCopy } from './terminal';

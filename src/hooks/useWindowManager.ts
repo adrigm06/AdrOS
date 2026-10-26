@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export type WindowType = 'project' | 'profile' | 'contact' | 'chat' | 'safari' | 'cv';
+export type WindowType = 'project' | 'profile' | 'contact' | 'chat' | 'safari' | 'cv' | 'terminal';
 
 export interface WindowState {
   id: string;
@@ -31,6 +31,9 @@ function defaultSize(type: WindowType) {
       width: Math.min(560, vw * 0.88),
       height: Math.min(580, vh * 0.82),
     };
+  }
+  if (type === 'terminal') {
+    return { width: Math.min(800, vw * 0.92), height: Math.min(540, vh * 0.82) };
   }
   if (type === 'chat') {
     return {
