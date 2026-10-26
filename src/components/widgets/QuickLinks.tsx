@@ -3,6 +3,7 @@ import type { Lang } from '@/hooks/useLanguage';
 interface QuickLinksProps {
   lang: Lang;
   onOpenContact: () => void;
+  onOpenCv: () => void;
 }
 
 /** Authentic macOS Alias Badge (curved arrow in a white circular badge) */
@@ -59,8 +60,13 @@ function MailIcon() {
   );
 }
 
-export default function QuickLinks({ lang, onOpenContact }: QuickLinksProps) {
+export default function QuickLinks({ lang, onOpenContact, onOpenCv }: QuickLinksProps) {
   const links = [
+    {
+      label: 'CV',
+      onClick: onOpenCv,
+      renderIcon: () => <div className="w-12 h-12 rounded-xl bg-[var(--os-surface-2)] border border-[var(--os-border-light)] flex items-center justify-center text-[var(--os-text)] font-mono text-sm font-semibold" aria-hidden="true">PDF</div>,
+    },
     {
       label: 'GitHub',
       href: 'https://github.com/adrigm06',

@@ -47,3 +47,5 @@ export const translations = {
   chat_title:       'AdrBOT',
   chat_send:        'Send',
 };
+
+export { mailEnglish as appTranslations } from './apps';

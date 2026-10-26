@@ -12,6 +12,10 @@ import ContactForm from '@/components/widgets/ContactForm';
 
 import ChatWindow from '@/components/widgets/ChatWindow';
 import SafariWindow from '@/components/widgets/SafariWindow';
+import DocumentWindow from '@/components/widgets/DocumentWindow';
+import { useState } from 'react';
+import { initialBrowserHistory } from '@/lib/browser';
+import { useContactSession } from '@/hooks/useContactSession';
 
 interface WindowManagerProps {
   windows: WindowState[];
@@ -39,6 +43,13 @@ export default function WindowManager({
   onOpenContact,
 }: WindowManagerProps) {
   const isMobile = useIsMobile();
+  const contact = useContactSession();
+  const [browserHistory, setBrowserHistory] = useState(initialBrowserHistory);
+  const closeApp = (id: string) => {
+    if (id === 'contact') contact.reset();
+    if (id === 'safari') setBrowserHistory(initialBrowserHistory());
+    onClose(id);
+  };
 
   return (
     <AnimatePresence>
@@ -55,7 +66,7 @@ export default function WindowManager({
           <Window
             key={win.id}
             window={win}
-            onClose={onClose}
+            onClose={closeApp}
             onMinimize={onMinimize}
             onMaximize={onMaximize}
             onBringToFront={onBringToFront}
@@ -68,11 +79,13 @@ export default function WindowManager({
             {win.type === 'profile' ? (
               <ProfileWindow lang={lang} onOpenContact={onOpenContact} />
             ) : win.type === 'contact' ? (
-              <ContactForm lang={lang} onClose={() => onClose(win.id)} />
+              <ContactForm lang={lang} session={contact} onClose={() => closeApp(win.id)} />
             ) : win.type === 'chat' ? (
               <ChatWindow lang={lang} />
             ) : win.type === 'safari' ? (
-              <SafariWindow lang={lang} />
+              <SafariWindow lang={lang} projects={projects} history={browserHistory} onHistoryChange={setBrowserHistory} />
+            ) : win.type === 'cv' ? (
+              <DocumentWindow lang={lang} />
             ) : project ? (
               <ProjectWindow
                 project={project}

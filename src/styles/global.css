@@ -252,3 +252,64 @@ a { color: inherit; text-decoration: none; }
   --os-warn: #cc8800;
   --os-ok: #008800;
 }
+
+/* Browser and mail surfaces share the existing OS tokens. */
+@layer components {
+  .browser-app {
+    @apply flex flex-col h-full min-h-0 text-sm;
+    background: var(--os-surface);
+    color: var(--os-text);
+  }
+  .browser-toolbar {
+    @apply flex items-center gap-1.5 px-2 py-2 shrink-0;
+    background: var(--os-surface-2);
+    border-bottom: 1px solid var(--os-border);
+  }
+  .browser-tool {
+    @apply inline-flex items-center justify-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium no-underline shrink-0 disabled:opacity-40 disabled:cursor-not-allowed;
+    color: var(--os-text);
+    min-height: 32px;
+  }
+  .browser-tool:hover:not(:disabled), .browser-tool[aria-current='page'] { background: var(--os-surface-3); }
+  .browser-tool:focus-visible, .browser-notice a:focus-visible {
+    outline: 2px solid var(--os-blue);
+    outline-offset: 2px;
+  }
+  .browser-primary, .browser-primary:hover:not(:disabled) { background: var(--os-blue); color: var(--os-bg); }
+  .browser-address {
+    @apply flex-1 min-w-0 truncate rounded-md px-2.5 py-1.5 font-mono text-[11px] select-text;
+    background: var(--os-bg);
+    border: 1px solid var(--os-border);
+    color: var(--os-text-dim);
+  }
+  .browser-bookmarks {
+    @apply flex gap-1 px-2 py-1 overflow-x-auto shrink-0;
+    border-bottom: 1px solid var(--os-border);
+  }
+  .browser-notice {
+    @apply flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs shrink-0;
+    color: var(--os-text-dim);
+    border-bottom: 1px solid var(--os-border);
+  }
+  .browser-notice a { color: var(--os-blue); text-decoration: underline; }
+  .browser-input {
+    @apply rounded-md px-3 py-2 min-w-0 text-sm;
+    border: 1px solid var(--os-border);
+    background: var(--os-bg);
+    color: var(--os-text);
+  }
+  .browser-input:focus { outline: 2px solid var(--os-blue); outline-offset: 1px; }
+  .mail-composer { @apply flex flex-col h-full min-h-0 overflow-hidden text-sm; background: var(--os-surface); color: var(--os-text); }
+  .mail-fields { @apply flex flex-col flex-1 min-h-0 overflow-y-auto; }
+  .mail-heading { @apply flex justify-between items-center gap-3 px-5 py-3 shrink-0 font-semibold; background: var(--os-surface-2); }
+  .mail-field { @apply flex items-center gap-3 mx-5 py-2.5 shrink-0; border-bottom: 1px solid var(--os-border); }
+  .mail-field label, .mail-field > span:first-child { @apply text-xs shrink-0; color: var(--os-text-dim); min-width: 64px; }
+  .mail-field input { @apply flex-1 min-w-0 bg-transparent text-sm py-1; color: var(--os-text); }
+  .mail-field input:focus { outline: 2px solid var(--os-blue); outline-offset: 3px; }
+  .mail-field:has(.mail-error) { flex-wrap: wrap; }
+  .mail-field .mail-error { width: 100%; }
+  .mail-body { @apply flex-1 w-full min-h-[130px] resize-none px-5 py-4 bg-transparent; color: var(--os-text); }
+  .mail-body:focus { outline: 2px solid var(--os-blue); outline-offset: -4px; }
+  .mail-footer { @apply px-5 py-3 shrink-0; border-top: 1px solid var(--os-border); background: var(--os-surface); }
+  .mail-error { color: var(--os-danger); font-size: 12px; }
+}

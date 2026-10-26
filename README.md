@@ -8,12 +8,19 @@
 - **Desktop environment** — Zoned layout (Android, Full-Stack, AI Tools) with folder icons
 - **Draggable windows** — Project viewer with tabs (README, Screenshots, Stack, Links)
 - **Profile window** — Avatar, bio, and social links
+- **Safari bookmarks** — Curated project destinations from MDX, real public GitHub metadata, and external website previews with an explicit external-open fallback
+- **CV shortcut** — English PDF résumé in a separate browser-style window with a download action
+- **Mail composer** — Gmail-inspired contact form, copyable recipient, subject, and in-memory draft retention while minimized
 - **i18n** — Spanish / English toggle with smooth transition
 - **List view** — Table view of all projects sorted by date
 - **Easter eggs** — Konami code (high contrast theme), `ls` command, midnight clock glitch
 - **Fully responsive** — Mobile-first layout with touch support
 
 ## 🚀 Quick Start
+
+The Mail composer stores contact submissions through the existing Astro action; it does not send Gmail messages. Drafts are not written to localStorage. Safari fetches public GitHub metadata without tokens; network and rate-limit errors offer a direct GitHub link. External sites can prohibit iframe embedding, so an external-open action is always available. Opening the CV does not change Safari's default GitHub home. The published PDF is an unchanged copy of `docs/EN_Adrian_Gomez_AI_Engineer.pdf`; publishing it does not run AdrBOT ingestion.
+
+The CV uses pre-rendered WebP pages instead of relying on browser PDF plugins. After replacing the source PDF, run `python scripts/render-cv.py` with local Poppler (`pdftoppm` on PATH) and Pillow available. The Codex bundled runtime provides both. This regenerates `public/documents/cv/`, updates the checksum/page manifest in `src/data/cv-preview.json`, and copies the original PDF unchanged. Each preview is at most 1200px wide and below 150KB. Unit tests reject a stale checksum or oversized previews. The original PDF remains available for selectable/accessibility text and download; preview images are not a substitute for its text layer.
 
 ```bash
 npm install

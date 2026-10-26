@@ -409,6 +409,7 @@ export default function Desktop({ projects }: DesktopProps) {
             className="absolute transition-all duration-200 z-10 left-1/2 -translate-x-1/2 bottom-[88px] md:left-auto md:translate-x-0 md:right-7 md:bottom-6"
           >
             <QuickLinks
+              onOpenCv={() => openWindow('cv', 'cv', 'CV · Adrian Gomez')}
               lang={langState.lang}
               onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
             />
