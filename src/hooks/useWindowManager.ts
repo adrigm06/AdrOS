@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 
+export type WindowType = 'project' | 'profile' | 'contact' | 'chat' | 'safari' | 'cv' | 'terminal';
+
 export interface WindowState {
   id: string;
   title: string;
@@ -9,12 +11,12 @@ export interface WindowState {
   position: { x: number; y: number };
   size: { width: number; height: number };
   zIndex: number;
-  type: 'project' | 'profile' | 'contact' | 'chat' | 'safari';
+  type: WindowType;
   projectId?: string;
 }
 
 /** Default sizes clamped to viewport so windows fit any screen. */
-function defaultSize(type: 'project' | 'profile' | 'contact' | 'chat' | 'safari') {
+function defaultSize(type: WindowType) {
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
 
@@ -26,9 +28,12 @@ function defaultSize(type: 'project' | 'profile' | 'contact' | 'chat' | 'safari'
   }
   if (type === 'contact') {
     return {
-      width: Math.min(480, vw * 0.88),
-      height: Math.min(460, vh * 0.82),
+      width: Math.min(560, vw * 0.88),
+      height: Math.min(580, vh * 0.82),
     };
+  }
+  if (type === 'terminal') {
+    return { width: Math.min(800, vw * 0.92), height: Math.min(540, vh * 0.82) };
   }
   if (type === 'chat') {
     return {
@@ -36,7 +41,7 @@ function defaultSize(type: 'project' | 'profile' | 'contact' | 'chat' | 'safari'
       height: Math.min(680, vh * 0.85),
     };
   }
-  if (type === 'safari') {
+  if (type === 'safari' || type === 'cv') {
     return {
       width: Math.min(880, vw * 0.92),
       height: Math.min(620, vh * 0.85),
@@ -61,7 +66,7 @@ function randomOffset() {
 export function useWindowManager() {
   const [windows, setWindows] = useState<WindowState[]>([]);
 
-  const openWindow = useCallback((id: string, type: 'project' | 'profile' | 'contact' | 'chat' | 'safari', title: string, projectId?: string) => {
+  const openWindow = useCallback((id: string, type: WindowType, title: string, projectId?: string) => {
     setWindows(prev => {
       const existing = prev.find(w => w.id === id);
       if (existing) {

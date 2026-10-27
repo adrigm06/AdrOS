@@ -47,3 +47,9 @@ export const translations = {
   chat_title:       'AdrBOT',
   chat_send:        'Enviar',
 };
+
+export { mailSpanish as appTranslations } from './apps';
+
+export { terminalCopy } from './terminal';
+
+export { repositoryCopy } from './repository';

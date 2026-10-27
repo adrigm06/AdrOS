@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useWindowManager } from '@/hooks/useWindowManager';
 import { LanguageContext, useLanguageState, useTranslation } from '@/hooks/useLanguage';
 import { useReducedMotion } from 'framer-motion';
-import { useKonamiCode, useLsCommand } from '@/hooks/useEasterEggs';
+import { useKonamiCode } from '@/hooks/useEasterEggs';
 import type { EasterEgg } from '@/hooks/useEasterEggs';
 import Taskbar from './Taskbar';
 import MenuBar from './MenuBar';
@@ -163,7 +163,6 @@ export default function Desktop({ projects }: DesktopProps) {
   const reduce = useReducedMotion();
 
   const { eggs, updateEgg } = useKonamiCode();
-  useLsCommand();
 
   useEffect(() => {
     const initial = calcInitialPositions(projects);
@@ -409,6 +408,7 @@ export default function Desktop({ projects }: DesktopProps) {
             className="absolute transition-all duration-200 z-10 left-1/2 -translate-x-1/2 bottom-[88px] md:left-auto md:translate-x-0 md:right-7 md:bottom-6"
           >
             <QuickLinks
+              onOpenCv={() => openWindow('cv', 'cv', 'CV · Adrian Gomez')}
               lang={langState.lang}
               onOpenContact={() => openWindow('contact', 'contact', langState.lang === 'es' ? 'Contáctame' : 'Contact me')}
             />
@@ -420,6 +420,7 @@ export default function Desktop({ projects }: DesktopProps) {
 
         {/* ── Windows layer ── */}
         <WindowManager
+          onOpenWindow={openWindow}
           windows={windows}
           onClose={closeWindow}
           onMinimize={minimizeWindow}
@@ -439,6 +440,10 @@ export default function Desktop({ projects }: DesktopProps) {
           transition={{ duration: 0.3, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
         >
           <Taskbar
+            onOpenTerminal={() => {
+              openWindow('terminal', 'terminal', 'Terminal');
+              setViewMode('icons');
+            }}
             lang={langState.lang}
             viewMode={viewMode}
             onToggleView={() => setViewMode((v) => (v === 'icons' ? 'list' : 'icons'))}

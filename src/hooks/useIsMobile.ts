@@ -14,14 +14,16 @@ export function useIsMobile(): boolean {
     if (typeof window === 'undefined') return;
 
     const mql = window.matchMedia('(max-width: 767px)');
-    const onChange = (e: MediaQueryListEvent) => {
-      setIsMobile(e.matches);
-    };
+    const onChange = () => setIsMobile(window.innerWidth < 768);
 
     setIsMobile(mql.matches);
 
     mql.addEventListener('change', onChange);
-    return () => mql.removeEventListener('change', onChange);
+    window.addEventListener('resize', onChange);
+    return () => {
+      mql.removeEventListener('change', onChange);
+      window.removeEventListener('resize', onChange);
+    };
   }, []);
 
   return isMobile;
