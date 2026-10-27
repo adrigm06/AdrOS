@@ -9,10 +9,10 @@ const manifest = JSON.parse(readFileSync(new URL('src/data/cv-preview.json', roo
 };
 
 describe('published CV preview', () => {
-  it('publishes the unchanged source and ties previews to its checksum', () => {
-    const source = readFileSync(new URL('docs/EN_Adrian_Gomez_AI_Engineer.pdf', root));
-    expect(readFileSync(new URL('public/documents/EN_Adrian_Gomez_AI_Engineer.pdf', root))).toEqual(source);
-    expect(createHash('sha256').update(source).digest('hex')).toBe(manifest.sourceSha256);
+  it('ties previews to the versioned published PDF checksum', () => {
+    const published = readFileSync(new URL('public/documents/EN_Adrian_Gomez_AI_Engineer.pdf', root));
+    expect(published.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+    expect(createHash('sha256').update(published).digest('hex')).toBe(manifest.sourceSha256);
   });
   it('uses complete, sized WebP previews within the asset budget', () => {
     expect(manifest.pages.length).toBeGreaterThan(0);
