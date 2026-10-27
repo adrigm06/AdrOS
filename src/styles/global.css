@@ -323,6 +323,45 @@ a { color: inherit; text-decoration: none; }
   .terminal-prompt input { @apply flex-1 min-w-0 bg-transparent py-2 text-sm outline-none; color: var(--os-text); font-family: inherit; }
   .terminal-prompt:focus-within { outline: 1px solid var(--os-accent); outline-offset: -1px; }
   .terminal-status { @apply flex justify-between items-center gap-2 px-4 py-1 shrink-0 text-[10px]; min-height: 28px; color: var(--os-text-dim); }
+  .repo-view { @apply flex-1 min-h-0 overflow-y-auto select-text; }
+  .repo-heading { @apply flex items-center flex-wrap gap-2 px-4 py-4 text-base; border-bottom: 1px solid var(--os-border); background: var(--os-surface-2); }
+  .repo-heading strong, .repo-breadcrumb button { color: var(--os-blue); }
+  .repo-public { @apply text-[10px] rounded-full px-2 py-0.5; border: 1px solid var(--os-border-light); color: var(--os-text-dim); }
+  .repo-api { @apply text-[10px] ml-auto; color: var(--os-muted); }
+  .repo-tabs { @apply px-4 py-3 text-xs font-semibold; border-bottom: 1px solid var(--os-border); }
+  .repo-body { @apply p-3 sm:p-5 max-w-[1100px] mx-auto; }
+  .repo-branch { @apply rounded-md px-2.5 py-1.5 text-xs; border: 1px solid var(--os-border-light); background: var(--os-surface-2); }
+  .repo-breadcrumb { @apply flex flex-wrap items-center gap-2 text-sm mb-4; overflow-wrap: anywhere; }
+  .repo-breadcrumb button { @apply text-left hover:underline; }
+  .repo-breadcrumb button:focus-visible, .repo-row:focus-visible, .repo-markdown a:focus-visible { outline: 2px solid var(--os-blue); outline-offset: -2px; }
+  .repo-panel { @apply rounded-lg mb-5 overflow-hidden; border: 1px solid var(--os-border); }
+  .repo-panel-heading { @apply flex items-center gap-2 px-3 py-2 text-xs font-semibold; min-height: 44px; background: var(--os-surface-2); border-bottom: 1px solid var(--os-border); }
+  .repo-panel-heading button[aria-pressed='true'] { background: var(--os-surface-3); }
+  .repo-row { @apply flex items-center gap-3 px-3 py-2.5 w-full text-sm text-left disabled:opacity-60 disabled:cursor-not-allowed; border-bottom: 1px solid var(--os-border); min-height: 42px; }
+  .repo-row:last-child { border-bottom: none; }
+  .repo-row:hover:not(:disabled) { background: var(--os-surface-2); }
+  .repo-entry-kind { @apply ml-auto text-[10px] shrink-0 max-w-[40%]; color: var(--os-muted); }
+  .repo-markdown { @apply px-4 py-4 sm:px-7 sm:py-6 text-sm leading-7; overflow-wrap: anywhere; }
+  .repo-markdown h1 { @apply text-2xl font-semibold mt-5 mb-4 pb-3; border-bottom: 1px solid var(--os-border); }
+  .repo-markdown h2 { @apply text-xl font-semibold mt-6 mb-3 pb-2; border-bottom: 1px solid var(--os-border); }
+  .repo-markdown h3 { @apply text-lg font-semibold mt-5 mb-2; }
+  .repo-markdown h4, .repo-markdown h5, .repo-markdown h6 { @apply text-base font-semibold mt-4 mb-2; }
+  .repo-markdown p { @apply my-3 whitespace-pre-line; }
+  .repo-markdown a { @apply underline; color: var(--os-blue); }
+  .repo-markdown ul { @apply list-disc pl-6 my-3; }
+  .repo-markdown ol { @apply list-decimal pl-6 my-3; }
+  .repo-markdown li { @apply my-1; }
+  .repo-markdown code { @apply rounded px-1 py-0.5 text-xs; background: var(--os-surface-3); font-family: var(--font-mono); }
+  .repo-markdown pre { @apply p-4 rounded-lg overflow-auto my-4 text-xs leading-6; background: var(--os-bg); }
+  .repo-markdown pre code { @apply p-0; background: transparent; }
+  .repo-markdown blockquote { @apply p-3 my-3 rounded-md; background: var(--os-surface-2); color: var(--os-text-dim); }
+  .repo-markdown table { @apply border-collapse my-3 text-sm; }
+  .repo-markdown th, .repo-markdown td { @apply px-3 py-1.5 text-left; border: 1px solid var(--os-border); }
+  .repo-markdown hr { @apply my-5; border-color: var(--os-border); }
+  .repo-markdown .repo-image-note { @apply text-[10px] leading-5 mb-4; color: var(--os-muted); }
+  .repo-source { @apply overflow-auto text-xs leading-6; max-height: 65vh; background: var(--os-bg); }
+  .repo-line-numbers { @apply text-right px-3 py-3 select-none shrink-0; color: var(--os-muted); border-right: 1px solid var(--os-border); font-family: var(--font-mono); }
+  .repo-file-text { @apply py-3 px-4; font-family: var(--font-mono); }
 }
 
 @media (max-width: 767px) {

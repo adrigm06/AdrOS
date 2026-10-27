@@ -33,7 +33,7 @@ describe('public GitHub transport', () => {
     await client.request('/repos/o/r', signal());
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
-  it.each([[404, 'not_found'], [403, 'rate_limit'], [429, 'rate_limit'], [500, 'network']] as const)('classifies HTTP %i without retries', async (status, code) => {
+  it.each([[404, 'not_found'], [403, 'rate_limit'], [429, 'rate_limit'], [409, 'empty'], [500, 'network']] as const)('classifies HTTP %i without retries', async (status, code) => {
     const fetcher = vi.fn<typeof fetch>(async () => json({}, status));
     await expect(new PublicGithubClient(fetcher).request('/repos/o/r', signal())).rejects.toMatchObject({ code });
     expect(fetcher).toHaveBeenCalledTimes(1);

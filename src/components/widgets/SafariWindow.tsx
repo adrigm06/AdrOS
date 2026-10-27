@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Lang } from '@/hooks/useLanguage';
 import type { ProjectEntry } from '@/components/os/Desktop';
-import { BROWSER_HOME, moveBrowser, navigateBrowser, parseBrowserTarget, resolveBookmarks, type BrowserHistory } from '@/lib/browser';
+import { BROWSER_HOME, moveBrowser, navigateBrowser, parseBrowserTarget, resolveBookmarks, replaceBrowserTarget, type BrowserHistory, type RepositoryTarget } from '@/lib/browser';
+import type { GithubRepositoryService } from '@/lib/terminal/repo-filesystem';
 import BrowserToolbar from './BrowserToolbar';
 import GitHubView from './GitHubView';
 
@@ -10,23 +11,25 @@ interface Props {
   projects: ProjectEntry[];
   history: BrowserHistory;
   onHistoryChange: (update: (previous: BrowserHistory) => BrowserHistory) => void;
+  repositoryService: GithubRepositoryService;
 }
 
-export default function SafariWindow({ lang, projects, history, onHistoryChange }: Props) {
+export default function SafariWindow({ lang, projects, history, onHistoryChange, repositoryService }: Props) {
   const [reload, setReload] = useState(0);
   const target = history.entries[history.index] ?? BROWSER_HOME;
-  const navigate = (url: string) => {
+  const navigate = useCallback((url: string) => {
     const next = parseBrowserTarget(url);
     if (next) onHistoryChange(previous => navigateBrowser(previous, next));
-  };
+  }, [onHistoryChange]);
+  const canonical = useCallback((expected: string, next: RepositoryTarget) => onHistoryChange(previous => replaceBrowserTarget(previous, expected, next)), [onHistoryChange]);
   return <section className="browser-app" aria-label="Safari">
     <BrowserToolbar lang={lang} url={target.url}
       onHome={() => onHistoryChange(previous => navigateBrowser(previous, BROWSER_HOME))}
       onBack={history.index > 0 ? () => onHistoryChange(previous => moveBrowser(previous, -1)) : undefined}
       onForward={history.index < history.entries.length - 1 ? () => onHistoryChange(previous => moveBrowser(previous, 1)) : undefined}
-      onReload={() => setReload(value => value + 1)} />
+      onReload={() => { repositoryService.clear(); setReload(value => value + 1); }} />
     <nav className="browser-bookmarks" aria-label={lang === 'es' ? 'Marcadores' : 'Bookmarks'}>
-      {resolveBookmarks(projects).map(bookmark => <button key={bookmark.id} className="browser-tool whitespace-nowrap" onClick={() => navigate(bookmark.target.url)} aria-current={target.url === bookmark.target.url ? 'page' : undefined}>{bookmark.title}</button>)}
+      {resolveBookmarks(projects).map(bookmark => <button key={bookmark.id} className="browser-tool whitespace-nowrap" onClick={() => navigate(bookmark.target.url)} aria-current={target.url === bookmark.target.url || (target.kind === 'repository' && bookmark.target.kind === 'repository' && target.owner === bookmark.target.owner && target.repository === bookmark.target.repository) ? 'page' : undefined}>{bookmark.title}</button>)}
     </nav>
     {target.kind === 'website' ? <div className="flex-1 min-h-0 flex flex-col" key={`${target.url}-${reload}`}>
       <div className="browser-notice">
@@ -34,6 +37,6 @@ export default function SafariWindow({ lang, projects, history, onHistoryChange 
         <a href={target.url} target="_blank" rel="noopener noreferrer">{lang === 'es' ? 'Abrir web' : 'Open website'} ↗</a>
       </div>
       <iframe className="flex-1 w-full min-h-0 bg-[var(--os-surface)]" src={target.url} title={target.url} sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer" />
-    </div> : <GitHubView key={`${target.url}-${reload}`} refresh={reload > 0} target={target} lang={lang} onNavigate={navigate} />}
+    </div> : <GitHubView key={`${target.url}-${reload}`} refresh={reload > 0} target={target} lang={lang} onNavigate={navigate} service={repositoryService} onCanonical={canonical} />}
   </section>;
 }

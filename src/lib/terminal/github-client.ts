@@ -74,6 +74,7 @@ export class PublicGithubClient {
         signal: controller.signal, credentials: 'omit', redirect: 'error', headers: { Accept: 'application/vnd.github+json' },
       });
       if (response.status === 404) throw new TerminalError('not_found');
+      if (response.status === 409) throw new TerminalError('empty');
       if (response.status === 403 || response.status === 429) throw new TerminalError('rate_limit');
       if (!response.ok) throw new TerminalError('network');
       const value = await readJson(response);
@@ -93,5 +94,11 @@ export class PublicGithubClient {
       if (error instanceof TerminalError) throw error;
       throw new TerminalError('network');
     } finally { clearTimeout(timer); }
+  }
+
+  clear() {
+    this.cache.clear();
+    for (const entry of this.pending.values()) entry.controller.abort();
+    this.pending.clear();
   }
 }

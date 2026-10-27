@@ -20,6 +20,7 @@ import { useTerminalSession } from '@/hooks/useTerminalSession';
 import TerminalWindow from '@/components/widgets/TerminalWindow';
 import { navigateBrowser, parseBrowserTarget } from '@/lib/browser';
 import type { TerminalAction } from '@/lib/terminal/types';
+import { GithubRepositoryService } from '@/lib/terminal/repo-filesystem';
 
 interface WindowManagerProps {
   windows: WindowState[];
@@ -51,6 +52,7 @@ export default function WindowManager({
   const isMobile = useIsMobile();
   const contact = useContactSession();
   const [browserHistory, setBrowserHistory] = useState(initialBrowserHistory);
+  const [repositoryService, setRepositoryService] = useState(() => new GithubRepositoryService());
   const onTerminalAction = (action: TerminalAction) => {
     if (action.kind === 'contact') onOpenContact();
     if (action.kind === 'cv') onOpenWindow('cv', 'cv', 'CV · Adrian Gomez');
@@ -69,7 +71,7 @@ export default function WindowManager({
   const terminal = useTerminalSession(projects.map(project => project.data), lang, onTerminalAction);
   const closeApp = (id: string) => {
     if (id === 'contact') contact.reset();
-    if (id === 'safari') setBrowserHistory(initialBrowserHistory());
+    if (id === 'safari') { setBrowserHistory(initialBrowserHistory()); setRepositoryService(new GithubRepositoryService()); }
     if (id === 'terminal') terminal.reset();
     onClose(id);
   };
@@ -106,7 +108,7 @@ export default function WindowManager({
             ) : win.type === 'chat' ? (
               <ChatWindow lang={lang} />
             ) : win.type === 'safari' ? (
-              <SafariWindow lang={lang} projects={projects} history={browserHistory} onHistoryChange={setBrowserHistory} />
+              <SafariWindow lang={lang} projects={projects} history={browserHistory} onHistoryChange={setBrowserHistory} repositoryService={repositoryService} />
             ) : win.type === 'cv' ? (
               <DocumentWindow lang={lang} />
             ) : win.type === 'terminal' ? (

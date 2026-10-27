@@ -1,13 +1,13 @@
 import { isRecord } from '../github-public.js';
-import { parseBrowserTarget } from '../browser.js';
+import { parseBrowserTarget, validRepositoryRef } from '../browser.js';
 import { PublicGithubClient } from './github-client.js';
 import { TerminalError, type TerminalProject } from './types.js';
 import { containsControl } from './parser.js';
 
 export const MAX_TEXT_BYTES = 128 * 1024;
-interface Mount { base: string; branch: string; commit: string; tree: string }
-interface Entry { name: string; sha: string; directory: boolean; blocked: boolean; size?: number }
-interface Listing { entries: Entry[]; limited: boolean }
+export interface Mount { base: string; branch: string; commit: string; tree: string; description: string; language: string | null; stars: number | null }
+export interface Entry { name: string; sha: string; directory: boolean; blocked: boolean; size?: number }
+export interface Listing { entries: Entry[]; limited: boolean }
 const validSha = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{40,64}$/i.test(value);
 
 export function decodeGithubText(value: unknown): string {
@@ -29,9 +29,11 @@ export class GithubRepositoryService {
   private mounts = new Map<string, Mount>();
   constructor(private client = new PublicGithubClient()) {}
 
-  async mount(project: TerminalProject, signal: AbortSignal): Promise<Mount> {
+  async mount(project: TerminalProject, signal: AbortSignal, ref?: string): Promise<Mount> {
     if (signal.aborted) throw new TerminalError('cancelled');
-    const current = this.mounts.get(project.id);
+    if (ref !== undefined && !validRepositoryRef(ref)) throw new TerminalError('path');
+    const key = `${project.id}@${ref ?? 'default'}`;
+    const current = this.mounts.get(key);
     if (current) return current;
     const target = parseBrowserTarget(project.githubUrl);
     if (!target || target.kind !== 'repository') throw new TerminalError('repo');
@@ -39,12 +41,17 @@ export class GithubRepositoryService {
     const metadata = await this.client.request(base, signal);
     if (!isRecord(metadata) || metadata.private !== false || typeof metadata.default_branch !== 'string') throw new TerminalError('malformed');
     const branch = metadata.default_branch;
-    const commit = await this.client.request(`${base}/commits/${encodeURIComponent(branch)}`, signal);
+    const commit = await this.client.request(`${base}/commits/${encodeURIComponent(ref ?? branch)}`, signal);
     if (!isRecord(commit) || !validSha(commit.sha) || !isRecord(commit.commit) || !isRecord(commit.commit.tree) || !validSha(commit.commit.tree.sha)) throw new TerminalError('malformed');
-    const mount = { base, branch, commit: commit.sha, tree: commit.commit.tree.sha };
+    if (ref && commit.sha.toLowerCase() !== ref.toLowerCase()) throw new TerminalError('malformed');
+    const mount = { base, branch, commit: commit.sha, tree: commit.commit.tree.sha,
+      description: typeof metadata.description === 'string' ? metadata.description : '',
+      language: typeof metadata.language === 'string' ? metadata.language : null,
+      stars: typeof metadata.stargazers_count === 'number' ? metadata.stargazers_count : null };
     if (signal.aborted) throw new TerminalError('cancelled');
-    this.mounts.set(project.id, mount);
-    if (this.mounts.size > 32) this.mounts.delete(this.mounts.keys().next().value!);
+    this.mounts.set(key, mount);
+    this.mounts.set(`${project.id}@${mount.commit}`, mount);
+    while (this.mounts.size > 32) this.mounts.delete(this.mounts.keys().next().value!);
     return mount;
   }
 
@@ -58,8 +65,8 @@ export class GithubRepositoryService {
     return { entries, limited: data.truncated === true || data.tree.length >= 1000 };
   }
 
-  async locate(project: TerminalProject, path: string, signal: AbortSignal) {
-    const mount = await this.mount(project, signal);
+  async locate(project: TerminalProject, path: string, signal: AbortSignal, ref?: string) {
+    const mount = await this.mount(project, signal, ref);
     let node: Entry = { name: '', sha: mount.tree, directory: true, blocked: false };
     for (const part of path.split('/').filter(Boolean)) {
       if (part === '.' || part === '..') throw new TerminalError('path');
@@ -73,17 +80,18 @@ export class GithubRepositoryService {
     return { mount, node };
   }
 
-  async list(project: TerminalProject, path: string, signal: AbortSignal): Promise<Listing> {
-    const { mount, node } = await this.locate(project, path, signal);
+  async list(project: TerminalProject, path: string, signal: AbortSignal, ref?: string): Promise<Listing> {
+    const { mount, node } = await this.locate(project, path, signal, ref);
     if (!node.directory) throw new TerminalError('directory', path);
     return this.tree(mount, node.sha, signal);
   }
 
-  async cat(project: TerminalProject, path: string, signal: AbortSignal): Promise<string> {
-    const { mount, node } = await this.locate(project, path, signal);
+  async cat(project: TerminalProject, path: string, signal: AbortSignal, ref?: string): Promise<string> {
+    const { mount, node } = await this.locate(project, path, signal, ref);
     if (node.directory) throw new TerminalError('file', path);
     if ((node.size ?? 0) > MAX_TEXT_BYTES) throw new TerminalError('large');
     if (/\.(?:png|jpe?g|gif|webp|pdf|zip|gz|exe|dll|woff2?|ttf|ico|mp[34]|bin)$/i.test(node.name)) throw new TerminalError('binary');
     return decodeGithubText(await this.client.request(`${mount.base}/git/blobs/${node.sha}`, signal));
   }
+  clear() { this.mounts.clear(); this.client.clear(); }
 }

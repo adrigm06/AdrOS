@@ -51,3 +51,5 @@ export const translations = {
 export { mailSpanish as appTranslations } from './apps';
 
 export { terminalCopy } from './terminal';
+
+export { repositoryCopy } from './repository';

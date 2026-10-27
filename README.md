@@ -9,6 +9,7 @@
 - **Draggable windows** — Project viewer with tabs (README, Screenshots, Stack, Links)
 - **Profile window** — Avatar, bio, and social links
 - **Safari bookmarks** — Curated project destinations from MDX, real public GitHub metadata, and external website previews with an explicit external-open fallback
+- **Repository browser** — API-backed GitHub-style folders, breadcrumbs, real README previews, pinned snapshots and line-numbered source files within Safari
 - **CV shortcut** — English PDF résumé in a separate browser-style window with a download action
 - **Mail composer** — Gmail-inspired contact form, copyable recipient, subject, and in-memory draft retention while minimized
 - **Terminal app** — Read-only virtual folders, project launching, public GitHub file browsing, filtered projects, guided tour, and recruiter overview
@@ -48,6 +49,12 @@ Use `help <command>` or `<command> --help` for usage. Tab completes commands and
 GitHub exploration is on demand and unauthenticated, only for linked public repositories. Metadata resolves the default branch to a pinned commit/tree, and shallow Git Trees preserve file modes so symlinks and submodules cannot be followed. Text blobs are limited to 128 KiB and displayed as plain text, not executable HTML. Directories display at most 1,000 entries with an explicit limit notice. API responses have a 2 MiB download bound; a bounded 4 MiB/32-entry, five-minute cache deduplicates active requests. Requests time out after 12 seconds, support cancellation, and never retry automatically. Network failures, private/missing repositories, rate limits, malformed data, binary files and oversize files produce explicit errors. No GitHub token is shipped to the browser.
 
 The traversal design follows GitHub's official [Git Trees](https://docs.github.com/en/rest/git/trees#get-a-tree) and [Git Blobs](https://docs.github.com/en/rest/git/blobs#get-a-blob) endpoints rather than following untrusted download URLs. Tree mode checks happen before any blob request.
+
+### GitHub repositories in Safari
+
+The three repository bookmarks open an API-backed, read-only repository browser, not an embedded copy of github.com. GitHub prohibits framing its original pages. The profile remains Safari's homepage; Avisia and Keyout retain their website destinations. Repository views show actual public metadata, directory-first file rows, breadcrumbs, a pinned default-branch commit and the real README from the current directory. File navigation participates in Safari Back/Forward history and survives minimization. Refresh clears the repository cache and reloads the current snapshot safely.
+
+Text files offer a line-numbered source view and pinned raw/original GitHub links. Markdown offers a restricted React preview (headings, paragraphs, emphasis, links, lists, quotes, fenced code and tables), with a source toggle. Raw HTML is never executed: wrappers lose their tags while readable text and safe links remain. Images and badges are link-only fallbacks, with no automatic remote image requests. Relative paths stay within the repository; local heading anchors work within the current preview. Unsupported Markdown remains readable text rather than requiring an untrusted compiler. The shared terminal transport enforces the same cancellation, cache, response/file limits and symlink/submodule restrictions; no recursive crawl, credentials, repository writes or HTML proxy is used.
 
 ```bash
 npm install
